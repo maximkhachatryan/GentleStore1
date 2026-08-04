@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { App as AntApp, Button, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
@@ -12,6 +13,7 @@ interface TagValues {
 }
 
 export default function TagsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const [open, setOpen] = useState(false);
@@ -24,20 +26,20 @@ export default function TagsPage() {
   const save = useMutation({
     mutationFn: (v: TagValues) => (editing ? api.backoffice.updateTag(editing.id, v) : api.backoffice.createTag(v)),
     onSuccess: () => {
-      message.success('Tag saved');
+      message.success(t('tags.saved'));
       setOpen(false);
       invalidate();
     },
-    onError: () => message.error('Could not save tag. The name may already exist.'),
+    onError: () => message.error(t('tags.saveError')),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.backoffice.deleteTag(id),
     onSuccess: () => {
-      message.success('Tag deleted');
+      message.success(t('tags.deleted'));
       invalidate();
     },
-    onError: () => message.error('Could not delete tag'),
+    onError: () => message.error(t('tags.deleteError')),
   });
 
   const openCreate = () => {
@@ -54,20 +56,20 @@ export default function TagsPage() {
   };
 
   const columns: ColumnsType<TagModel> = [
-    { title: 'Order', dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
+    { title: t('tags.colOrder'), dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
+    { title: t('common.name'), dataIndex: 'name', key: 'name' },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       width: 180,
       render: (_, r) => (
         <Space>
           <Button size="small" onClick={() => openEdit(r)}>
-            Edit
+            {t('common.edit')}
           </Button>
-          <Popconfirm title="Delete this tag?" onConfirm={() => remove.mutate(r.id)}>
+          <Popconfirm title={t('tags.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
             <Button size="small" danger>
-              Delete
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -79,17 +81,17 @@ export default function TagsPage() {
     <div style={{ maxWidth: 640 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>
-          Tags
+          {t('tags.title')}
         </Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          New tag
+          {t('tags.new')}
         </Button>
       </div>
 
       <Table rowKey="id" loading={isLoading} dataSource={data} columns={columns} pagination={false} />
 
       <Modal
-        title={editing ? 'Edit tag' : 'New tag'}
+        title={editing ? t('tags.edit') : t('tags.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
@@ -97,10 +99,10 @@ export default function TagsPage() {
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
-          <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="displayOrder" label="Display order" rules={[{ required: true }]}>
+          <Form.Item name="displayOrder" label={t('common.displayOrder')} rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>

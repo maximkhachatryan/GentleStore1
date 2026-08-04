@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { PublicProductListItem } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function ProductCard({ slug, product }: Props) {
+  const { t } = useTranslation();
   const img = resolveAssetUrl(API_URL, product.primaryImageUrl);
 
   return (
@@ -26,11 +28,11 @@ export default function ProductCard({ slug, product }: Props) {
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-slate-300">No image</div>
+          <div className="flex h-full items-center justify-center text-slate-300">{t('productCard.noImage')}</div>
         )}
         {!product.inStock && (
           <span className="absolute left-2 top-2 rounded-full bg-slate-900/80 px-2.5 py-1 text-xs font-medium text-white">
-            Out of stock
+            {t('productCard.outOfStock')}
           </span>
         )}
       </div>

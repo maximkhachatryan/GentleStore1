@@ -1,0 +1,38 @@
+{
+  "footer": { "text": "Աջակցվում է GentleStore-ի կողմից · Դիտեք և պատվիրեք տեղական խանութներից" },
+  "home": {
+    "heroTitle": "Գնումներ տեղական խանութներից",
+    "heroSubtitle": "Բացահայտեք ապրանքները և պատվիրեք ուղղակիորեն WhatsApp-ով կամ արագ զանգով։",
+    "searchPlaceholder": "Որոնել խանութներ...",
+    "searchResults": "Որոնման արդյունքներ",
+    "featuredStores": "Ընտրված խանութներ",
+    "noStores": "Խանութներ չեն գտնվել։"
+  },
+  "store": {
+    "notFound": "Խանութը չի գտնվել",
+    "unavailable": "Այս խանութը կարող է անհասանելի լինել։",
+    "backToAll": "Վերադառնալ բոլոր խանութներին",
+    "searchPlaceholder": "Որոնել ապրանքներ...",
+    "all": "Բոլորը",
+    "tagsLabel": "Պիտակներ՝",
+    "noProducts": "Ապրանքներ չեն գտնվել։",
+    "contactMessage": "Բարև {{store}}, հարց ունեմ ձեր ապրանքների վերաբերյալ։"
+  },
+  "product": {
+    "notFound": "Ապրանքը չի գտնվել",
+    "backToStore": "Վերադառնալ խանութ",
+    "inStock": "Առկա է",
+    "unavailable": "Ներկայումս անհասանելի",
+    "ordersNote": "Պատվերները կատարվում են ուղղակիորեն խանութի հետ WhatsApp-ով կամ հեռախոսով։",
+    "orderMessage": "Բարև {{store}}, ցանկանում եմ պատվիրել՝ {{product}}։"
+  },
+  "notFound": {
+    "title": "Էջը չի գտնվել",
+    "subtitle": "Չկարողացանք գտնել այն, ինչ փնտրում էիք։",
+    "backHome": "Վերադառնալ գլխավոր էջ"
+  },
+  "storeCard": { "browse": "Դիտել խանութը" },
+  "productCard": { "noImage": "Նկար չկա", "outOfStock": "Առկա չէ" },
+  "gallery": { "noImage": "Նկար չկա" },
+  "contact": { "whatsapp": "WhatsApp", "call": "Զանգել" }
+}

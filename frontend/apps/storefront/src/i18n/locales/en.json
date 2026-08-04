@@ -1,0 +1,38 @@
+{
+  "footer": { "text": "Powered by GentleStore · Browse & order from local stores" },
+  "home": {
+    "heroTitle": "Shop from local stores",
+    "heroSubtitle": "Discover products and order directly via WhatsApp or a quick call.",
+    "searchPlaceholder": "Search stores...",
+    "searchResults": "Search results",
+    "featuredStores": "Featured stores",
+    "noStores": "No stores found."
+  },
+  "store": {
+    "notFound": "Store not found",
+    "unavailable": "This store may be unavailable.",
+    "backToAll": "Back to all stores",
+    "searchPlaceholder": "Search products...",
+    "all": "All",
+    "tagsLabel": "Tags:",
+    "noProducts": "No products found.",
+    "contactMessage": "Hi {{store}}, I have a question about your products."
+  },
+  "product": {
+    "notFound": "Product not found",
+    "backToStore": "Back to store",
+    "inStock": "In stock",
+    "unavailable": "Currently unavailable",
+    "ordersNote": "Orders are placed directly with the store via WhatsApp or phone.",
+    "orderMessage": "Hi {{store}}, I'd like to order: {{product}}."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "subtitle": "We couldn't find what you were looking for.",
+    "backHome": "Back home"
+  },
+  "storeCard": { "browse": "Browse store" },
+  "productCard": { "noImage": "No image", "outOfStock": "Out of stock" },
+  "gallery": { "noImage": "No image" },
+  "contact": { "whatsapp": "WhatsApp", "call": "Call" }
+}

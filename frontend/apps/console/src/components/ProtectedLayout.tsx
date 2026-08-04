@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Avatar, Button, Layout, Menu, Typography } from 'antd';
 import {
   AppstoreOutlined,
@@ -11,10 +12,12 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/AuthContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const { Header, Sider, Content } = Layout;
 
 export default function ProtectedLayout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,18 +27,18 @@ export default function ProtectedLayout() {
   const items = useMemo(() => {
     if (isAdmin) {
       return [
-        { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">Dashboard</Link> },
-        { key: '/admin/stores', icon: <ShopOutlined />, label: <Link to="/admin/stores">Stores</Link> },
-        { key: '/admin/users', icon: <TeamOutlined />, label: <Link to="/admin/users">Users</Link> },
+        { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">{t('nav.dashboard')}</Link> },
+        { key: '/admin/stores', icon: <ShopOutlined />, label: <Link to="/admin/stores">{t('nav.stores')}</Link> },
+        { key: '/admin/users', icon: <TeamOutlined />, label: <Link to="/admin/users">{t('nav.users')}</Link> },
       ];
     }
     return [
-      { key: '/store', icon: <ProfileOutlined />, label: <Link to="/store">Store Profile</Link> },
-      { key: '/store/categories', icon: <AppstoreOutlined />, label: <Link to="/store/categories">Categories</Link> },
-      { key: '/store/products', icon: <ShopOutlined />, label: <Link to="/store/products">Products</Link> },
-      { key: '/store/tags', icon: <TagsOutlined />, label: <Link to="/store/tags">Tags</Link> },
+      { key: '/store', icon: <ProfileOutlined />, label: <Link to="/store">{t('nav.storeProfile')}</Link> },
+      { key: '/store/categories', icon: <AppstoreOutlined />, label: <Link to="/store/categories">{t('nav.categories')}</Link> },
+      { key: '/store/products', icon: <ShopOutlined />, label: <Link to="/store/products">{t('nav.products')}</Link> },
+      { key: '/store/tags', icon: <TagsOutlined />, label: <Link to="/store/tags">{t('nav.tags')}</Link> },
     ];
-  }, [isAdmin]);
+  }, [isAdmin, t]);
 
   const selectedKey = useMemo(() => {
     const matches = items
@@ -71,12 +74,13 @@ export default function ProtectedLayout() {
             borderBottom: '1px solid #f0f0f0',
           }}
         >
-          <Typography.Text type="secondary">{isAdmin ? 'Admin Panel' : user.storeName}</Typography.Text>
+          <Typography.Text type="secondary">{isAdmin ? t('layout.adminPanel') : user.storeName}</Typography.Text>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <LanguageSwitcher />
             <Avatar style={{ backgroundColor: '#4f46e5' }}>{user.fullName.charAt(0).toUpperCase()}</Avatar>
             <span>{user.fullName}</span>
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>
-              Logout
+              {t('layout.logout')}
             </Button>
           </div>
         </Header>

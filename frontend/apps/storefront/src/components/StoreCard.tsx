@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { PublicStoreListItem } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
 
 export default function StoreCard({ store }: { store: PublicStoreListItem }) {
+  const { t } = useTranslation();
   const logo = resolveAssetUrl(API_URL, store.logoUrl);
 
   return (
@@ -22,7 +24,7 @@ export default function StoreCard({ store }: { store: PublicStoreListItem }) {
         </div>
         <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-emerald-700">{store.name}</h3>
         {store.description && <p className="mt-1 line-clamp-2 text-sm text-slate-500">{store.description}</p>}
-        <span className="mt-3 inline-block text-sm font-medium text-emerald-600">Browse store →</span>
+        <span className="mt-3 inline-block text-sm font-medium text-emerald-600">{t('storeCard.browse')} →</span>
       </div>
     </Link>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { App as AntApp, Button, Card, Form, Input, Typography } from 'antd';
 import { api } from '../../api';
 import ImageUpload from '../../components/ImageUpload';
@@ -12,6 +13,7 @@ interface ProfileValues {
 }
 
 export default function StoreProfilePage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const [form] = Form.useForm<ProfileValues>();
@@ -41,39 +43,39 @@ export default function StoreProfilePage() {
         logoUrl,
       }),
     onSuccess: () => {
-      message.success('Profile updated');
+      message.success(t('storeProfile.updated'));
       qc.invalidateQueries({ queryKey: ['backoffice', 'store'] });
     },
-    onError: () => message.error('Could not save profile'),
+    onError: () => message.error(t('storeProfile.saveError')),
   });
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <Typography.Title level={3}>Store Profile</Typography.Title>
+      <Typography.Title level={3}>{t('storeProfile.title')}</Typography.Title>
       <Card loading={isLoading}>
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
-          <Form.Item name="name" label="Store name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item name="name" label={t('storeProfile.storeName')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="phone" label="Phone (WhatsApp)" rules={[{ required: true, message: 'Phone is required' }]}>
+          <Form.Item name="phone" label={t('common.phoneWhatsapp')} rules={[{ required: true, message: t('common.phoneRequired') }]}>
             <Input placeholder="+1 555 123 4567" />
           </Form.Item>
-          <Form.Item name="currency" label="Currency code">
+          <Form.Item name="currency" label={t('common.currencyCode')}>
             <Input maxLength={3} placeholder="USD" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
+          <Form.Item name="description" label={t('common.description')}>
             <Input.TextArea rows={4} />
           </Form.Item>
-          <Form.Item label="Logo">
-            <ImageUpload value={logoUrl} onChange={setLogoUrl} buttonText="Upload logo" />
+          <Form.Item label={t('common.logo')}>
+            <ImageUpload value={logoUrl} onChange={setLogoUrl} buttonText={t('common.uploadLogo')} />
           </Form.Item>
           {data && (
             <Typography.Paragraph type="secondary">
-              Public URL: <code>/{data.slug}</code>
+              {t('storeProfile.publicUrl')}: <code>/{data.slug}</code>
             </Typography.Paragraph>
           )}
           <Button type="primary" htmlType="submit" loading={save.isPending}>
-            Save changes
+            {t('storeProfile.saveChanges')}
           </Button>
         </Form>
       </Card>

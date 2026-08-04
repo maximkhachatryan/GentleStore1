@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PublicImage } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
@@ -9,12 +10,13 @@ interface Props {
 }
 
 export default function ProductGallery({ images, alt }: Props) {
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
 
   if (images.length === 0) {
     return (
       <div className="flex aspect-square items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
-        No image
+        {t('gallery.noImage')}
       </div>
     );
   }

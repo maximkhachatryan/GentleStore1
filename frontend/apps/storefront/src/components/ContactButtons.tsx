@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { callLink, whatsappLink } from '../lib/contact';
 
 interface Props {
@@ -28,6 +29,7 @@ function PhoneIcon() {
 }
 
 export default function ContactButtons({ phone, message, size = 'md' }: Props) {
+  const { t } = useTranslation();
   const pad = size === 'lg' ? 'px-5 py-3 text-base' : 'px-4 py-2.5 text-sm';
 
   return (
@@ -38,13 +40,13 @@ export default function ContactButtons({ phone, message, size = 'md' }: Props) {
         rel="noreferrer"
         className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 font-semibold text-white transition hover:bg-emerald-700 ${pad}`}
       >
-        <WhatsAppIcon /> WhatsApp
+        <WhatsAppIcon /> {t('contact.whatsapp')}
       </a>
       <a
         href={callLink(phone)}
         className={`inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white font-semibold text-slate-700 transition hover:bg-slate-50 ${pad}`}
       >
-        <PhoneIcon /> Call
+        <PhoneIcon /> {t('contact.call')}
       </a>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { App as AntApp, Button, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { resolveAssetUrl } from '@gentlestore/shared';
@@ -10,7 +11,8 @@ interface Props {
   buttonText?: string;
 }
 
-export default function ImageUpload({ value, onChange, buttonText = 'Upload image' }: Props) {
+export default function ImageUpload({ value, onChange, buttonText }: Props) {
+  const { t } = useTranslation();
   const { message } = AntApp.useApp();
   const [uploading, setUploading] = useState(false);
   const preview = resolveAssetUrl(API_URL, value);
@@ -33,17 +35,17 @@ export default function ImageUpload({ value, onChange, buttonText = 'Upload imag
             const res = await api.uploads.upload(file as File);
             onChange?.(res.url);
             onSuccess?.(res);
-            message.success('Image uploaded');
+            message.success(t('imageUpload.uploaded'));
           } catch (e) {
             onError?.(e as Error);
-            message.error('Upload failed');
+            message.error(t('imageUpload.failed'));
           } finally {
             setUploading(false);
           }
         }}
       >
         <Button icon={<UploadOutlined />} loading={uploading}>
-          {buttonText}
+          {buttonText ?? t('imageUpload.upload')}
         </Button>
       </Upload>
     </div>

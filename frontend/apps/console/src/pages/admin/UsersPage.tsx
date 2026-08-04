@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   App as AntApp,
   Button,
@@ -29,12 +30,13 @@ interface UserFormValues {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  SuperAdmin: 'Super Admin',
-  StoreOwner: 'Store Owner',
-  StoreStaff: 'Store Staff',
+  SuperAdmin: 'users.roleSuperAdmin',
+  StoreOwner: 'users.roleStoreOwner',
+  StoreStaff: 'users.roleStoreStaff',
 };
 
 export default function UsersPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const [open, setOpen] = useState(false);
@@ -73,20 +75,20 @@ export default function UsersPage() {
       });
     },
     onSuccess: () => {
-      message.success('User saved');
+      message.success(t('users.saved'));
       setOpen(false);
       invalidate();
     },
-    onError: () => message.error('Could not save user. Email may already be in use.'),
+    onError: () => message.error(t('users.saveError')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.admin.deleteUser(id),
     onSuccess: () => {
-      message.success('User deleted');
+      message.success(t('users.deleted'));
       invalidate();
     },
-    onError: () => message.error('Could not delete user'),
+    onError: () => message.error(t('users.deleteError')),
   });
 
   const openCreate = () => {
@@ -110,22 +112,22 @@ export default function UsersPage() {
   };
 
   const columns: ColumnsType<AdminUser> = [
-    { title: 'Name', dataIndex: 'fullName', key: 'fullName' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Role', key: 'role', render: (_, r) => <Tag color={r.role === 'SuperAdmin' ? 'purple' : 'blue'}>{ROLE_LABELS[r.role]}</Tag> },
-    { title: 'Store', key: 'store', render: (_, r) => r.storeName ?? <Typography.Text type="secondary">—</Typography.Text> },
-    { title: 'Status', key: 'status', render: (_, r) => (r.isActive ? <Tag color="green">Active</Tag> : <Tag>Disabled</Tag>) },
+    { title: t('users.fullName'), dataIndex: 'fullName', key: 'fullName' },
+    { title: t('users.email'), dataIndex: 'email', key: 'email' },
+    { title: t('users.role'), key: 'role', render: (_, r) => <Tag color={r.role === 'SuperAdmin' ? 'purple' : 'blue'}>{t(ROLE_LABELS[r.role])}</Tag> },
+    { title: t('users.store'), key: 'store', render: (_, r) => r.storeName ?? <Typography.Text type="secondary">—</Typography.Text> },
+    { title: t('common.status'), key: 'status', render: (_, r) => (r.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.disabled')}</Tag>) },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       render: (_, r) => (
         <Space>
           <Button size="small" onClick={() => openEdit(r)}>
-            Edit
+            {t('common.edit')}
           </Button>
-          <Popconfirm title="Delete this user?" onConfirm={() => deleteMutation.mutate(r.id)}>
+          <Popconfirm title={t('users.deleteConfirm')} onConfirm={() => deleteMutation.mutate(r.id)}>
             <Button size="small" danger>
-              Delete
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -137,17 +139,17 @@ export default function UsersPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>
-          Users
+          {t('users.title')}
         </Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          New user
+          {t('users.new')}
         </Button>
       </div>
 
       <Table rowKey="id" loading={isLoading} dataSource={users} columns={columns} pagination={false} />
 
       <Modal
-        title={editing ? 'Edit user' : 'New user'}
+        title={editing ? t('users.edit') : t('users.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
@@ -155,35 +157,35 @@ export default function UsersPage() {
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate(v)}>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Valid email required' }]}>
+          <Form.Item name="email" label={t('users.email')} rules={[{ required: true, type: 'email', message: t('users.validEmail') }]}>
             <Input disabled={!!editing} />
           </Form.Item>
-          <Form.Item name="fullName" label="Full name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item name="fullName" label={t('users.fullName')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
           <Form.Item
             name="password"
-            label={editing ? 'New password (leave blank to keep)' : 'Password'}
-            rules={editing ? [] : [{ required: true, min: 6, message: 'At least 6 characters' }]}
+            label={editing ? t('users.newPassword') : t('users.password')}
+            rules={editing ? [] : [{ required: true, min: 6, message: t('users.minPassword') }]}
           >
             <Input.Password autoComplete="new-password" />
           </Form.Item>
-          <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+          <Form.Item name="role" label={t('users.role')} rules={[{ required: true }]}>
             <Select
               options={[
-                { label: 'Super Admin', value: 'SuperAdmin' },
-                { label: 'Store Owner', value: 'StoreOwner' },
-                { label: 'Store Staff', value: 'StoreStaff' },
+                { label: t('users.roleSuperAdmin'), value: 'SuperAdmin' },
+                { label: t('users.roleStoreOwner'), value: 'StoreOwner' },
+                { label: t('users.roleStoreStaff'), value: 'StoreStaff' },
               ]}
             />
           </Form.Item>
           {role !== 'SuperAdmin' && (
-            <Form.Item name="storeId" label="Store" rules={[{ required: true, message: 'Store is required for store roles' }]}>
-              <Select options={storeOptions} placeholder="Select a store" showSearch optionFilterProp="label" />
+            <Form.Item name="storeId" label={t('users.store')} rules={[{ required: true, message: t('users.storeRequired') }]}>
+              <Select options={storeOptions} placeholder={t('users.selectStore')} showSearch optionFilterProp="label" />
             </Form.Item>
           )}
           {editing && (
-            <Form.Item name="isActive" label="Active" valuePropName="checked">
+            <Form.Item name="isActive" label={t('common.active')} valuePropName="checked">
               <Switch />
             </Form.Item>
           )}

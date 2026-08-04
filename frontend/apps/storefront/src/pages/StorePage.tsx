@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Chip from '../components/Chip';
@@ -11,6 +12,7 @@ import { resolveAssetUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../api';
 
 export default function StorePage() {
+  const { t } = useTranslation();
   const { slug = '' } = useParams();
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [tagId, setTagId] = useState<string | undefined>();
@@ -38,10 +40,10 @@ export default function StorePage() {
       <div>
         <Navbar />
         <div className="mx-auto max-w-md px-4 py-24 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Store not found</h1>
-          <p className="mt-2 text-slate-500">This store may be unavailable.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('store.notFound')}</h1>
+          <p className="mt-2 text-slate-500">{t('store.unavailable')}</p>
           <Link to="/" className="mt-4 inline-block font-medium text-emerald-600">
-            ← Back to all stores
+            ← {t('store.backToAll')}
           </Link>
         </div>
       </div>
@@ -71,7 +73,7 @@ export default function StorePage() {
                 {store.description && <p className="mt-1 max-w-2xl text-slate-500">{store.description}</p>}
               </div>
               <div className="sm:w-64">
-                <ContactButtons phone={store.phone} message={`Hi ${store.name}, I have a question about your products.`} />
+                <ContactButtons phone={store.phone} message={t('store.contactMessage', { store: store.name })} />
               </div>
             </div>
           ) : (
@@ -85,12 +87,12 @@ export default function StorePage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
+            placeholder={t('store.searchPlaceholder')}
             className="w-full rounded-xl border border-slate-200 px-4 py-2 outline-none focus:border-emerald-400"
           />
           <div className="flex gap-2 overflow-x-auto pb-1">
             <Chip active={!categoryId} onClick={() => setCategoryId(undefined)}>
-              All
+              {t('store.all')}
             </Chip>
             {categoriesQuery.data?.map((c) => (
               <Chip key={c.id} active={categoryId === c.id} onClick={() => setCategoryId(c.id)}>
@@ -100,7 +102,7 @@ export default function StorePage() {
           </div>
           {tagsQuery.data && tagsQuery.data.length > 0 && (
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="mr-1 self-center text-xs text-slate-400">Tags:</span>
+              <span className="mr-1 self-center text-xs text-slate-400">{t('store.tagsLabel')}</span>
               {tagsQuery.data.map((t) => (
                 <button
                   key={t.id}
@@ -128,7 +130,7 @@ export default function StorePage() {
             ))}
           </div>
         ) : (
-          <div className="py-16 text-center text-slate-500">No products found.</div>
+          <div className="py-16 text-center text-slate-500">{t('store.noProducts')}</div>
         )}
       </main>
 

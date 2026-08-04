@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   App as AntApp,
   Avatar,
@@ -33,6 +34,7 @@ interface StoreFormValues {
 }
 
 export default function StoresPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const [open, setOpen] = useState(false);
@@ -57,11 +59,11 @@ export default function StoresPage() {
       return editing ? api.admin.updateStore(editing.id, payload) : api.admin.createStore(payload);
     },
     onSuccess: () => {
-      message.success('Store saved');
+      message.success(t('stores.saved'));
       setOpen(false);
       invalidate();
     },
-    onError: () => message.error('Could not save store'),
+    onError: () => message.error(t('stores.saveError')),
   });
 
   const toggleActive = useMutation({
@@ -72,10 +74,10 @@ export default function StoresPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.admin.deleteStore(id),
     onSuccess: () => {
-      message.success('Store deleted');
+      message.success(t('stores.deleted'));
       invalidate();
     },
-    onError: () => message.error('Could not delete store'),
+    onError: () => message.error(t('stores.deleteError')),
   });
 
   const openCreate = () => {
@@ -103,7 +105,7 @@ export default function StoresPage() {
 
   const columns: ColumnsType<StoreListItem> = [
     {
-      title: 'Store',
+      title: t('stores.colStore'),
       key: 'store',
       render: (_, r) => (
         <Space>
@@ -119,30 +121,30 @@ export default function StoresPage() {
         </Space>
       ),
     },
-    { title: 'Phone', dataIndex: 'phone', key: 'phone' },
-    { title: 'Products', dataIndex: 'productCount', key: 'productCount' },
+    { title: t('stores.colPhone'), dataIndex: 'phone', key: 'phone' },
+    { title: t('stores.colProducts'), dataIndex: 'productCount', key: 'productCount' },
     {
-      title: 'Status',
+      title: t('common.status'),
       key: 'status',
-      render: (_, r) => (r.isActive ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>),
+      render: (_, r) => (r.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.inactive')}</Tag>),
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       render: (_, r) => (
         <Space wrap>
           <a href={`${STOREFRONT_URL}/${r.slug}`} target="_blank" rel="noreferrer">
-            View
+            {t('stores.view')}
           </a>
           <Button size="small" onClick={() => openEdit(r)}>
-            Edit
+            {t('common.edit')}
           </Button>
           <Button size="small" onClick={() => toggleActive.mutate(r)}>
-            {r.isActive ? 'Deactivate' : 'Activate'}
+            {r.isActive ? t('stores.deactivate') : t('stores.activate')}
           </Button>
-          <Popconfirm title="Delete this store and all its data?" onConfirm={() => deleteMutation.mutate(r.id)}>
+          <Popconfirm title={t('stores.deleteConfirm')} onConfirm={() => deleteMutation.mutate(r.id)}>
             <Button size="small" danger>
-              Delete
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -154,17 +156,17 @@ export default function StoresPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>
-          Stores
+          {t('stores.title')}
         </Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          New store
+          {t('stores.new')}
         </Button>
       </div>
 
       <Table rowKey="id" loading={isLoading} dataSource={stores} columns={columns} pagination={false} />
 
       <Modal
-        title={editing ? 'Edit store' : 'New store'}
+        title={editing ? t('stores.edit') : t('stores.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
@@ -172,25 +174,25 @@ export default function StoresPage() {
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate(v)}>
-          <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="slug" label="Slug" tooltip="Used in the public URL. Leave blank to auto-generate.">
-            <Input placeholder="auto from name" />
+          <Form.Item name="slug" label={t('stores.slug')} tooltip={t('stores.slugTooltip')}>
+            <Input placeholder={t('stores.slugPlaceholder')} />
           </Form.Item>
-          <Form.Item name="phone" label="Phone (WhatsApp)" rules={[{ required: true, message: 'Phone is required' }]}>
+          <Form.Item name="phone" label={t('common.phoneWhatsapp')} rules={[{ required: true, message: t('common.phoneRequired') }]}>
             <Input placeholder="+1 555 123 4567" />
           </Form.Item>
-          <Form.Item name="currency" label="Currency code">
+          <Form.Item name="currency" label={t('common.currencyCode')}>
             <Input maxLength={3} placeholder="USD" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
+          <Form.Item name="description" label={t('common.description')}>
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item label="Logo">
-            <ImageUpload value={logoUrl} onChange={setLogoUrl} buttonText="Upload logo" />
+          <Form.Item label={t('common.logo')}>
+            <ImageUpload value={logoUrl} onChange={setLogoUrl} buttonText={t('common.uploadLogo')} />
           </Form.Item>
-          <Form.Item name="isActive" label="Active" valuePropName="checked">
+          <Form.Item name="isActive" label={t('stores.active')} valuePropName="checked">
             <Switch />
           </Form.Item>
         </Form>

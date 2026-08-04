@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { App as AntApp, Button, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
@@ -12,6 +13,7 @@ interface CategoryValues {
 }
 
 export default function CategoriesPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const [open, setOpen] = useState(false);
@@ -25,20 +27,20 @@ export default function CategoriesPage() {
     mutationFn: (v: CategoryValues) =>
       editing ? api.backoffice.updateCategory(editing.id, v) : api.backoffice.createCategory(v),
     onSuccess: () => {
-      message.success('Category saved');
+      message.success(t('categories.saved'));
       setOpen(false);
       invalidate();
     },
-    onError: () => message.error('Could not save category'),
+    onError: () => message.error(t('categories.saveError')),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.backoffice.deleteCategory(id),
     onSuccess: () => {
-      message.success('Category deleted');
+      message.success(t('categories.deleted'));
       invalidate();
     },
-    onError: () => message.error('Cannot delete a category that still has products'),
+    onError: () => message.error(t('categories.deleteInUse')),
   });
 
   const openCreate = () => {
@@ -55,21 +57,21 @@ export default function CategoriesPage() {
   };
 
   const columns: ColumnsType<Category> = [
-    { title: 'Order', dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Products', dataIndex: 'productCount', key: 'productCount', width: 120 },
+    { title: t('categories.colOrder'), dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
+    { title: t('common.name'), dataIndex: 'name', key: 'name' },
+    { title: t('categories.colProducts'), dataIndex: 'productCount', key: 'productCount', width: 120 },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       width: 180,
       render: (_, r) => (
         <Space>
           <Button size="small" onClick={() => openEdit(r)}>
-            Edit
+            {t('common.edit')}
           </Button>
-          <Popconfirm title="Delete this category?" onConfirm={() => remove.mutate(r.id)}>
+          <Popconfirm title={t('categories.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
             <Button size="small" danger>
-              Delete
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -81,17 +83,17 @@ export default function CategoriesPage() {
     <div style={{ maxWidth: 760 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Typography.Title level={3} style={{ margin: 0 }}>
-          Categories
+          {t('categories.title')}
         </Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          New category
+          {t('categories.new')}
         </Button>
       </div>
 
       <Table rowKey="id" loading={isLoading} dataSource={data} columns={columns} pagination={false} />
 
       <Modal
-        title={editing ? 'Edit category' : 'New category'}
+        title={editing ? t('categories.edit') : t('categories.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
@@ -99,10 +101,10 @@ export default function CategoriesPage() {
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
-          <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="displayOrder" label="Display order" rules={[{ required: true }]}>
+          <Form.Item name="displayOrder" label={t('common.displayOrder')} rules={[{ required: true }]}>
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>

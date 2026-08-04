@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar({ children }: { children?: ReactNode }) {
   return (
@@ -9,7 +10,10 @@ export default function Navbar({ children }: { children?: ReactNode }) {
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">G</span>
           GentleStore
         </Link>
-        <div>{children}</div>
+        <div className="flex items-center gap-3">
+          {children}
+          <LanguageSwitcher />
+        </div>
       </div>
     </header>
   );

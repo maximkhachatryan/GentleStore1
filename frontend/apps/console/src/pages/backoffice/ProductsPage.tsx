@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   App as AntApp,
   Button,
@@ -34,6 +35,7 @@ interface ProductValues {
 }
 
 export default function ProductsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const [open, setOpen] = useState(false);
@@ -73,20 +75,20 @@ export default function ProductsPage() {
       return editing ? api.backoffice.updateProduct(editing.id, payload) : api.backoffice.createProduct(payload);
     },
     onSuccess: (saved) => {
-      message.success('Product saved');
+      message.success(t('products.saved'));
       invalidateList();
       if (!editing) setEditing(saved);
     },
-    onError: () => message.error('Could not save product'),
+    onError: () => message.error(t('products.saveError')),
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.backoffice.deleteProduct(id),
     onSuccess: () => {
-      message.success('Product deleted');
+      message.success(t('products.deleted'));
       invalidateList();
     },
-    onError: () => message.error('Could not delete product'),
+    onError: () => message.error(t('products.deleteError')),
   });
 
   const addImage = useMutation({
@@ -152,23 +154,23 @@ export default function ProductsPage() {
         );
       },
     },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Category', dataIndex: 'categoryName', key: 'categoryName' },
-    { title: 'Price', key: 'price', render: (_, r) => r.price.toFixed(2) },
-    { title: 'Stock', dataIndex: 'stockQuantity', key: 'stock' },
-    { title: 'Available', key: 'available', render: (_, r) => (r.isAvailable ? <Tag color="green">Yes</Tag> : <Tag>No</Tag>) },
-    { title: 'Tags', key: 'tags', render: (_, r) => r.tags.map((t) => <Tag key={t.id}>{t.name}</Tag>) },
+    { title: t('common.name'), dataIndex: 'name', key: 'name' },
+    { title: t('products.category'), dataIndex: 'categoryName', key: 'categoryName' },
+    { title: t('products.price'), key: 'price', render: (_, r) => r.price.toFixed(2) },
+    { title: t('products.stock'), dataIndex: 'stockQuantity', key: 'stock' },
+    { title: t('products.available'), key: 'available', render: (_, r) => (r.isAvailable ? <Tag color="green">{t('common.yes')}</Tag> : <Tag>{t('common.no')}</Tag>) },
+    { title: t('products.tags'), key: 'tags', render: (_, r) => r.tags.map((t2) => <Tag key={t2.id}>{t2.name}</Tag>) },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       render: (_, r) => (
         <Space>
           <Button size="small" onClick={() => openEdit(r)}>
-            Edit
+            {t('common.edit')}
           </Button>
-          <Popconfirm title="Delete this product?" onConfirm={() => remove.mutate(r.id)}>
+          <Popconfirm title={t('products.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
             <Button size="small" danger>
-              Delete
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -182,30 +184,30 @@ export default function ProductsPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <Typography.Title level={3} style={{ margin: 0 }}>
-          Products
+          {t('products.title')}
         </Typography.Title>
         <Space>
           <Select
             allowClear
-            placeholder="All categories"
+            placeholder={t('products.allCategories')}
             style={{ width: 200 }}
             options={categoryOptions}
             value={categoryFilter}
             onChange={setCategoryFilter}
           />
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} disabled={!categories?.length}>
-            New product
+            {t('products.new')}
           </Button>
         </Space>
       </div>
       {!categories?.length && (
-        <Typography.Paragraph type="warning">Create a category first before adding products.</Typography.Paragraph>
+        <Typography.Paragraph type="warning">{t('products.createCategoryFirst')}</Typography.Paragraph>
       )}
 
       <Table rowKey="id" loading={isLoading} dataSource={products} columns={columns} pagination={false} />
 
       <Modal
-        title={editing ? 'Edit product' : 'New product'}
+        title={editing ? t('products.edit') : t('products.new')}
         open={open}
         onCancel={closeModal}
         onOk={() => form.submit()}
@@ -214,37 +216,37 @@ export default function ProductsPage() {
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
-          <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="categoryId" label="Category" rules={[{ required: true, message: 'Category is required' }]}>
-            <Select options={categoryOptions} placeholder="Select category" />
+          <Form.Item name="categoryId" label={t('products.category')} rules={[{ required: true, message: t('products.categoryRequired') }]}>
+            <Select options={categoryOptions} placeholder={t('products.selectCategory')} />
           </Form.Item>
           <Space size="large" style={{ display: 'flex' }}>
-            <Form.Item name="price" label="Price" rules={[{ required: true }]}>
+            <Form.Item name="price" label={t('products.price')} rules={[{ required: true }]}>
               <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="stockQuantity" label="Stock" rules={[{ required: true }]}>
+            <Form.Item name="stockQuantity" label={t('products.stock')} rules={[{ required: true }]}>
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="displayOrder" label="Order" rules={[{ required: true }]}>
+            <Form.Item name="displayOrder" label={t('products.order')} rules={[{ required: true }]}>
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
           </Space>
-          <Form.Item name="description" label="Description">
+          <Form.Item name="description" label={t('common.description')}>
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item name="tagIds" label="Tags">
-            <Select mode="multiple" options={tagOptions} placeholder="Add tags" />
+          <Form.Item name="tagIds" label={t('products.tags')}>
+            <Select mode="multiple" options={tagOptions} placeholder={t('products.addTags')} />
           </Form.Item>
-          <Form.Item name="isAvailable" label="Available to customers" valuePropName="checked">
+          <Form.Item name="isAvailable" label={t('products.availableToCustomers')} valuePropName="checked">
             <Switch />
           </Form.Item>
 
-          <Typography.Text strong>Images</Typography.Text>
+          <Typography.Text strong>{t('products.images')}</Typography.Text>
           {!editing ? (
             <Typography.Paragraph type="secondary" style={{ marginTop: 4 }}>
-              Save the product first, then add images.
+              {t('products.saveFirst')}
             </Typography.Paragraph>
           ) : (
             <div style={{ marginTop: 8 }}>
@@ -267,7 +269,7 @@ export default function ProductsPage() {
                 ))}
               </Space>
               <div style={{ marginTop: 8 }}>
-                <ImageUpload onChange={(url) => addImage.mutate(url)} buttonText="Add image" />
+                <ImageUpload onChange={(url) => addImage.mutate(url)} buttonText={t('products.addImage')} />
               </div>
             </div>
           )}

@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json ./
 COPY packages/ ./packages/
 COPY apps/ ./apps/
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build -w $APP
 
 FROM nginx:alpine
