@@ -17,6 +17,52 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gentlestore-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development   # required for EF migrations + seeding
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=gentlestore;Username=gentlestore;Password=gentlestore_dev_pw"
+      Jwt__Secret: "REPLACE_WITH_A_LONG_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS"
+      Cors__Origins__0: "http://localhost:5173"
+      Cors__Origins__1: "http://localhost:5174"
+    ports:
+      - "5080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  console:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP: console
+        VITE_API_URL: "http://localhost:5080"
+    container_name: gentlestore-console
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+  storefront:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP: storefront
+        VITE_API_URL: "http://localhost:5080"
+    container_name: gentlestore-storefront
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    depends_on:
+      - api
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: gentlestore-pgadmin
