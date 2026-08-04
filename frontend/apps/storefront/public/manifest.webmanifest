@@ -1,0 +1,17 @@
+{
+  "name": "GentleStore",
+  "short_name": "GentleStore",
+  "description": "Browse and order from local stores.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

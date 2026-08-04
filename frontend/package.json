@@ -1,0 +1,14 @@
+{
+  "name": "gentlestore-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:console": "npm run dev -w console",
+    "dev:storefront": "npm run dev -w storefront",
+    "build": "npm run build -w console && npm run build -w storefront"
+  }
+}

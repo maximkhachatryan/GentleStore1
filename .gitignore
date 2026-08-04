@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+[Bb]in/
+[Oo]bj/
+
+# EF Core local
+*.db
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Local uploaded files (dev)
+backend/src/GentleStore.Api/wwwroot/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Capacitor native (generated later)
+frontend/apps/storefront/android/
+frontend/apps/storefront/ios/

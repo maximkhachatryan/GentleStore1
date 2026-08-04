@@ -1,0 +1,6 @@
+@GentleStore.Api_HostAddress = http://localhost:5072
+
+GET {{GentleStore.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
