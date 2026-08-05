@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
@@ -42,9 +42,6 @@ export default function StorePage() {
         <div className="mx-auto max-w-md px-4 py-24 text-center">
           <h1 className="text-2xl font-bold text-slate-900">{t('store.notFound')}</h1>
           <p className="mt-2 text-slate-500">{t('store.unavailable')}</p>
-          <Link to="/" className="mt-4 inline-block font-medium text-emerald-600">
-            ← {t('store.backToAll')}
-          </Link>
         </div>
       </div>
     );
@@ -55,7 +52,7 @@ export default function StorePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <Navbar store={store} />
 
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-8">
@@ -134,7 +131,7 @@ export default function StorePage() {
         )}
       </main>
 
-      <Footer />
+      <Footer store={store} />
     </div>
   );
 }

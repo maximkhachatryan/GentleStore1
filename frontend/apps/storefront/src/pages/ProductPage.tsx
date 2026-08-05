@@ -60,7 +60,7 @@ export default function ProductPage() {
   if (productQuery.isError || storeQuery.isError) {
     return (
       <div>
-        <Navbar />
+        <Navbar store={store} />
         <div className="mx-auto max-w-md px-4 py-24 text-center">
           <h1 className="text-2xl font-bold text-slate-900">{t('product.notFound')}</h1>
           <Link to={`/${slug}`} className="mt-4 inline-block font-medium text-emerald-600">
@@ -73,7 +73,7 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen pb-24 md:pb-0">
-      <Navbar />
+      <Navbar store={store} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <Link to={`/${slug}`} className="text-sm text-slate-500 transition hover:text-emerald-600">
           ← {store?.name ?? t('product.backToStore')}

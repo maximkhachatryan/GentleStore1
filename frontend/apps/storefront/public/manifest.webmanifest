@@ -1,7 +1,7 @@
 {
-  "name": "GentleStore",
-  "short_name": "GentleStore",
-  "description": "Browse and order from local stores.",
+  "name": "Store",
+  "short_name": "Store",
+  "description": "Browse products and order directly from the store.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

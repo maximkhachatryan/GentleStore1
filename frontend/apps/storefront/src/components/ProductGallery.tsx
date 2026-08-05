@@ -25,8 +25,8 @@ export default function ProductGallery({ images, alt }: Props) {
 
   return (
     <div>
-      <div className="aspect-square overflow-hidden rounded-2xl bg-slate-100">
-        <img src={current} alt={alt} className="h-full w-full object-cover" />
+      <div className="flex max-h-[70vh] items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+        <img src={current} alt={alt} className="max-h-[70vh] w-auto max-w-full object-contain" />
       </div>
       {images.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">

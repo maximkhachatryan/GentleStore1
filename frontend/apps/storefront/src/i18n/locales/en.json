@@ -1,17 +1,12 @@
 {
-  "footer": { "text": "Powered by GentleStore · Browse & order from local stores" },
+  "footer": { "text": "Order directly from the store via WhatsApp or a quick call." },
   "home": {
-    "heroTitle": "Shop from local stores",
-    "heroSubtitle": "Discover products and order directly via WhatsApp or a quick call.",
-    "searchPlaceholder": "Search stores...",
-    "searchResults": "Search results",
-    "featuredStores": "Featured stores",
-    "noStores": "No stores found."
+    "title": "No store selected",
+    "subtitle": "Open a store's link to browse its products and place an order."
   },
   "store": {
     "notFound": "Store not found",
     "unavailable": "This store may be unavailable.",
-    "backToAll": "Back to all stores",
     "searchPlaceholder": "Search products...",
     "all": "All",
     "tagsLabel": "Tags:",
