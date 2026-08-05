@@ -3,6 +3,7 @@ namespace GentleStore.Api.Auth;
 public static class AppClaimTypes
 {
     public const string StoreId = "store_id";
+    public const string StoreIdHeader = "X-Store-Id";
 }
 
 public static class Policies

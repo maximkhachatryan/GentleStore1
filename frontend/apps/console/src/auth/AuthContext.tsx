@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react';
 import type { UserDto } from '@gentlestore/shared';
 import { api, setOnUnauthorized, tokenStore } from '../api';
+import { managedStore } from './managedStore';
 
 interface AuthState {
   user: UserDto | null;
@@ -18,11 +19,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     tokenStore.clear();
+    managedStore.clear();
     setUser(null);
   }, []);
 
   useEffect(() => {
-    setOnUnauthorized(() => setUser(null));
+    setOnUnauthorized(() => {
+      managedStore.clear();
+      setUser(null);
+    });
     const token = tokenStore.get();
     if (!token) {
       setLoading(false);

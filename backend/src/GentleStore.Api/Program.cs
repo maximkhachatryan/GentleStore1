@@ -39,7 +39,7 @@ builder.Services
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policies.SuperAdmin, p => p.RequireRole(nameof(UserRole.SuperAdmin)))
-    .AddPolicy(Policies.StoreMember, p => p.RequireRole(nameof(UserRole.StoreOwner), nameof(UserRole.StoreStaff)))
+    .AddPolicy(Policies.StoreMember, p => p.RequireRole(nameof(UserRole.StoreOwner), nameof(UserRole.StoreStaff), nameof(UserRole.SuperAdmin)))
     .AddPolicy(Policies.StoreOwner, p => p.RequireRole(nameof(UserRole.StoreOwner)));
 
 builder.Services.AddCors(options => options.AddPolicy("frontend", policy =>

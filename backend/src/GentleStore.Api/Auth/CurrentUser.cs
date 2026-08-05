@@ -24,8 +24,21 @@ public class CurrentUser : ICurrentUser
     public Guid? UserId =>
         Guid.TryParse(Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
 
-    public Guid? StoreId =>
-        Guid.TryParse(Principal?.FindFirstValue(AppClaimTypes.StoreId), out var id) ? id : null;
+    public Guid? StoreId
+    {
+        get
+        {
+            if (Guid.TryParse(Principal?.FindFirstValue(AppClaimTypes.StoreId), out var claimStoreId))
+                return claimStoreId;
+
+            // SuperAdmins are not bound to a store, so they may target one via header when managing it.
+            var headerValue = _accessor.HttpContext?.Request.Headers[AppClaimTypes.StoreIdHeader].ToString();
+            if (Role == UserRole.SuperAdmin && Guid.TryParse(headerValue, out var headerStoreId))
+                return headerStoreId;
+
+            return null;
+        }
+    }
 
     public UserRole? Role =>
         Enum.TryParse<UserRole>(Principal?.FindFirstValue(ClaimTypes.Role), out var r) ? r : null;

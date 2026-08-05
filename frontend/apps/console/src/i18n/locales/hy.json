@@ -11,7 +11,10 @@
   },
   "layout": {
     "adminPanel": "Ադմինի վահանակ",
-    "logout": "Դուրս գալ"
+    "logout": "Դուրս գալ",
+    "viewStorefront": "Դիտել խանութը",
+    "exitManage": "Վերադառնալ ադմին",
+    "managingStore": "Կառավարման ռեժիմ"
   },
   "login": {
     "title": "Մուտք գործեք ձեր վահանակ",
@@ -56,6 +59,7 @@
     "colStore": "Խանութ",
     "colPhone": "Հեռախոս",
     "colProducts": "Ապրանքներ",
+    "manage": "Կառավարել",
     "view": "Դիտել",
     "activate": "Ակտիվացնել",
     "deactivate": "Ապաակտիվացնել",

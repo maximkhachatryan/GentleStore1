@@ -11,7 +11,10 @@
   },
   "layout": {
     "adminPanel": "Admin Panel",
-    "logout": "Logout"
+    "logout": "Logout",
+    "viewStorefront": "View storefront",
+    "exitManage": "Exit to admin",
+    "managingStore": "Managing store"
   },
   "login": {
     "title": "Sign in to your console",
@@ -56,6 +59,7 @@
     "colStore": "Store",
     "colPhone": "Phone",
     "colProducts": "Products",
+    "manage": "Manage",
     "view": "View",
     "activate": "Activate",
     "deactivate": "Deactivate",

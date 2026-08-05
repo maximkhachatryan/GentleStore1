@@ -11,7 +11,10 @@
   },
   "layout": {
     "adminPanel": "Панель администратора",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "viewStorefront": "Открыть витрину",
+    "exitManage": "К админ-панели",
+    "managingStore": "Режим управления"
   },
   "login": {
     "title": "Войдите в консоль",
@@ -56,6 +59,7 @@
     "colStore": "Магазин",
     "colPhone": "Телефон",
     "colProducts": "Товары",
+    "manage": "Управлять",
     "view": "Просмотр",
     "activate": "Активировать",
     "deactivate": "Деактивировать",

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   App as AntApp,
   Avatar,
@@ -19,10 +20,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import type { StoreListItem } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
-import { api, API_URL } from '../../api';
+import { api, API_URL, STOREFRONT_URL } from '../../api';
+import { managedStore } from '../../auth/managedStore';
 import ImageUpload from '../../components/ImageUpload';
-
-const STOREFRONT_URL = 'http://localhost:5174';
 
 interface StoreFormValues {
   name: string;
@@ -37,6 +37,7 @@ export default function StoresPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StoreListItem | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
@@ -88,6 +89,11 @@ export default function StoresPage() {
     setOpen(true);
   };
 
+  const manageStore = (s: StoreListItem) => {
+    managedStore.set({ id: s.id, name: s.name, slug: s.slug });
+    navigate('/store');
+  };
+
   const openEdit = async (s: StoreListItem) => {
     const detail = await api.admin.getStore(s.id);
     setEditing(s);
@@ -133,6 +139,9 @@ export default function StoresPage() {
       key: 'actions',
       render: (_, r) => (
         <Space wrap>
+          <Button type="primary" size="small" onClick={() => manageStore(r)}>
+            {t('stores.manage')}
+          </Button>
           <a href={`${STOREFRONT_URL}/${r.slug}`} target="_blank" rel="noreferrer">
             {t('stores.view')}
           </a>

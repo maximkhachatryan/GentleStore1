@@ -12,6 +12,7 @@ export interface UserDto {
   role: UserRole;
   storeId: string | null;
   storeName: string | null;
+  storeSlug: string | null;
 }
 
 export interface LoginResponse {

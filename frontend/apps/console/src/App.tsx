@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useAuth } from './auth/AuthContext';
+import { useManagedStore } from './auth/managedStore';
 import ProtectedLayout from './components/ProtectedLayout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/admin/DashboardPage';
@@ -14,6 +15,7 @@ import VariantAttributesPage from './pages/backoffice/VariantAttributesPage';
 
 export default function App() {
   const { user, loading } = useAuth();
+  const managedStore = useManagedStore();
 
   if (loading) {
     return (
@@ -24,18 +26,21 @@ export default function App() {
   }
 
   const isAdmin = user?.role === 'SuperAdmin';
+  const managingStore = isAdmin && managedStore !== null;
+  const showBackoffice = !isAdmin || managingStore;
 
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route element={<ProtectedLayout />}>
-        {isAdmin ? (
+        {isAdmin && (
           <>
             <Route path="/admin" element={<DashboardPage />} />
             <Route path="/admin/stores" element={<StoresPage />} />
             <Route path="/admin/users" element={<UsersPage />} />
           </>
-        ) : (
+        )}
+        {showBackoffice && (
           <>
             <Route path="/store" element={<StoreProfilePage />} />
             <Route path="/store/categories" element={<CategoriesPage />} />
@@ -44,7 +49,7 @@ export default function App() {
             <Route path="/store/variant-attributes" element={<VariantAttributesPage />} />
           </>
         )}
-        <Route path="*" element={<Navigate to={isAdmin ? '/admin' : '/store'} replace />} />
+        <Route path="*" element={<Navigate to={isAdmin ? (managingStore ? '/store' : '/admin') : '/store'} replace />} />
       </Route>
     </Routes>
   );

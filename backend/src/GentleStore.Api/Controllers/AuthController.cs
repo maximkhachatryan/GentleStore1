@@ -37,7 +37,7 @@ public class AuthController : ControllerBase
             return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password.");
 
         var (token, expiresAt) = _tokens.CreateToken(user);
-        var dto = new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString(), user.StoreId, user.Store?.Name);
+        var dto = new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString(), user.StoreId, user.Store?.Name, user.Store?.Slug);
         return Ok(new LoginResponse(token, expiresAt, dto));
     }
 
@@ -52,6 +52,6 @@ public class AuthController : ControllerBase
         if (user is null || !user.IsActive)
             return Unauthorized();
 
-        return Ok(new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString(), user.StoreId, user.Store?.Name));
+        return Ok(new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString(), user.StoreId, user.Store?.Name, user.Store?.Slug));
     }
 }
