@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import {
   App as AntApp,
   Button,
+  Card,
+  Divider,
   Form,
   Input,
   InputNumber,
@@ -17,8 +19,8 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import type { Product } from '@gentlestore/shared';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import type { Product, ProductVariant } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../../api';
 import ImageUpload from '../../components/ImageUpload';
@@ -41,6 +43,13 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>();
   const [form] = Form.useForm<ProductValues>();
+  const [variantEditorOpen, setVariantEditorOpen] = useState(false);
+  const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
+  const [vSku, setVSku] = useState('');
+  const [vPrice, setVPrice] = useState(0);
+  const [vAvailable, setVAvailable] = useState(true);
+  const [vOrder, setVOrder] = useState(1);
+  const [vSelections, setVSelections] = useState<Record<string, string | undefined>>({});
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['backoffice', 'products', categoryFilter ?? 'all'],
@@ -48,6 +57,10 @@ export default function ProductsPage() {
   });
   const { data: categories } = useQuery({ queryKey: ['backoffice', 'categories'], queryFn: () => api.backoffice.listCategories() });
   const { data: tags } = useQuery({ queryKey: ['backoffice', 'tags'], queryFn: () => api.backoffice.listTags() });
+  const { data: attributes } = useQuery({
+    queryKey: ['backoffice', 'variant-attributes'],
+    queryFn: () => api.backoffice.listVariantAttributes(),
+  });
 
   const { data: editingDetail, refetch: refetchEditing } = useQuery({
     queryKey: ['backoffice', 'product', editing?.id],
@@ -129,6 +142,53 @@ export default function ProductsPage() {
       tagIds: p.tags.map((t) => t.id),
     });
     setOpen(true);
+  };
+
+  const saveVariant = useMutation({
+    mutationFn: () => {
+      const payload = {
+        sku: vSku.trim() ? vSku.trim() : null,
+        price: vPrice,
+        isAvailable: vAvailable,
+        displayOrder: vOrder,
+        optionIds: Object.values(vSelections).filter((id): id is string => !!id),
+      };
+      return editingVariant
+        ? api.backoffice.updateProductVariant(editing!.id, editingVariant.id, payload)
+        : api.backoffice.createProductVariant(editing!.id, payload);
+    },
+    onSuccess: () => {
+      message.success(t('products.variantSaved'));
+      refetchEditing();
+      invalidateList();
+      setVariantEditorOpen(false);
+    },
+    onError: () => message.error(t('products.variantSaveError')),
+  });
+
+  const deleteVariant = useMutation({
+    mutationFn: (variantId: string) => api.backoffice.deleteProductVariant(editing!.id, variantId),
+    onSuccess: () => {
+      message.success(t('products.variantDeleted'));
+      refetchEditing();
+      invalidateList();
+    },
+    onError: () => message.error(t('products.variantDeleteError')),
+  });
+
+  const openVariantEditor = (variant?: ProductVariant) => {
+    setEditingVariant(variant ?? null);
+    setVSku(variant?.sku ?? '');
+    setVPrice(variant?.price ?? (form.getFieldValue('price') ?? 0));
+    setVAvailable(variant?.isAvailable ?? true);
+    setVOrder(variant?.displayOrder ?? (editingDetail?.variants.length ?? 0) + 1);
+    setVSelections(
+      (variant?.attributes ?? []).reduce<Record<string, string | undefined>>((acc, a) => {
+        if (a.definitionId && a.optionId) acc[a.definitionId] = a.optionId;
+        return acc;
+      }, {}),
+    );
+    setVariantEditorOpen(true);
   };
 
   const closeModal = () => {
@@ -265,7 +325,101 @@ export default function ProductsPage() {
               </div>
             </div>
           )}
+
+          <Divider />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography.Text strong>{t('products.variants')}</Typography.Text>
+            <Button
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => openVariantEditor()}
+              disabled={!editing || !attributes?.length}
+            >
+              {t('products.addVariant')}
+            </Button>
+          </div>
+          {!editing ? (
+            <Typography.Paragraph type="secondary" style={{ marginTop: 4 }}>
+              {t('products.saveFirst')}
+            </Typography.Paragraph>
+          ) : !attributes?.length ? (
+            <Typography.Paragraph type="secondary" style={{ marginTop: 4 }}>
+              {t('products.defineAttributesFirst')}
+            </Typography.Paragraph>
+          ) : (editingDetail?.variants.length ?? 0) === 0 ? (
+            <Typography.Paragraph type="secondary" style={{ marginTop: 4 }}>
+              {t('products.noVariants')}
+            </Typography.Paragraph>
+          ) : (
+            <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size={8}>
+              {(editingDetail?.variants ?? []).map((v) => (
+                <Card key={v.id} size="small" styles={{ body: { padding: 12 } }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <Space wrap>
+                      {v.attributes.map((a) => (
+                        <Tag key={a.definitionId ?? a.name}>
+                          {a.name}: {a.value}
+                        </Tag>
+                      ))}
+                      <Typography.Text strong>{v.price.toFixed(2)}</Typography.Text>
+                      {v.sku && <Typography.Text type="secondary">{v.sku}</Typography.Text>}
+                      {!v.isAvailable && <Tag>{t('common.no')}</Tag>}
+                    </Space>
+                    <Space>
+                      <Button size="small" icon={<EditOutlined />} onClick={() => openVariantEditor(v)} />
+                      <Popconfirm title={t('products.deleteVariantConfirm')} onConfirm={() => deleteVariant.mutate(v.id)}>
+                        <Button size="small" danger icon={<DeleteOutlined />} />
+                      </Popconfirm>
+                    </Space>
+                  </div>
+                </Card>
+              ))}
+            </Space>
+          )}
         </Form>
+      </Modal>
+
+      <Modal
+        title={editingVariant ? t('products.editVariant') : t('products.addVariant')}
+        open={variantEditorOpen}
+        onCancel={() => setVariantEditorOpen(false)}
+        onOk={() => saveVariant.mutate()}
+        confirmLoading={saveVariant.isPending}
+        destroyOnHidden
+      >
+        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          {(attributes ?? []).map((def) => (
+            <div key={def.id}>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{def.name}</div>
+              <Select
+                allowClear
+                style={{ width: '100%' }}
+                placeholder={def.name}
+                value={vSelections[def.id]}
+                onChange={(val) => setVSelections((s) => ({ ...s, [def.id]: val }))}
+                options={def.options.map((o) => ({ label: o.value, value: o.id }))}
+              />
+            </div>
+          ))}
+          <Space size="large" wrap align="end">
+            <div>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.price')}</div>
+              <InputNumber min={0} step={0.01} value={vPrice} onChange={(val) => setVPrice(val ?? 0)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.order')}</div>
+              <InputNumber min={0} value={vOrder} onChange={(val) => setVOrder(val ?? 0)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.sku')}</div>
+              <Input value={vSku} onChange={(e) => setVSku(e.target.value)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.available')}</div>
+              <Switch checked={vAvailable} onChange={setVAvailable} />
+            </div>
+          </Space>
+        </Space>
       </Modal>
     </div>
   );

@@ -23,6 +23,7 @@
     "backToStore": "Вернуться в магазин",
     "inStock": "В наличии",
     "unavailable": "Сейчас недоступно",
+    "priceFrom": "От {{price}}",
     "ordersNote": "Заказы оформляются напрямую с магазином через WhatsApp или по телефону.",
     "orderMessage": "Здравствуйте, {{store}}! Хочу заказать: {{product}}."
   },

@@ -16,4 +16,6 @@ public class Store
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public ICollection<Tag> Tags { get; set; } = new List<Tag>();
     public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<VariantAttributeDefinition> VariantAttributeDefinitions { get; set; }
+        = new List<VariantAttributeDefinition>();
 }

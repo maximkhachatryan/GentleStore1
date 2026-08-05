@@ -59,7 +59,13 @@ public class PublicProductsController : ControllerBase
                 p.CategoryId,
                 p.Category.Name,
                 p.Images.OrderBy(i => i.DisplayOrder).Select(i => new PublicImageDto(i.ImageUrl, i.DisplayOrder)).ToList(),
-                p.ProductTags.OrderBy(pt => pt.Tag.DisplayOrder).Select(pt => new PublicTagDto(pt.TagId, pt.Tag.Name)).ToList()))
+                p.ProductTags.OrderBy(pt => pt.Tag.DisplayOrder).Select(pt => new PublicTagDto(pt.TagId, pt.Tag.Name)).ToList(),
+                p.Variants.OrderBy(v => v.DisplayOrder).Select(v => new PublicVariantDto(
+                    v.Id,
+                    v.Sku,
+                    v.Price,
+                    v.IsAvailable,
+                    v.Attributes.Select(a => new PublicVariantAttributeDto(a.Name, a.Value)).ToList())).ToList()))
             .FirstOrDefaultAsync();
 
         return product is null ? NotFound() : Ok(product);

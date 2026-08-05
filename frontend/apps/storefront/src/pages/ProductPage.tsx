@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,44 @@ export default function ProductPage() {
     retry: false,
   });
 
+  const product = productQuery.data;
+  const store = storeQuery.data;
+
+  const attributeGroups = useMemo(() => {
+    const groups = new Map<string, string[]>();
+    for (const variant of product?.variants ?? []) {
+      for (const attr of variant.attributes) {
+        const values = groups.get(attr.name) ?? [];
+        if (!values.includes(attr.value)) values.push(attr.value);
+        groups.set(attr.name, values);
+      }
+    }
+    return [...groups.entries()].map(([name, values]) => ({ name, values }));
+  }, [product]);
+
+  const [selected, setSelected] = useState<Record<string, string>>({});
+
+  const matchedVariant = useMemo(() => {
+    if (!product?.variants.length || attributeGroups.length === 0) return null;
+    if (attributeGroups.some((g) => !selected[g.name])) return null;
+    return (
+      product.variants.find((v) =>
+        attributeGroups.every((g) => v.attributes.some((a) => a.name === g.name && a.value === selected[g.name])),
+      ) ?? null
+    );
+  }, [product, attributeGroups, selected]);
+
+  const hasVariants = (product?.variants.length ?? 0) > 0;
+  const minVariantPrice = hasVariants ? Math.min(...product!.variants.map((v) => v.price)) : 0;
+  const displayPrice = matchedVariant ? matchedVariant.price : hasVariants ? minVariantPrice : product?.price ?? 0;
+  const displayInStock = matchedVariant ? matchedVariant.inStock : hasVariants ? product!.variants.some((v) => v.inStock) : product?.inStock ?? false;
+
+  const orderProductLabel = useMemo(() => {
+    if (!product) return '';
+    const parts = attributeGroups.map((g) => (selected[g.name] ? `${g.name}: ${selected[g.name]}` : null)).filter(Boolean);
+    return parts.length ? `${product.name} (${parts.join(', ')})` : product.name;
+  }, [product, attributeGroups, selected]);
+
   if (productQuery.isError || storeQuery.isError) {
     return (
       <div>
@@ -31,9 +70,6 @@ export default function ProductPage() {
       </div>
     );
   }
-
-  const product = productQuery.data;
-  const store = storeQuery.data;
 
   return (
     <div className="min-h-screen pb-24 md:pb-0">
@@ -58,21 +94,59 @@ export default function ProductPage() {
               )}
               <h1 className="mt-2 text-3xl font-bold text-slate-900">{product.name}</h1>
               <div className="mt-2 text-2xl font-semibold text-emerald-700">
-                {formatPrice(product.price, product.currency)}
+                {hasVariants && !matchedVariant
+                  ? t('product.priceFrom', { price: formatPrice(displayPrice, product.currency) })
+                  : formatPrice(displayPrice, product.currency)}
               </div>
               <div className="mt-1">
-                {product.inStock ? (
+                {displayInStock ? (
                   <span className="text-sm font-medium text-emerald-600">{t('product.inStock')}</span>
                 ) : (
                   <span className="text-sm font-medium text-slate-400">{t('product.unavailable')}</span>
                 )}
               </div>
+
+              {attributeGroups.length > 0 && (
+                <div className="mt-5 space-y-4">
+                  {attributeGroups.map((group) => (
+                    <div key={group.name}>
+                      <div className="mb-1.5 text-sm font-medium text-slate-700">{group.name}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {group.values.map((value) => {
+                          const active = selected[group.name] === value;
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() =>
+                                setSelected((prev) =>
+                                  prev[group.name] === value
+                                    ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== group.name))
+                                    : { ...prev, [group.name]: value },
+                                )
+                              }
+                              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                                active
+                                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                                  : 'border-slate-200 text-slate-700 hover:border-emerald-300'
+                              }`}
+                            >
+                              {value}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {product.description && (
                 <p className="mt-4 whitespace-pre-line leading-relaxed text-slate-600">{product.description}</p>
               )}
               {store && (
                 <div className="mt-6 hidden md:block">
-                  <ContactButtons size="lg" phone={store.phone} message={t('product.orderMessage', { store: store.name, product: product.name })} />
+                  <ContactButtons size="lg" phone={store.phone} message={t('product.orderMessage', { store: store.name, product: orderProductLabel })} />
                   <p className="mt-2 text-xs text-slate-400">{t('product.ordersNote')}</p>
                 </div>
               )}
@@ -92,7 +166,7 @@ export default function ProductPage() {
 
       {store && product && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 md:hidden">
-          <ContactButtons size="lg" phone={store.phone} message={t('product.orderMessage', { store: store.name, product: product.name })} />
+          <ContactButtons size="lg" phone={store.phone} message={t('product.orderMessage', { store: store.name, product: orderProductLabel })} />
         </div>
       )}
     </div>

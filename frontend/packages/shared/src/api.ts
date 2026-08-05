@@ -14,6 +14,9 @@ import type {
   Product,
   ProductImage,
   ProductQuery,
+  ProductVariant,
+  CreateProductVariantRequest,
+  UpdateProductVariantRequest,
   PublicCategory,
   PublicProduct,
   PublicProductListItem,
@@ -32,6 +35,12 @@ import type {
   UpdateUserRequest,
   UploadResponse,
   UserDto,
+  VariantAttributeDefinition,
+  VariantAttributeOption,
+  CreateVariantAttributeDefinitionRequest,
+  UpdateVariantAttributeDefinitionRequest,
+  CreateVariantAttributeOptionRequest,
+  UpdateVariantAttributeOptionRequest,
 } from './types';
 
 export function createApi(http: AxiosInstance) {
@@ -78,11 +87,33 @@ export function createApi(http: AxiosInstance) {
         http.post<ProductImage>(`/api/backoffice/products/${id}/images`, body).then((r) => r.data),
       deleteProductImage: (id: string, imageId: string) =>
         http.delete(`/api/backoffice/products/${id}/images/${imageId}`).then((r) => r.data),
+      listProductVariants: (productId: string) =>
+        http.get<ProductVariant[]>(`/api/backoffice/products/${productId}/variants`).then((r) => r.data),
+      createProductVariant: (productId: string, body: CreateProductVariantRequest) =>
+        http.post<ProductVariant>(`/api/backoffice/products/${productId}/variants`, body).then((r) => r.data),
+      updateProductVariant: (productId: string, variantId: string, body: UpdateProductVariantRequest) =>
+        http.put<ProductVariant>(`/api/backoffice/products/${productId}/variants/${variantId}`, body).then((r) => r.data),
+      deleteProductVariant: (productId: string, variantId: string) =>
+        http.delete(`/api/backoffice/products/${productId}/variants/${variantId}`).then((r) => r.data),
       listTags: () => http.get<Tag[]>('/api/backoffice/tags').then((r) => r.data),
       createTag: (body: CreateTagRequest) => http.post<Tag>('/api/backoffice/tags', body).then((r) => r.data),
       updateTag: (id: string, body: UpdateTagRequest) =>
         http.put<Tag>(`/api/backoffice/tags/${id}`, body).then((r) => r.data),
       deleteTag: (id: string) => http.delete(`/api/backoffice/tags/${id}`).then((r) => r.data),
+      listVariantAttributes: () =>
+        http.get<VariantAttributeDefinition[]>('/api/backoffice/variant-attributes').then((r) => r.data),
+      createVariantAttribute: (body: CreateVariantAttributeDefinitionRequest) =>
+        http.post<VariantAttributeDefinition>('/api/backoffice/variant-attributes', body).then((r) => r.data),
+      updateVariantAttribute: (id: string, body: UpdateVariantAttributeDefinitionRequest) =>
+        http.put<VariantAttributeDefinition>(`/api/backoffice/variant-attributes/${id}`, body).then((r) => r.data),
+      deleteVariantAttribute: (id: string) =>
+        http.delete(`/api/backoffice/variant-attributes/${id}`).then((r) => r.data),
+      addVariantAttributeOption: (id: string, body: CreateVariantAttributeOptionRequest) =>
+        http.post<VariantAttributeOption>(`/api/backoffice/variant-attributes/${id}/options`, body).then((r) => r.data),
+      updateVariantAttributeOption: (id: string, optionId: string, body: UpdateVariantAttributeOptionRequest) =>
+        http.put<VariantAttributeOption>(`/api/backoffice/variant-attributes/${id}/options/${optionId}`, body).then((r) => r.data),
+      deleteVariantAttributeOption: (id: string, optionId: string) =>
+        http.delete(`/api/backoffice/variant-attributes/${id}/options/${optionId}`).then((r) => r.data),
     },
     store: {
       list: (search?: string) =>

@@ -23,6 +23,7 @@
     "backToStore": "Back to store",
     "inStock": "In stock",
     "unavailable": "Currently unavailable",
+    "priceFrom": "From {{price}}",
     "ordersNote": "Orders are placed directly with the store via WhatsApp or phone.",
     "orderMessage": "Hi {{store}}, I'd like to order: {{product}}."
   },

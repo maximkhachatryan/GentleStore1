@@ -16,6 +16,10 @@ public class AppDbContext : DbContext
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ProductTag> ProductTags => Set<ProductTag>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<VariantAttribute> VariantAttributes => Set<VariantAttribute>();
+    public DbSet<VariantAttributeDefinition> VariantAttributeDefinitions => Set<VariantAttributeDefinition>();
+    public DbSet<VariantAttributeOption> VariantAttributeOptions => Set<VariantAttributeOption>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -74,6 +78,44 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Tag).WithMany(x => x.ProductTags)
                 .HasForeignKey(x => x.TagId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<VariantAttributeDefinition>(e =>
+        {
+            e.Property(x => x.Name).IsRequired().HasMaxLength(80);
+            e.HasOne(x => x.Store).WithMany(x => x.VariantAttributeDefinitions)
+                .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.StoreId, x.Name }).IsUnique();
+        });
+
+        mb.Entity<VariantAttributeOption>(e =>
+        {
+            e.Property(x => x.Value).IsRequired().HasMaxLength(200);
+            e.HasOne(x => x.Definition).WithMany(x => x.Options)
+                .HasForeignKey(x => x.VariantAttributeDefinitionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.VariantAttributeDefinitionId, x.Value }).IsUnique();
+        });
+
+        mb.Entity<ProductVariant>(e =>
+        {
+            e.Property(x => x.Sku).HasMaxLength(80);
+            e.Property(x => x.Price).HasPrecision(18, 2);
+            e.HasOne(x => x.Product).WithMany(x => x.Variants)
+                .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.ProductId, x.DisplayOrder });
+        });
+
+        mb.Entity<VariantAttribute>(e =>
+        {
+            e.Property(x => x.Name).IsRequired().HasMaxLength(80);
+            e.Property(x => x.Value).IsRequired().HasMaxLength(200);
+            e.HasOne(x => x.Variant).WithMany(x => x.Attributes)
+                .HasForeignKey(x => x.ProductVariantId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Definition).WithMany()
+                .HasForeignKey(x => x.VariantAttributeDefinitionId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.Option).WithMany()
+                .HasForeignKey(x => x.VariantAttributeOptionId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(x => new { x.ProductVariantId, x.Name }).IsUnique();
         });
 
         mb.Entity<User>(e =>

@@ -10,6 +10,7 @@ import {
   ShopOutlined,
   TagsOutlined,
   TeamOutlined,
+  BranchesOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -37,6 +38,7 @@ export default function ProtectedLayout() {
       { key: '/store/categories', icon: <AppstoreOutlined />, label: <Link to="/store/categories">{t('nav.categories')}</Link> },
       { key: '/store/products', icon: <ShopOutlined />, label: <Link to="/store/products">{t('nav.products')}</Link> },
       { key: '/store/tags', icon: <TagsOutlined />, label: <Link to="/store/tags">{t('nav.tags')}</Link> },
+      { key: '/store/variant-attributes', icon: <BranchesOutlined />, label: <Link to="/store/variant-attributes">{t('nav.variantAttributes')}</Link> },
     ];
   }, [isAdmin, t]);
 

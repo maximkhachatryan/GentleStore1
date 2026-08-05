@@ -31,6 +31,7 @@ public class BackofficeProductsController : BackofficeControllerBase
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.ProductTags).ThenInclude(pt => pt.Tag)
+            .Include(p => p.Variants).ThenInclude(v => v.Attributes)
             .OrderBy(p => p.DisplayOrder).ThenBy(p => p.Name)
             .ToListAsync();
 
@@ -77,7 +78,9 @@ public class BackofficeProductsController : BackofficeControllerBase
     public async Task<IActionResult> Update(Guid id, UpdateProductRequest req)
     {
         if (_current.StoreId is not Guid storeId) return Forbidden();
-        var product = await LoadProduct(storeId, id);
+        var product = await _db.Products
+            .Include(p => p.ProductTags)
+            .FirstOrDefaultAsync(p => p.Id == id && p.StoreId == storeId);
         if (product is null) return NotFound();
         var validation = await ValidateProduct(storeId, req.CategoryId, req.Name, req.Price);
         if (validation is not null) return validation;
@@ -139,6 +142,7 @@ public class BackofficeProductsController : BackofficeControllerBase
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.ProductTags).ThenInclude(pt => pt.Tag)
+            .Include(p => p.Variants).ThenInclude(v => v.Attributes)
             .FirstOrDefaultAsync(p => p.Id == id && p.StoreId == storeId);
 
     private async Task<IActionResult?> ValidateProduct(Guid storeId, Guid categoryId, string name, decimal price)
@@ -163,5 +167,9 @@ public class BackofficeProductsController : BackofficeControllerBase
         p.Price, p.IsAvailable, p.DisplayOrder,
         p.Images.OrderBy(i => i.DisplayOrder).Select(i => new ProductImageDto(i.Id, i.ImageUrl, i.DisplayOrder)).ToList(),
         p.ProductTags.Select(pt => new ProductTagDto(pt.TagId, pt.Tag.Name)).ToList(),
+        p.Variants.OrderBy(v => v.DisplayOrder).Select(v => new ProductVariantDto(
+            v.Id, v.Sku, v.Price, v.IsAvailable, v.DisplayOrder,
+            v.Attributes.Select(a => new VariantAttributeDto(
+                a.VariantAttributeDefinitionId, a.VariantAttributeOptionId, a.Name, a.Value)).ToList())).ToList(),
         p.CreatedAt);
 }

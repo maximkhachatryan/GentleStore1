@@ -23,6 +23,7 @@
     "backToStore": "Վերադառնալ խանութ",
     "inStock": "Առկա է",
     "unavailable": "Ներկայումս անհասանելի",
+    "priceFrom": "{{price}}-ից",
     "ordersNote": "Պատվերները կատարվում են ուղղակիորեն խանութի հետ WhatsApp-ով կամ հեռախոսով։",
     "orderMessage": "Բարև {{store}}, ցանկանում եմ պատվիրել՝ {{product}}։"
   },

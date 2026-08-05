@@ -144,6 +144,31 @@ export interface ProductTagRef {
   name: string;
 }
 
+export interface VariantAttribute {
+  definitionId: string | null;
+  optionId: string | null;
+  name: string;
+  value: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  sku: string | null;
+  price: number;
+  isAvailable: boolean;
+  displayOrder: number;
+  attributes: VariantAttribute[];
+}
+
+export interface CreateProductVariantRequest {
+  sku?: string | null;
+  price: number;
+  isAvailable: boolean;
+  displayOrder: number;
+  optionIds: string[];
+}
+export type UpdateProductVariantRequest = CreateProductVariantRequest;
+
 export interface Product {
   id: string;
   categoryId: string;
@@ -155,6 +180,7 @@ export interface Product {
   displayOrder: number;
   images: ProductImage[];
   tags: ProductTagRef[];
+  variants: ProductVariant[];
   createdAt: string;
 }
 
@@ -185,6 +211,31 @@ export interface CreateTagRequest {
   displayOrder: number;
 }
 export type UpdateTagRequest = CreateTagRequest;
+
+export interface VariantAttributeOption {
+  id: string;
+  value: string;
+  displayOrder: number;
+}
+
+export interface VariantAttributeDefinition {
+  id: string;
+  name: string;
+  displayOrder: number;
+  options: VariantAttributeOption[];
+}
+
+export interface CreateVariantAttributeDefinitionRequest {
+  name: string;
+  displayOrder: number;
+}
+export type UpdateVariantAttributeDefinitionRequest = CreateVariantAttributeDefinitionRequest;
+
+export interface CreateVariantAttributeOptionRequest {
+  value: string;
+  displayOrder: number;
+}
+export type UpdateVariantAttributeOptionRequest = CreateVariantAttributeOptionRequest;
 
 // ---- Public ----
 export interface PublicStoreListItem {
@@ -221,6 +272,19 @@ export interface PublicImage {
   displayOrder: number;
 }
 
+export interface PublicVariantAttribute {
+  name: string;
+  value: string;
+}
+
+export interface PublicVariant {
+  id: string;
+  sku: string | null;
+  price: number;
+  inStock: boolean;
+  attributes: PublicVariantAttribute[];
+}
+
 export interface PublicProductListItem {
   id: string;
   name: string;
@@ -243,6 +307,7 @@ export interface PublicProduct {
   categoryName: string;
   images: PublicImage[];
   tags: PublicTag[];
+  variants: PublicVariant[];
 }
 
 export interface UploadResponse {
