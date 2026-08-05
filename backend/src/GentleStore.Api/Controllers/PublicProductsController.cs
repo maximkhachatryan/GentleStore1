@@ -33,7 +33,7 @@ public class PublicProductsController : ControllerBase
                 p.Name,
                 p.Price,
                 store.Currency,
-                p.StockQuantity > 0,
+                p.IsAvailable,
                 p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).FirstOrDefault(),
                 p.CategoryId,
                 p.ProductTags.OrderBy(pt => pt.Tag.DisplayOrder).Select(pt => pt.Tag.Name).ToList()))
@@ -55,8 +55,7 @@ public class PublicProductsController : ControllerBase
                 p.Description,
                 p.Price,
                 store.Currency,
-                p.StockQuantity,
-                p.StockQuantity > 0,
+                p.IsAvailable,
                 p.CategoryId,
                 p.Category.Name,
                 p.Images.OrderBy(i => i.DisplayOrder).Select(i => new PublicImageDto(i.ImageUrl, i.DisplayOrder)).ToList(),

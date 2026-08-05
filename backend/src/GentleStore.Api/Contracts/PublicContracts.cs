@@ -16,5 +16,5 @@ public record PublicProductListItemDto(
 
 public record PublicProductDto(
     Guid Id, string Name, string? Description, decimal Price, string Currency,
-    int StockQuantity, bool InStock, Guid CategoryId, string CategoryName,
+    bool InStock, Guid CategoryId, string CategoryName,
     IReadOnlyList<PublicImageDto> Images, IReadOnlyList<PublicTagDto> Tags);

@@ -175,7 +175,6 @@ public static class DbInitializer
             Name = name,
             Description = description,
             Price = price,
-            StockQuantity = stock,
             IsAvailable = stock > 0,
             DisplayOrder = order,
             CreatedAt = store.CreatedAt

@@ -60,7 +60,6 @@ public class BackofficeProductsController : BackofficeControllerBase
             Name = req.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description!.Trim(),
             Price = req.Price,
-            StockQuantity = req.StockQuantity,
             IsAvailable = req.IsAvailable,
             DisplayOrder = req.DisplayOrder,
             CreatedAt = DateTime.UtcNow
@@ -87,7 +86,6 @@ public class BackofficeProductsController : BackofficeControllerBase
         product.Name = req.Name.Trim();
         product.Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description!.Trim();
         product.Price = req.Price;
-        product.StockQuantity = req.StockQuantity;
         product.IsAvailable = req.IsAvailable;
         product.DisplayOrder = req.DisplayOrder;
 
@@ -162,7 +160,7 @@ public class BackofficeProductsController : BackofficeControllerBase
 
     private static ProductDto ToDto(Product p) => new(
         p.Id, p.CategoryId, p.Category?.Name ?? string.Empty, p.Name, p.Description,
-        p.Price, p.StockQuantity, p.IsAvailable, p.DisplayOrder,
+        p.Price, p.IsAvailable, p.DisplayOrder,
         p.Images.OrderBy(i => i.DisplayOrder).Select(i => new ProductImageDto(i.Id, i.ImageUrl, i.DisplayOrder)).ToList(),
         p.ProductTags.Select(pt => new ProductTagDto(pt.TagId, pt.Tag.Name)).ToList(),
         p.CreatedAt);

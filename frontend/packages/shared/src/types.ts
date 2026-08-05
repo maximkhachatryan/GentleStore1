@@ -151,7 +151,6 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;
-  stockQuantity: number;
   isAvailable: boolean;
   displayOrder: number;
   images: ProductImage[];
@@ -164,7 +163,6 @@ export interface CreateProductRequest {
   name: string;
   description?: string | null;
   price: number;
-  stockQuantity: number;
   isAvailable: boolean;
   displayOrder: number;
   tagIds?: string[] | null;
@@ -240,7 +238,6 @@ export interface PublicProduct {
   description: string | null;
   price: number;
   currency: string;
-  stockQuantity: number;
   inStock: boolean;
   categoryId: string;
   categoryName: string;

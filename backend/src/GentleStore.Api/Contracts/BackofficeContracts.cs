@@ -19,16 +19,16 @@ public record ProductTagDto(Guid Id, string Name);
 
 public record ProductDto(
     Guid Id, Guid CategoryId, string CategoryName, string Name, string? Description,
-    decimal Price, int StockQuantity, bool IsAvailable, int DisplayOrder,
+    decimal Price, bool IsAvailable, int DisplayOrder,
     IReadOnlyList<ProductImageDto> Images, IReadOnlyList<ProductTagDto> Tags, DateTime CreatedAt);
 
 public record CreateProductRequest(
     Guid CategoryId, string Name, string? Description, decimal Price,
-    int StockQuantity, bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
+    bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
 
 public record UpdateProductRequest(
     Guid CategoryId, string Name, string? Description, decimal Price,
-    int StockQuantity, bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
+    bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
 
 public record AddProductImageRequest(string ImageUrl, int? DisplayOrder);
 

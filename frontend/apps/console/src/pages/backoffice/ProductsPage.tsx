@@ -27,7 +27,6 @@ interface ProductValues {
   name: string;
   categoryId: string;
   price: number;
-  stockQuantity: number;
   isAvailable: boolean;
   displayOrder: number;
   description?: string;
@@ -67,7 +66,6 @@ export default function ProductsPage() {
         categoryId: v.categoryId,
         description: v.description,
         price: v.price,
-        stockQuantity: v.stockQuantity,
         isAvailable: v.isAvailable,
         displayOrder: v.displayOrder,
         tagIds: v.tagIds ?? [],
@@ -112,7 +110,6 @@ export default function ProductsPage() {
     form.resetFields();
     form.setFieldsValue({
       isAvailable: true,
-      stockQuantity: 0,
       price: 0,
       displayOrder: (products?.length ?? 0) + 1,
       tagIds: [],
@@ -127,7 +124,6 @@ export default function ProductsPage() {
       categoryId: p.categoryId,
       description: p.description ?? '',
       price: p.price,
-      stockQuantity: p.stockQuantity,
       isAvailable: p.isAvailable,
       displayOrder: p.displayOrder,
       tagIds: p.tags.map((t) => t.id),
@@ -157,7 +153,6 @@ export default function ProductsPage() {
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
     { title: t('products.category'), dataIndex: 'categoryName', key: 'categoryName' },
     { title: t('products.price'), key: 'price', render: (_, r) => r.price.toFixed(2) },
-    { title: t('products.stock'), dataIndex: 'stockQuantity', key: 'stock' },
     { title: t('products.available'), key: 'available', render: (_, r) => (r.isAvailable ? <Tag color="green">{t('common.yes')}</Tag> : <Tag>{t('common.no')}</Tag>) },
     { title: t('products.tags'), key: 'tags', render: (_, r) => r.tags.map((t2) => <Tag key={t2.id}>{t2.name}</Tag>) },
     {
@@ -225,9 +220,6 @@ export default function ProductsPage() {
           <Space size="large" style={{ display: 'flex' }}>
             <Form.Item name="price" label={t('products.price')} rules={[{ required: true }]}>
               <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item name="stockQuantity" label={t('products.stock')} rules={[{ required: true }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="displayOrder" label={t('products.order')} rules={[{ required: true }]}>
               <InputNumber min={0} style={{ width: '100%' }} />
