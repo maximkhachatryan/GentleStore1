@@ -4,6 +4,7 @@ using GentleStore.Domain.Enums;
 using GentleStore.Infrastructure;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -77,6 +78,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Trust the reverse proxy (nginx) for scheme + client IP.
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedOptions.KnownIPNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -100,15 +110,16 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-if (app.Environment.IsDevelopment())
+// Always apply migrations + ensure the super admin; demo data is opt-in via Seed:DemoData.
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var seed = builder.Configuration.GetSection("Seed");
     await DbInitializer.InitializeAsync(
         scope.ServiceProvider,
         seed["SuperAdminEmail"] ?? "admin@gentlestore.local",
         seed["SuperAdminPassword"] ?? "Admin123!",
-        seed["DemoStoreOwnerPassword"] ?? "Owner123!");
+        seed["DemoStoreOwnerPassword"] ?? "Owner123!",
+        seedDemoData: builder.Configuration.GetValue<bool>("Seed:DemoData"));
 }
 
 app.Run();

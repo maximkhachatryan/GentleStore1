@@ -12,7 +12,8 @@ public static class DbInitializer
         IServiceProvider services,
         string superAdminEmail,
         string superAdminPassword,
-        string demoOwnerPassword)
+        string demoOwnerPassword,
+        bool seedDemoData = true)
     {
         var db = services.GetRequiredService<AppDbContext>();
         var hasher = services.GetRequiredService<IPasswordHasher>();
@@ -33,6 +34,9 @@ public static class DbInitializer
             });
             await db.SaveChangesAsync();
         }
+
+        if (!seedDemoData)
+            return;
 
         if (await db.Stores.AnyAsync())
             return;

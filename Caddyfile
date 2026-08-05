@@ -1,0 +1,17 @@
+# Automatic HTTPS (Let's Encrypt) + reverse proxy for the GentleStore stack.
+# Domains are injected from the .env file via docker-compose.prod.yml.
+
+{$STOREFRONT_DOMAIN} {
+	encode gzip
+	reverse_proxy storefront:80
+}
+
+{$CONSOLE_DOMAIN} {
+	encode gzip
+	reverse_proxy console:80
+}
+
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:8080
+}

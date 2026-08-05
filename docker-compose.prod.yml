@@ -1,0 +1,133 @@
+# Production stack for a single Hetzner Cloud VM.
+# Run with:  docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+# All secrets/domains come from the .env file (see .env.example).
+# TLS is terminated by nginx-proxy; certs are issued/renewed automatically by acme-companion.
+name: gentlestore
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: gentlestore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - gentlestore_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # No published ports: Postgres is only reachable inside the compose network.
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gentlestore-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Jwt__Issuer: "GentleStore"
+      Jwt__Audience: "GentleStoreClients"
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__Origins__0: "https://${STOREFRONT_DOMAIN}"
+      Cors__Origins__1: "https://${CONSOLE_DOMAIN}"
+      Seed__DemoData: ${SEED_DEMO_DATA:-false}
+      Seed__SuperAdminEmail: ${SUPERADMIN_EMAIL}
+      Seed__SuperAdminPassword: ${SUPERADMIN_PASSWORD}
+      # Routing + automatic TLS via nginx-proxy / acme-companion
+      VIRTUAL_HOST: ${API_DOMAIN}
+      VIRTUAL_PORT: "8080"
+      LETSENCRYPT_HOST: ${API_DOMAIN}
+    expose:
+      - "8080"
+    volumes:
+      - gentlestore_uploads:/app/wwwroot/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  console:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP: console
+        VITE_API_URL: "https://${API_DOMAIN}"
+    container_name: gentlestore-console
+    restart: unless-stopped
+    environment:
+      VIRTUAL_HOST: ${CONSOLE_DOMAIN}
+      VIRTUAL_PORT: "80"
+      LETSENCRYPT_HOST: ${CONSOLE_DOMAIN}
+    expose:
+      - "80"
+    depends_on:
+      - api
+
+  storefront:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP: storefront
+        VITE_API_URL: "https://${API_DOMAIN}"
+    container_name: gentlestore-storefront
+    restart: unless-stopped
+    environment:
+      VIRTUAL_HOST: ${STOREFRONT_DOMAIN}
+      VIRTUAL_PORT: "80"
+      LETSENCRYPT_HOST: ${STOREFRONT_DOMAIN}
+    expose:
+      - "80"
+    depends_on:
+      - api
+
+  # nginx reverse proxy: auto-generates vhosts from the VIRTUAL_HOST env of the services above.
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:1.6
+    container_name: gentlestore-nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - nginx_certs:/etc/nginx/certs:ro
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - nginx_conf:/etc/nginx/conf.d
+    depends_on:
+      - api
+      - console
+      - storefront
+
+  # Obtains and renews Let's Encrypt certificates for every LETSENCRYPT_HOST.
+  acme-companion:
+    image: nginxproxy/acme-companion:2.4
+    container_name: gentlestore-acme
+    restart: unless-stopped
+    environment:
+      DEFAULT_EMAIL: ${ACME_EMAIL}
+      NGINX_PROXY_CONTAINER: gentlestore-nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - nginx_certs:/etc/nginx/certs
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - acme_state:/etc/acme.sh
+    depends_on:
+      - nginx-proxy
+
+volumes:
+  gentlestore_pgdata:
+  gentlestore_uploads:
+  nginx_certs:
+  nginx_vhost:
+  nginx_html:
+  nginx_conf:
+  acme_state:
