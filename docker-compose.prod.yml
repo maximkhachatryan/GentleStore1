@@ -58,6 +58,7 @@ services:
       args:
         APP: console
         VITE_API_URL: "https://${API_DOMAIN}"
+        VITE_STOREFRONT_URL: "https://${STOREFRONT_DOMAIN}"
     container_name: gentlestore-console
     restart: unless-stopped
     environment:

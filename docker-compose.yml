@@ -42,6 +42,7 @@ services:
       args:
         APP: console
         VITE_API_URL: "http://localhost:5080"
+        VITE_STOREFRONT_URL: "http://localhost:5174"
     container_name: gentlestore-console
     restart: unless-stopped
     ports:
