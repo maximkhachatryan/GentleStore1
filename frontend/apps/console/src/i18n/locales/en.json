@@ -137,6 +137,8 @@
     "categoryRequired": "Category is required",
     "selectCategory": "Select category",
     "price": "Price",
+    "noPrice": "No price",
+    "priceOptionalHint": "Leave empty to show \"Price on request\" in the storefront.",
     "stock": "Stock",
     "order": "Order",
     "available": "Available",

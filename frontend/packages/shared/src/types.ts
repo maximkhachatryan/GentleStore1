@@ -176,7 +176,7 @@ export interface Product {
   categoryName: string;
   name: string;
   description: string | null;
-  price: number;
+  price: number | null;
   isAvailable: boolean;
   displayOrder: number;
   images: ProductImage[];
@@ -189,7 +189,7 @@ export interface CreateProductRequest {
   categoryId: string;
   name: string;
   description?: string | null;
-  price: number;
+  price?: number | null;
   isAvailable: boolean;
   displayOrder: number;
   tagIds?: string[] | null;
@@ -289,7 +289,7 @@ export interface PublicVariant {
 export interface PublicProductListItem {
   id: string;
   name: string;
-  price: number;
+  price: number | null;
   currency: string;
   inStock: boolean;
   primaryImageUrl: string | null;
@@ -301,7 +301,7 @@ export interface PublicProduct {
   id: string;
   name: string;
   description: string | null;
-  price: number;
+  price: number | null;
   currency: string;
   inStock: boolean;
   categoryId: string;

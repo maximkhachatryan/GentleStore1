@@ -145,7 +145,7 @@ public class BackofficeProductsController : BackofficeControllerBase
             .Include(p => p.Variants).ThenInclude(v => v.Attributes)
             .FirstOrDefaultAsync(p => p.Id == id && p.StoreId == storeId);
 
-    private async Task<IActionResult?> ValidateProduct(Guid storeId, Guid categoryId, string name, decimal price)
+    private async Task<IActionResult?> ValidateProduct(Guid storeId, Guid categoryId, string name, decimal? price)
     {
         if (string.IsNullOrWhiteSpace(name)) return BadRequest(new { error = "Name is required." });
         if (price < 0) return BadRequest(new { error = "Price cannot be negative." });

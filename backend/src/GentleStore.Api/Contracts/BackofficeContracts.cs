@@ -31,16 +31,16 @@ public record UpdateProductVariantRequest(
 
 public record ProductDto(
     Guid Id, Guid CategoryId, string CategoryName, string Name, string? Description,
-    decimal Price, bool IsAvailable, int DisplayOrder,
+    decimal? Price, bool IsAvailable, int DisplayOrder,
     IReadOnlyList<ProductImageDto> Images, IReadOnlyList<ProductTagDto> Tags,
     IReadOnlyList<ProductVariantDto> Variants, DateTime CreatedAt);
 
 public record CreateProductRequest(
-    Guid CategoryId, string Name, string? Description, decimal Price,
+    Guid CategoryId, string Name, string? Description, decimal? Price,
     bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
 
 public record UpdateProductRequest(
-    Guid CategoryId, string Name, string? Description, decimal Price,
+    Guid CategoryId, string Name, string? Description, decimal? Price,
     bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
 
 public record AddProductImageRequest(string ImageUrl, int? DisplayOrder);

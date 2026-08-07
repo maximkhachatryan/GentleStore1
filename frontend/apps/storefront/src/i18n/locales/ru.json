@@ -19,6 +19,7 @@
     "inStock": "В наличии",
     "unavailable": "Сейчас недоступно",
     "priceFrom": "От {{price}}",
+    "priceOnRequest": "Цена по запросу",
     "ordersNote": "Заказы оформляются напрямую с магазином через WhatsApp или по телефону.",
     "orderMessage": "Здравствуйте, {{store}}! Хочу заказать: {{product}}."
   },
@@ -28,7 +29,7 @@
     "backHome": "На главную"
   },
   "storeCard": { "browse": "Открыть магазин" },
-  "productCard": { "noImage": "Нет изображения", "outOfStock": "Нет в наличии" },
+  "productCard": { "noImage": "Нет изображения", "outOfStock": "Нет в наличии", "priceOnRequest": "Цена по запросу" },
   "gallery": { "noImage": "Нет изображения" },
   "contact": { "whatsapp": "WhatsApp", "call": "Позвонить" }
 }

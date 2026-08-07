@@ -47,8 +47,8 @@ export default function ProductPage() {
   }, [product, attributeGroups, selected]);
 
   const hasVariants = (product?.variants.length ?? 0) > 0;
-  const minVariantPrice = hasVariants ? Math.min(...product!.variants.map((v) => v.price)) : 0;
-  const displayPrice = matchedVariant ? matchedVariant.price : hasVariants ? minVariantPrice : product?.price ?? 0;
+  const minVariantPrice = hasVariants ? Math.min(...product!.variants.map((v) => v.price)) : null;
+  const displayPrice = matchedVariant ? matchedVariant.price : hasVariants ? minVariantPrice : product?.price ?? null;
   const displayInStock = matchedVariant ? matchedVariant.inStock : hasVariants ? product!.variants.some((v) => v.inStock) : product?.inStock ?? false;
 
   const orderProductLabel = useMemo(() => {
@@ -94,9 +94,11 @@ export default function ProductPage() {
               )}
               <h1 className="mt-2 text-3xl font-bold text-slate-900">{product.name}</h1>
               <div className="mt-2 text-2xl font-semibold text-emerald-700">
-                {hasVariants && !matchedVariant
-                  ? t('product.priceFrom', { price: formatPrice(displayPrice, product.currency) })
-                  : formatPrice(displayPrice, product.currency)}
+                {displayPrice === null
+                  ? t('product.priceOnRequest')
+                  : hasVariants && !matchedVariant
+                    ? t('product.priceFrom', { price: formatPrice(displayPrice, product.currency) })
+                    : formatPrice(displayPrice, product.currency)}
               </div>
               <div className="mt-1">
                 {displayInStock ? (

@@ -17,11 +17,11 @@ public record PublicVariantDto(
     IReadOnlyList<PublicVariantAttributeDto> Attributes);
 
 public record PublicProductListItemDto(
-    Guid Id, string Name, decimal Price, string Currency, bool InStock,
+    Guid Id, string Name, decimal? Price, string Currency, bool InStock,
     string? PrimaryImageUrl, Guid CategoryId, IReadOnlyList<string> Tags);
 
 public record PublicProductDto(
-    Guid Id, string Name, string? Description, decimal Price, string Currency,
+    Guid Id, string Name, string? Description, decimal? Price, string Currency,
     bool InStock, Guid CategoryId, string CategoryName,
     IReadOnlyList<PublicImageDto> Images, IReadOnlyList<PublicTagDto> Tags,
     IReadOnlyList<PublicVariantDto> Variants);

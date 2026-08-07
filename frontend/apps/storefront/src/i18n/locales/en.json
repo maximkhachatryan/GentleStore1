@@ -19,6 +19,7 @@
     "inStock": "In stock",
     "unavailable": "Currently unavailable",
     "priceFrom": "From {{price}}",
+    "priceOnRequest": "Price on request",
     "ordersNote": "Orders are placed directly with the store via WhatsApp or phone.",
     "orderMessage": "Hi {{store}}, I'd like to order: {{product}}."
   },
@@ -28,7 +29,7 @@
     "backHome": "Back home"
   },
   "storeCard": { "browse": "Browse store" },
-  "productCard": { "noImage": "No image", "outOfStock": "Out of stock" },
+  "productCard": { "noImage": "No image", "outOfStock": "Out of stock", "priceOnRequest": "Price on request" },
   "gallery": { "noImage": "No image" },
   "contact": { "whatsapp": "WhatsApp", "call": "Call" }
 }

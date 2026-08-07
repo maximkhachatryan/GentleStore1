@@ -19,6 +19,7 @@
     "inStock": "Առկա է",
     "unavailable": "Ներկայումս անհասանելի",
     "priceFrom": "{{price}}-ից",
+    "priceOnRequest": "Գինը՝ հարցումով",
     "ordersNote": "Պատվերները կատարվում են ուղղակիորեն խանութի հետ WhatsApp-ով կամ հեռախոսով։",
     "orderMessage": "Բարև {{store}}, ցանկանում եմ պատվիրել՝ {{product}}։"
   },
@@ -28,7 +29,7 @@
     "backHome": "Վերադառնալ գլխավոր էջ"
   },
   "storeCard": { "browse": "Դիտել խանութը" },
-  "productCard": { "noImage": "Նկար չկա", "outOfStock": "Առկա չէ" },
+  "productCard": { "noImage": "Նկար չկա", "outOfStock": "Առկա չէ", "priceOnRequest": "Գինը՝ հարցումով" },
   "gallery": { "noImage": "Նկար չկա" },
   "contact": { "whatsapp": "WhatsApp", "call": "Զանգել" }
 }

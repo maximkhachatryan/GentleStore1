@@ -28,7 +28,7 @@ import ImageUpload from '../../components/ImageUpload';
 interface ProductValues {
   name: string;
   categoryId: string;
-  price: number;
+  price?: number | null;
   isAvailable: boolean;
   displayOrder: number;
   description?: string;
@@ -78,7 +78,7 @@ export default function ProductsPage() {
         name: v.name,
         categoryId: v.categoryId,
         description: v.description,
-        price: v.price,
+        price: v.price ?? null,
         isAvailable: v.isAvailable,
         displayOrder: v.displayOrder,
         tagIds: v.tagIds ?? [],
@@ -123,7 +123,7 @@ export default function ProductsPage() {
     form.resetFields();
     form.setFieldsValue({
       isAvailable: true,
-      price: 0,
+      price: null,
       displayOrder: (products?.length ?? 0) + 1,
       tagIds: [],
     });
@@ -212,7 +212,7 @@ export default function ProductsPage() {
     },
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
     { title: t('products.category'), dataIndex: 'categoryName', key: 'categoryName' },
-    { title: t('products.price'), key: 'price', render: (_, r) => r.price.toFixed(2) },
+    { title: t('products.price'), key: 'price', render: (_, r) => (r.price === null ? <Typography.Text type="secondary">{t('products.noPrice')}</Typography.Text> : r.price.toFixed(2)) },
     { title: t('products.available'), key: 'available', render: (_, r) => (r.isAvailable ? <Tag color="green">{t('common.yes')}</Tag> : <Tag>{t('common.no')}</Tag>) },
     { title: t('products.tags'), key: 'tags', render: (_, r) => r.tags.map((t2) => <Tag key={t2.id}>{t2.name}</Tag>) },
     {
@@ -278,8 +278,8 @@ export default function ProductsPage() {
             <Select options={categoryOptions} placeholder={t('products.selectCategory')} />
           </Form.Item>
           <Space size="large" style={{ display: 'flex' }}>
-            <Form.Item name="price" label={t('products.price')} rules={[{ required: true }]}>
-              <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
+            <Form.Item name="price" label={t('products.price')} extra={t('products.priceOptionalHint')}>
+              <InputNumber min={0} step={0.01} placeholder={t('products.noPrice')} style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="displayOrder" label={t('products.order')} rules={[{ required: true }]}>
               <InputNumber min={0} style={{ width: '100%' }} />
