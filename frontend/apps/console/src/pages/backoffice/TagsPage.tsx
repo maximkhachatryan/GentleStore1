@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { App as AntApp, Button, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Typography } from 'antd';
+import { App as AntApp, Button, Form, Input, InputNumber, Popconfirm, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import type { Tag as TagModel } from '@gentlestore/shared';
 import { api } from '../../api';
+import EntityCard from '../../components/EntityCard';
+import FormDialog from '../../components/FormDialog';
+import PageHeader from '../../components/PageHeader';
+import ResponsiveTable from '../../components/ResponsiveTable';
 
 interface TagValues {
   name: string;
@@ -49,11 +53,24 @@ export default function TagsPage() {
     setOpen(true);
   };
 
-  const openEdit = (t: TagModel) => {
-    setEditing(t);
-    form.setFieldsValue({ name: t.name, displayOrder: t.displayOrder });
+  const openEdit = (tag: TagModel) => {
+    setEditing(tag);
+    form.setFieldsValue({ name: tag.name, displayOrder: tag.displayOrder });
     setOpen(true);
   };
+
+  const rowActions = (tag: TagModel) => (
+    <>
+      <Button size="small" onClick={() => openEdit(tag)}>
+        {t('common.edit')}
+      </Button>
+      <Popconfirm title={t('tags.deleteConfirm')} onConfirm={() => remove.mutate(tag.id)}>
+        <Button size="small" danger>
+          {t('common.delete')}
+        </Button>
+      </Popconfirm>
+    </>
+  );
 
   const columns: ColumnsType<TagModel> = [
     { title: t('tags.colOrder'), dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
@@ -62,41 +79,45 @@ export default function TagsPage() {
       title: t('common.actions'),
       key: 'actions',
       width: 180,
-      render: (_, r) => (
-        <Space>
-          <Button size="small" onClick={() => openEdit(r)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm title={t('tags.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
-            <Button size="small" danger>
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      align: 'end',
+      fixed: 'right',
+      render: (_, r) => <Space>{rowActions(r)}</Space>,
     },
   ];
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
-          {t('tags.title')}
-        </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          {t('tags.new')}
-        </Button>
-      </div>
+      <PageHeader
+        title={t('tags.title')}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            {t('tags.new')}
+          </Button>
+        }
+      />
 
-      <Table rowKey="id" loading={isLoading} dataSource={data} columns={columns} pagination={false} />
+      <ResponsiveTable<TagModel>
+        rowKey="id"
+        loading={isLoading}
+        dataSource={data}
+        columns={columns}
+        pagination={false}
+        cardKey={(r) => r.id}
+        renderCard={(r) => (
+          <EntityCard
+            title={r.name}
+            extra={<Tag style={{ marginInlineEnd: 0 }}>#{r.displayOrder}</Tag>}
+            actions={rowActions(r)}
+          />
+        )}
+      />
 
-      <Modal
+      <FormDialog
         title={editing ? t('tags.edit') : t('tags.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={save.isPending}
-        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
           <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
@@ -106,7 +127,7 @@ export default function TagsPage() {
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormDialog>
     </div>
   );
 }

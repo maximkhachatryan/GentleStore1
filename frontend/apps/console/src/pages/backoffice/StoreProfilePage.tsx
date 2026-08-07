@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { App as AntApp, Button, Card, Form, Input, Typography } from 'antd';
+import { App as AntApp, Button, Card, Col, Form, Input, Row } from 'antd';
 import { api } from '../../api';
 import ImageUpload from '../../components/ImageUpload';
+import PageHeader from '../../components/PageHeader';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface ProfileValues {
   name: string;
@@ -16,6 +18,7 @@ export default function StoreProfilePage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
+  const { isMobile } = useResponsive();
   const [form] = Form.useForm<ProfileValues>();
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
 
@@ -51,30 +54,34 @@ export default function StoreProfilePage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <Typography.Title level={3}>{t('storeProfile.title')}</Typography.Title>
+      <PageHeader
+        title={t('storeProfile.title')}
+        subtitle={data ? `${t('storeProfile.publicUrl')}: /${data.slug}` : undefined}
+      />
       <Card loading={isLoading}>
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
           <Form.Item name="name" label={t('storeProfile.storeName')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="phone" label={t('common.phoneWhatsapp')} rules={[{ required: true, message: t('common.phoneRequired') }]}>
-            <Input placeholder="+1 555 123 4567" />
-          </Form.Item>
-          <Form.Item name="currency" label={t('common.currencyCode')}>
-            <Input maxLength={3} placeholder="USD" />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col xs={24} sm={14}>
+              <Form.Item name="phone" label={t('common.phoneWhatsapp')} rules={[{ required: true, message: t('common.phoneRequired') }]}>
+                <Input placeholder="+1 555 123 4567" inputMode="tel" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={10}>
+              <Form.Item name="currency" label={t('common.currencyCode')}>
+                <Input maxLength={3} placeholder="USD" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item name="description" label={t('common.description')}>
             <Input.TextArea rows={4} />
           </Form.Item>
           <Form.Item label={t('common.logo')}>
             <ImageUpload value={logoUrl} onChange={setLogoUrl} buttonText={t('common.uploadLogo')} />
           </Form.Item>
-          {data && (
-            <Typography.Paragraph type="secondary">
-              {t('storeProfile.publicUrl')}: <code>/{data.slug}</code>
-            </Typography.Paragraph>
-          )}
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
+          <Button type="primary" htmlType="submit" block={isMobile} loading={save.isPending}>
             {t('storeProfile.saveChanges')}
           </Button>
         </Form>

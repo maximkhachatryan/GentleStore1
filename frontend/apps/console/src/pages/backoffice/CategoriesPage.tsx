@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { App as AntApp, Button, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Typography } from 'antd';
+import { App as AntApp, Button, Form, Input, InputNumber, Popconfirm, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import type { Category } from '@gentlestore/shared';
 import { api } from '../../api';
+import EntityCard from '../../components/EntityCard';
+import FormDialog from '../../components/FormDialog';
+import PageHeader from '../../components/PageHeader';
+import ResponsiveTable from '../../components/ResponsiveTable';
 
 interface CategoryValues {
   name: string;
@@ -56,6 +60,19 @@ export default function CategoriesPage() {
     setOpen(true);
   };
 
+  const rowActions = (c: Category) => (
+    <>
+      <Button size="small" onClick={() => openEdit(c)}>
+        {t('common.edit')}
+      </Button>
+      <Popconfirm title={t('categories.deleteConfirm')} onConfirm={() => remove.mutate(c.id)}>
+        <Button size="small" danger>
+          {t('common.delete')}
+        </Button>
+      </Popconfirm>
+    </>
+  );
+
   const columns: ColumnsType<Category> = [
     { title: t('categories.colOrder'), dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
@@ -64,41 +81,46 @@ export default function CategoriesPage() {
       title: t('common.actions'),
       key: 'actions',
       width: 180,
-      render: (_, r) => (
-        <Space>
-          <Button size="small" onClick={() => openEdit(r)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm title={t('categories.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
-            <Button size="small" danger>
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      align: 'end',
+      fixed: 'right',
+      render: (_, r) => <Space>{rowActions(r)}</Space>,
     },
   ];
 
   return (
     <div style={{ maxWidth: 760 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
-          {t('categories.title')}
-        </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          {t('categories.new')}
-        </Button>
-      </div>
+      <PageHeader
+        title={t('categories.title')}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            {t('categories.new')}
+          </Button>
+        }
+      />
 
-      <Table rowKey="id" loading={isLoading} dataSource={data} columns={columns} pagination={false} />
+      <ResponsiveTable<Category>
+        rowKey="id"
+        loading={isLoading}
+        dataSource={data}
+        columns={columns}
+        pagination={false}
+        cardKey={(r) => r.id}
+        renderCard={(r) => (
+          <EntityCard
+            title={r.name}
+            extra={<Tag style={{ marginInlineEnd: 0 }}>#{r.displayOrder}</Tag>}
+            fields={[{ label: t('categories.colProducts'), value: r.productCount }]}
+            actions={rowActions(r)}
+          />
+        )}
+      />
 
-      <Modal
+      <FormDialog
         title={editing ? t('categories.edit') : t('categories.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={save.isPending}
-        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
           <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
@@ -108,7 +130,7 @@ export default function CategoriesPage() {
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormDialog>
     </div>
   );
 }

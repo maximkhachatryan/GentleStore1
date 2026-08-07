@@ -14,7 +14,11 @@
     "logout": "Logout",
     "viewStorefront": "View storefront",
     "exitManage": "Exit to admin",
-    "managingStore": "Managing store"
+    "managingStore": "Managing store",
+    "workspace": "Workspace",
+    "menu": "Menu",
+    "account": "Account",
+    "language": "Language"
   },
   "login": {
     "title": "Sign in to your console",
@@ -50,7 +54,10 @@
     "phoneWhatsapp": "Phone (WhatsApp)",
     "currencyCode": "Currency code",
     "logo": "Logo",
-    "uploadLogo": "Upload logo"
+    "uploadLogo": "Upload logo",
+    "save": "Save",
+    "cancel": "Cancel",
+    "more": "More actions"
   },
   "stores": {
     "title": "Stores",

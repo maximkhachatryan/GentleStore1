@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { App as AntApp, Button, Form, Input, InputNumber, Modal, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import { App as AntApp, Button, Form, Input, InputNumber, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import type { VariantAttributeDefinition, VariantAttributeOption } from '@gentlestore/shared';
 import { api } from '../../api';
+import EntityCard from '../../components/EntityCard';
+import FormDialog from '../../components/FormDialog';
+import PageHeader from '../../components/PageHeader';
+import ResponsiveTable from '../../components/ResponsiveTable';
 
 interface DefinitionValues {
   name: string;
@@ -20,7 +24,7 @@ interface OptionValues {
 export default function VariantAttributesPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { message } = AntApp.useApp();
+  const { message, modal } = AntApp.useApp();
 
   const [defOpen, setDefOpen] = useState(false);
   const [editingDef, setEditingDef] = useState<VariantAttributeDefinition | null>(null);
@@ -108,6 +112,16 @@ export default function VariantAttributesPage() {
     setOptOpen(true);
   };
 
+  const confirmRemoveOption = (parent: VariantAttributeDefinition, option: VariantAttributeOption) =>
+    modal.confirm({
+      title: t('variantAttributes.optionDeleteConfirm'),
+      content: option.value,
+      okText: t('common.delete'),
+      okButtonProps: { danger: true },
+      cancelText: t('common.cancel'),
+      onOk: () => removeOption.mutate({ defId: parent.id, optionId: option.id }),
+    });
+
   const columns: ColumnsType<VariantAttributeDefinition> = [
     { title: t('variantAttributes.colOrder'), dataIndex: 'displayOrder', key: 'displayOrder', width: 90 },
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
@@ -129,6 +143,8 @@ export default function VariantAttributesPage() {
       title: t('common.actions'),
       key: 'actions',
       width: 280,
+      align: 'end',
+      fixed: 'right',
       render: (_, r) => (
         <Space>
           <Button size="small" icon={<PlusOutlined />} onClick={() => openCreateOption(r)}>
@@ -154,6 +170,7 @@ export default function VariantAttributesPage() {
       title: t('common.actions'),
       key: 'actions',
       width: 180,
+      align: 'end',
       render: (_, r) => {
         const parent = data?.find((d) => d.options.some((o) => o.id === r.id));
         if (!parent) return null;
@@ -178,17 +195,17 @@ export default function VariantAttributesPage() {
 
   return (
     <div style={{ maxWidth: 900 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
-          {t('variantAttributes.title')}
-        </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateDef}>
-          {t('variantAttributes.new')}
-        </Button>
-      </div>
-      <Typography.Paragraph type="secondary">{t('variantAttributes.hint')}</Typography.Paragraph>
+      <PageHeader
+        title={t('variantAttributes.title')}
+        subtitle={t('variantAttributes.hint')}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateDef}>
+            {t('variantAttributes.new')}
+          </Button>
+        }
+      />
 
-      <Table
+      <ResponsiveTable<VariantAttributeDefinition>
         rowKey="id"
         loading={isLoading}
         dataSource={data}
@@ -207,15 +224,59 @@ export default function VariantAttributesPage() {
           ),
           rowExpandable: (record) => record.options.length > 0,
         }}
+        cardKey={(r) => r.id}
+        renderCard={(r) => (
+          <EntityCard
+            title={r.name}
+            extra={<Tag style={{ marginInlineEnd: 0 }}>#{r.displayOrder}</Tag>}
+            actions={
+              <>
+                <Button size="small" icon={<PlusOutlined />} onClick={() => openCreateOption(r)}>
+                  {t('variantAttributes.addValue')}
+                </Button>
+                <Button size="small" onClick={() => openEditDef(r)}>
+                  {t('common.edit')}
+                </Button>
+                <Popconfirm title={t('variantAttributes.deleteConfirm')} onConfirm={() => removeDef.mutate(r.id)}>
+                  <Button size="small" danger>
+                    {t('common.delete')}
+                  </Button>
+                </Popconfirm>
+              </>
+            }
+          >
+            {r.options.length ? (
+              <Space wrap size={[6, 6]}>
+                {r.options.map((o) => (
+                  <Tag
+                    key={o.id}
+                    closable
+                    style={{ marginInlineEnd: 0, cursor: 'pointer', paddingBlock: 3 }}
+                    onClick={() => openEditOption(r, o)}
+                    onClose={(e) => {
+                      e.preventDefault();
+                      confirmRemoveOption(r, o);
+                    }}
+                  >
+                    {o.value}
+                  </Tag>
+                ))}
+              </Space>
+            ) : (
+              <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                {t('variantAttributes.noValues')}
+              </Typography.Text>
+            )}
+          </EntityCard>
+        )}
       />
 
-      <Modal
+      <FormDialog
         title={editingDef ? t('variantAttributes.edit') : t('variantAttributes.new')}
         open={defOpen}
         onCancel={() => setDefOpen(false)}
         onOk={() => defForm.submit()}
         confirmLoading={saveDef.isPending}
-        destroyOnHidden
       >
         <Form form={defForm} layout="vertical" onFinish={(v) => saveDef.mutate(v)}>
           <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
@@ -225,15 +286,14 @@ export default function VariantAttributesPage() {
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormDialog>
 
-      <Modal
+      <FormDialog
         title={editingOption ? t('variantAttributes.editValue') : t('variantAttributes.addValueTo', { name: optionParent?.name })}
         open={optOpen}
         onCancel={() => setOptOpen(false)}
         onOk={() => optForm.submit()}
         confirmLoading={saveOption.isPending}
-        destroyOnHidden
       >
         <Form form={optForm} layout="vertical" onFinish={(v) => saveOption.mutate(v)}>
           <Form.Item name="value" label={t('variantAttributes.value')} rules={[{ required: true, message: t('variantAttributes.valueRequired') }]}>
@@ -243,7 +303,7 @@ export default function VariantAttributesPage() {
             <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormDialog>
     </div>
   );
 }

@@ -14,7 +14,11 @@
     "logout": "Դուրս գալ",
     "viewStorefront": "Դիտել խանութը",
     "exitManage": "Վերադառնալ ադմին",
-    "managingStore": "Կառավարման ռեժիմ"
+    "managingStore": "Կառավարման ռեժիմ",
+    "workspace": "Աշխատատարածք",
+    "menu": "Մենյու",
+    "account": "Հաշիվ",
+    "language": "Լեզու"
   },
   "login": {
     "title": "Մուտք գործեք ձեր վահանակ",
@@ -50,7 +54,10 @@
     "phoneWhatsapp": "Հեռախոս (WhatsApp)",
     "currencyCode": "Արժույթի կոդ",
     "logo": "Լոգո",
-    "uploadLogo": "Վերբեռնել լոգո"
+    "uploadLogo": "Վերբեռնել լոգո",
+    "save": "Պահպանել",
+    "cancel": "Չեղարկել",
+    "more": "Այլ գործողություններ"
   },
   "stores": {
     "title": "Խանութներ",

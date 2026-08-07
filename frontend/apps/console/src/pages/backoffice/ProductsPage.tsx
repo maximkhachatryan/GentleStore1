@@ -5,16 +5,16 @@ import {
   App as AntApp,
   Button,
   Card,
+  Col,
   Divider,
   Form,
   Input,
   InputNumber,
-  Modal,
   Popconfirm,
+  Row,
   Select,
   Space,
   Switch,
-  Table,
   Tag,
   Typography,
 } from 'antd';
@@ -24,6 +24,10 @@ import type { Product, ProductVariant } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../../api';
 import ImageUpload from '../../components/ImageUpload';
+import EntityCard from '../../components/EntityCard';
+import FormDialog from '../../components/FormDialog';
+import PageHeader from '../../components/PageHeader';
+import ResponsiveTable from '../../components/ResponsiveTable';
 
 interface ProductValues {
   name: string;
@@ -33,6 +37,18 @@ interface ProductValues {
   displayOrder: number;
   description?: string;
   tagIds?: string[];
+}
+
+function Thumb({ url, size }: { url?: string; size: number }) {
+  return url ? (
+    <img
+      src={url}
+      alt=""
+      style={{ width: size, height: size, objectFit: 'cover', borderRadius: 8, display: 'block' }}
+    />
+  ) : (
+    <div style={{ width: size, height: size, borderRadius: 8, background: '#f1f2f6' }} />
+  );
 }
 
 export default function ProductsPage() {
@@ -70,7 +86,7 @@ export default function ProductsPage() {
 
   const invalidateList = () => qc.invalidateQueries({ queryKey: ['backoffice', 'products'] });
   const categoryOptions = useMemo(() => (categories ?? []).map((c) => ({ label: c.name, value: c.id })), [categories]);
-  const tagOptions = useMemo(() => (tags ?? []).map((t) => ({ label: t.name, value: t.id })), [tags]);
+  const tagOptions = useMemo(() => (tags ?? []).map((tag) => ({ label: tag.name, value: tag.id })), [tags]);
 
   const save = useMutation({
     mutationFn: (v: ProductValues) => {
@@ -139,7 +155,7 @@ export default function ProductsPage() {
       price: p.price,
       isAvailable: p.isAvailable,
       displayOrder: p.displayOrder,
-      tagIds: p.tags.map((t) => t.id),
+      tagIds: p.tags.map((tag) => tag.id),
     });
     setOpen(true);
   };
@@ -196,40 +212,43 @@ export default function ProductsPage() {
     setEditing(null);
   };
 
+  const priceLabel = (p: Product) =>
+    p.price === null ? <Typography.Text type="secondary">{t('products.noPrice')}</Typography.Text> : p.price.toFixed(2);
+
+  const availabilityTag = (p: Product) =>
+    p.isAvailable ? <Tag color="green">{t('common.yes')}</Tag> : <Tag>{t('common.no')}</Tag>;
+
+  const rowActions = (p: Product) => (
+    <>
+      <Button size="small" onClick={() => openEdit(p)}>
+        {t('common.edit')}
+      </Button>
+      <Popconfirm title={t('products.deleteConfirm')} onConfirm={() => remove.mutate(p.id)}>
+        <Button size="small" danger>
+          {t('common.delete')}
+        </Button>
+      </Popconfirm>
+    </>
+  );
+
   const columns: ColumnsType<Product> = [
     {
       title: '',
       key: 'image',
       width: 60,
-      render: (_, r) => {
-        const url = resolveAssetUrl(API_URL, r.images[0]?.imageUrl);
-        return url ? (
-          <img src={url} alt="" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6 }} />
-        ) : (
-          <div style={{ width: 44, height: 44, borderRadius: 6, background: '#f5f5f5' }} />
-        );
-      },
+      render: (_, r) => <Thumb url={resolveAssetUrl(API_URL, r.images[0]?.imageUrl)} size={44} />,
     },
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
     { title: t('products.category'), dataIndex: 'categoryName', key: 'categoryName' },
-    { title: t('products.price'), key: 'price', render: (_, r) => (r.price === null ? <Typography.Text type="secondary">{t('products.noPrice')}</Typography.Text> : r.price.toFixed(2)) },
-    { title: t('products.available'), key: 'available', render: (_, r) => (r.isAvailable ? <Tag color="green">{t('common.yes')}</Tag> : <Tag>{t('common.no')}</Tag>) },
-    { title: t('products.tags'), key: 'tags', render: (_, r) => r.tags.map((t2) => <Tag key={t2.id}>{t2.name}</Tag>) },
+    { title: t('products.price'), key: 'price', render: (_, r) => priceLabel(r) },
+    { title: t('products.available'), key: 'available', render: (_, r) => availabilityTag(r) },
+    { title: t('products.tags'), key: 'tags', render: (_, r) => r.tags.map((tag) => <Tag key={tag.id}>{tag.name}</Tag>) },
     {
       title: t('common.actions'),
       key: 'actions',
-      render: (_, r) => (
-        <Space>
-          <Button size="small" onClick={() => openEdit(r)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm title={t('products.deleteConfirm')} onConfirm={() => remove.mutate(r.id)}>
-            <Button size="small" danger>
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      align: 'end',
+      fixed: 'right',
+      render: (_, r) => <Space>{rowActions(r)}</Space>,
     },
   ];
 
@@ -237,38 +256,64 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
-          {t('products.title')}
-        </Typography.Title>
-        <Space>
-          <Select
-            allowClear
-            placeholder={t('products.allCategories')}
-            style={{ width: 200 }}
-            options={categoryOptions}
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-          />
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} disabled={!categories?.length}>
-            {t('products.new')}
-          </Button>
-        </Space>
-      </div>
+      <PageHeader
+        title={t('products.title')}
+        actions={
+          <>
+            <Select
+              allowClear
+              placeholder={t('products.allCategories')}
+              style={{ minWidth: 180 }}
+              options={categoryOptions}
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} disabled={!categories?.length}>
+              {t('products.new')}
+            </Button>
+          </>
+        }
+      />
       {!categories?.length && (
         <Typography.Paragraph type="warning">{t('products.createCategoryFirst')}</Typography.Paragraph>
       )}
 
-      <Table rowKey="id" loading={isLoading} dataSource={products} columns={columns} pagination={false} />
+      <ResponsiveTable<Product>
+        rowKey="id"
+        loading={isLoading}
+        dataSource={products}
+        columns={columns}
+        pagination={false}
+        cardKey={(r) => r.id}
+        renderCard={(r) => (
+          <EntityCard
+            media={<Thumb url={resolveAssetUrl(API_URL, r.images[0]?.imageUrl)} size={56} />}
+            title={r.name}
+            subtitle={r.categoryName}
+            extra={availabilityTag(r)}
+            fields={[{ label: t('products.price'), value: priceLabel(r) }]}
+            actions={rowActions(r)}
+          >
+            {r.tags.length > 0 && (
+              <Space wrap size={[4, 4]}>
+                {r.tags.map((tag) => (
+                  <Tag key={tag.id} style={{ marginInlineEnd: 0 }}>
+                    {tag.name}
+                  </Tag>
+                ))}
+              </Space>
+            )}
+          </EntityCard>
+        )}
+      />
 
-      <Modal
+      <FormDialog
         title={editing ? t('products.edit') : t('products.new')}
         open={open}
         onCancel={closeModal}
         onOk={() => form.submit()}
         confirmLoading={save.isPending}
         width={640}
-        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => save.mutate(v)}>
           <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
@@ -277,14 +322,18 @@ export default function ProductsPage() {
           <Form.Item name="categoryId" label={t('products.category')} rules={[{ required: true, message: t('products.categoryRequired') }]}>
             <Select options={categoryOptions} placeholder={t('products.selectCategory')} />
           </Form.Item>
-          <Space size="large" style={{ display: 'flex' }}>
-            <Form.Item name="price" label={t('products.price')} extra={t('products.priceOptionalHint')}>
-              <InputNumber min={0} step={0.01} placeholder={t('products.noPrice')} style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item name="displayOrder" label={t('products.order')} rules={[{ required: true }]}>
-              <InputNumber min={0} style={{ width: '100%' }} />
-            </Form.Item>
-          </Space>
+          <Row gutter={12}>
+            <Col xs={14} sm={12}>
+              <Form.Item name="price" label={t('products.price')} extra={t('products.priceOptionalHint')}>
+                <InputNumber min={0} step={0.01} placeholder={t('products.noPrice')} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={10} sm={12}>
+              <Form.Item name="displayOrder" label={t('products.order')} rules={[{ required: true }]}>
+                <InputNumber min={0} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item name="description" label={t('common.description')}>
             <Input.TextArea rows={3} />
           </Form.Item>
@@ -327,7 +376,7 @@ export default function ProductsPage() {
           )}
 
           <Divider />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <Typography.Text strong>{t('products.variants')}</Typography.Text>
             <Button
               size="small"
@@ -354,18 +403,18 @@ export default function ProductsPage() {
             <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size={8}>
               {(editingDetail?.variants ?? []).map((v) => (
                 <Card key={v.id} size="small" styles={{ body: { padding: 12 } }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                    <Space wrap>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <Space wrap size={[4, 4]} style={{ minWidth: 0 }}>
                       {v.attributes.map((a) => (
-                        <Tag key={a.definitionId ?? a.name}>
+                        <Tag key={a.definitionId ?? a.name} style={{ marginInlineEnd: 0 }}>
                           {a.name}: {a.value}
                         </Tag>
                       ))}
                       <Typography.Text strong>{v.price.toFixed(2)}</Typography.Text>
                       {v.sku && <Typography.Text type="secondary">{v.sku}</Typography.Text>}
-                      {!v.isAvailable && <Tag>{t('common.no')}</Tag>}
+                      {!v.isAvailable && <Tag style={{ marginInlineEnd: 0 }}>{t('common.no')}</Tag>}
                     </Space>
-                    <Space>
+                    <Space style={{ marginInlineStart: 'auto' }}>
                       <Button size="small" icon={<EditOutlined />} onClick={() => openVariantEditor(v)} />
                       <Popconfirm title={t('products.deleteVariantConfirm')} onConfirm={() => deleteVariant.mutate(v.id)}>
                         <Button size="small" danger icon={<DeleteOutlined />} />
@@ -377,20 +426,19 @@ export default function ProductsPage() {
             </Space>
           )}
         </Form>
-      </Modal>
+      </FormDialog>
 
-      <Modal
+      <FormDialog
         title={editingVariant ? t('products.editVariant') : t('products.addVariant')}
         open={variantEditorOpen}
         onCancel={() => setVariantEditorOpen(false)}
         onOk={() => saveVariant.mutate()}
         confirmLoading={saveVariant.isPending}
-        destroyOnHidden
       >
-        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+        <Space direction="vertical" style={{ display: 'flex' }} size={14}>
           {(attributes ?? []).map((def) => (
             <div key={def.id}>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{def.name}</div>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{def.name}</div>
               <Select
                 allowClear
                 style={{ width: '100%' }}
@@ -401,26 +449,32 @@ export default function ProductsPage() {
               />
             </div>
           ))}
-          <Space size="large" wrap align="end">
-            <div>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.price')}</div>
-              <InputNumber min={0} step={0.01} value={vPrice} onChange={(val) => setVPrice(val ?? 0)} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.order')}</div>
-              <InputNumber min={0} value={vOrder} onChange={(val) => setVOrder(val ?? 0)} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.sku')}</div>
+          <Row gutter={[12, 12]}>
+            <Col xs={12}>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{t('products.price')}</div>
+              <InputNumber
+                min={0}
+                step={0.01}
+                value={vPrice}
+                onChange={(val) => setVPrice(val ?? 0)}
+                style={{ width: '100%' }}
+              />
+            </Col>
+            <Col xs={12}>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{t('products.order')}</div>
+              <InputNumber min={0} value={vOrder} onChange={(val) => setVOrder(val ?? 0)} style={{ width: '100%' }} />
+            </Col>
+            <Col xs={24} sm={16}>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{t('products.sku')}</div>
               <Input value={vSku} onChange={(e) => setVSku(e.target.value)} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{t('products.available')}</div>
+            </Col>
+            <Col xs={24} sm={8}>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{t('products.available')}</div>
               <Switch checked={vAvailable} onChange={setVAvailable} />
-            </div>
-          </Space>
+            </Col>
+          </Row>
         </Space>
-      </Modal>
+      </FormDialog>
     </div>
   );
 }

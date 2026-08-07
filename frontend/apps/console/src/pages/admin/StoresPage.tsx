@@ -2,27 +2,19 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  App as AntApp,
-  Avatar,
-  Button,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Space,
-  Switch,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { App as AntApp, Avatar, Button, Dropdown, Form, Input, Space, Switch, Tag, Typography } from 'antd';
+import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { PlusOutlined } from '@ant-design/icons';
+import { MoreOutlined, PlusOutlined } from '@ant-design/icons';
 import type { StoreListItem } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { api, API_URL, STOREFRONT_URL } from '../../api';
 import { managedStore } from '../../auth/managedStore';
 import ImageUpload from '../../components/ImageUpload';
+import EntityCard from '../../components/EntityCard';
+import FormDialog from '../../components/FormDialog';
+import PageHeader from '../../components/PageHeader';
+import ResponsiveTable from '../../components/ResponsiveTable';
 
 interface StoreFormValues {
   name: string;
@@ -36,7 +28,7 @@ interface StoreFormValues {
 export default function StoresPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { message } = AntApp.useApp();
+  const { message, modal } = AntApp.useApp();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StoreListItem | null>(null);
@@ -81,6 +73,16 @@ export default function StoresPage() {
     onError: () => message.error(t('stores.deleteError')),
   });
 
+  const confirmDelete = (s: StoreListItem) =>
+    modal.confirm({
+      title: t('stores.deleteConfirm'),
+      content: s.name,
+      okText: t('common.delete'),
+      okButtonProps: { danger: true },
+      cancelText: t('common.cancel'),
+      onOk: () => deleteMutation.mutate(s.id),
+    });
+
   const openCreate = () => {
     setEditing(null);
     setLogoUrl(undefined);
@@ -109,6 +111,31 @@ export default function StoresPage() {
     setOpen(true);
   };
 
+  const moreMenu = (s: StoreListItem): MenuProps => ({
+    items: [
+      {
+        key: 'view',
+        label: (
+          <a href={`${STOREFRONT_URL}/${s.slug}`} target="_blank" rel="noreferrer">
+            {t('stores.view')}
+          </a>
+        ),
+      },
+      { key: 'edit', label: t('common.edit') },
+      { key: 'toggle', label: s.isActive ? t('stores.deactivate') : t('stores.activate') },
+      { type: 'divider' },
+      { key: 'delete', label: t('common.delete'), danger: true },
+    ],
+    onClick: ({ key }) => {
+      if (key === 'edit') openEdit(s);
+      else if (key === 'toggle') toggleActive.mutate(s);
+      else if (key === 'delete') confirmDelete(s);
+    },
+  });
+
+  const statusTag = (s: StoreListItem) =>
+    s.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.inactive')}</Tag>;
+
   const columns: ColumnsType<StoreListItem> = [
     {
       title: t('stores.colStore'),
@@ -129,33 +156,20 @@ export default function StoresPage() {
     },
     { title: t('stores.colPhone'), dataIndex: 'phone', key: 'phone' },
     { title: t('stores.colProducts'), dataIndex: 'productCount', key: 'productCount' },
-    {
-      title: t('common.status'),
-      key: 'status',
-      render: (_, r) => (r.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.inactive')}</Tag>),
-    },
+    { title: t('common.status'), key: 'status', render: (_, r) => statusTag(r) },
     {
       title: t('common.actions'),
       key: 'actions',
+      align: 'end',
+      fixed: 'right',
       render: (_, r) => (
-        <Space wrap>
+        <Space>
           <Button type="primary" size="small" onClick={() => manageStore(r)}>
             {t('stores.manage')}
           </Button>
-          <a href={`${STOREFRONT_URL}/${r.slug}`} target="_blank" rel="noreferrer">
-            {t('stores.view')}
-          </a>
-          <Button size="small" onClick={() => openEdit(r)}>
-            {t('common.edit')}
-          </Button>
-          <Button size="small" onClick={() => toggleActive.mutate(r)}>
-            {r.isActive ? t('stores.deactivate') : t('stores.activate')}
-          </Button>
-          <Popconfirm title={t('stores.deleteConfirm')} onConfirm={() => deleteMutation.mutate(r.id)}>
-            <Button size="small" danger>
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
+          <Dropdown menu={moreMenu(r)} trigger={['click']} placement="bottomRight">
+            <Button size="small" icon={<MoreOutlined />} aria-label={t('common.more')} />
+          </Dropdown>
         </Space>
       ),
     },
@@ -163,24 +177,56 @@ export default function StoresPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
-          {t('stores.title')}
-        </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          {t('stores.new')}
-        </Button>
-      </div>
+      <PageHeader
+        title={t('stores.title')}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            {t('stores.new')}
+          </Button>
+        }
+      />
 
-      <Table rowKey="id" loading={isLoading} dataSource={stores} columns={columns} pagination={false} />
+      <ResponsiveTable<StoreListItem>
+        rowKey="id"
+        loading={isLoading}
+        dataSource={stores}
+        columns={columns}
+        pagination={false}
+        cardKey={(r) => r.id}
+        renderCard={(r) => (
+          <EntityCard
+            media={
+              <Avatar size={44} src={resolveAssetUrl(API_URL, r.logoUrl)} shape="square">
+                {r.name.charAt(0)}
+              </Avatar>
+            }
+            title={r.name}
+            subtitle={`/${r.slug}`}
+            extra={
+              <Dropdown menu={moreMenu(r)} trigger={['click']} placement="bottomRight">
+                <Button type="text" icon={<MoreOutlined />} aria-label={t('common.more')} />
+              </Dropdown>
+            }
+            fields={[
+              { label: t('stores.colPhone'), value: r.phone },
+              { label: t('stores.colProducts'), value: r.productCount },
+              { label: t('common.status'), value: statusTag(r) },
+            ]}
+            actions={
+              <Button type="primary" block onClick={() => manageStore(r)}>
+                {t('stores.manage')}
+              </Button>
+            }
+          />
+        )}
+      />
 
-      <Modal
+      <FormDialog
         title={editing ? t('stores.edit') : t('stores.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={saveMutation.isPending}
-        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate(v)}>
           <Form.Item name="name" label={t('common.name')} rules={[{ required: true, message: t('common.nameRequired') }]}>
@@ -190,7 +236,7 @@ export default function StoresPage() {
             <Input placeholder={t('stores.slugPlaceholder')} />
           </Form.Item>
           <Form.Item name="phone" label={t('common.phoneWhatsapp')} rules={[{ required: true, message: t('common.phoneRequired') }]}>
-            <Input placeholder="+1 555 123 4567" />
+            <Input placeholder="+1 555 123 4567" inputMode="tel" />
           </Form.Item>
           <Form.Item name="currency" label={t('common.currencyCode')}>
             <Input maxLength={3} placeholder="USD" />
@@ -205,7 +251,7 @@ export default function StoresPage() {
             <Switch />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormDialog>
     </div>
   );
 }

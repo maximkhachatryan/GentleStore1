@@ -1,24 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import {
-  App as AntApp,
-  Button,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Select,
-  Space,
-  Switch,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import { App as AntApp, Button, Form, Input, Popconfirm, Select, Space, Switch, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined } from '@ant-design/icons';
 import type { AdminUser, UserRole } from '@gentlestore/shared';
 import { api } from '../../api';
+import EntityCard from '../../components/EntityCard';
+import FormDialog from '../../components/FormDialog';
+import PageHeader from '../../components/PageHeader';
+import ResponsiveTable from '../../components/ResponsiveTable';
 
 interface UserFormValues {
   email: string;
@@ -111,54 +102,85 @@ export default function UsersPage() {
     setOpen(true);
   };
 
+  const roleTag = (u: AdminUser) => (
+    <Tag color={u.role === 'SuperAdmin' ? 'purple' : 'blue'} style={{ marginInlineEnd: 0 }}>
+      {t(ROLE_LABELS[u.role])}
+    </Tag>
+  );
+
+  const statusTag = (u: AdminUser) =>
+    u.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.disabled')}</Tag>;
+
+  const rowActions = (u: AdminUser) => (
+    <>
+      <Button size="small" onClick={() => openEdit(u)}>
+        {t('common.edit')}
+      </Button>
+      <Popconfirm title={t('users.deleteConfirm')} onConfirm={() => deleteMutation.mutate(u.id)}>
+        <Button size="small" danger>
+          {t('common.delete')}
+        </Button>
+      </Popconfirm>
+    </>
+  );
+
   const columns: ColumnsType<AdminUser> = [
     { title: t('users.fullName'), dataIndex: 'fullName', key: 'fullName' },
     { title: t('users.email'), dataIndex: 'email', key: 'email' },
-    { title: t('users.role'), key: 'role', render: (_, r) => <Tag color={r.role === 'SuperAdmin' ? 'purple' : 'blue'}>{t(ROLE_LABELS[r.role])}</Tag> },
+    { title: t('users.role'), key: 'role', render: (_, r) => roleTag(r) },
     { title: t('users.store'), key: 'store', render: (_, r) => r.storeName ?? <Typography.Text type="secondary">—</Typography.Text> },
-    { title: t('common.status'), key: 'status', render: (_, r) => (r.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.disabled')}</Tag>) },
+    { title: t('common.status'), key: 'status', render: (_, r) => statusTag(r) },
     {
       title: t('common.actions'),
       key: 'actions',
-      render: (_, r) => (
-        <Space>
-          <Button size="small" onClick={() => openEdit(r)}>
-            {t('common.edit')}
-          </Button>
-          <Popconfirm title={t('users.deleteConfirm')} onConfirm={() => deleteMutation.mutate(r.id)}>
-            <Button size="small" danger>
-              {t('common.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      align: 'end',
+      fixed: 'right',
+      render: (_, r) => <Space>{rowActions(r)}</Space>,
     },
   ];
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Typography.Title level={3} style={{ margin: 0 }}>
-          {t('users.title')}
-        </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          {t('users.new')}
-        </Button>
-      </div>
+      <PageHeader
+        title={t('users.title')}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            {t('users.new')}
+          </Button>
+        }
+      />
 
-      <Table rowKey="id" loading={isLoading} dataSource={users} columns={columns} pagination={false} />
+      <ResponsiveTable<AdminUser>
+        rowKey="id"
+        loading={isLoading}
+        dataSource={users}
+        columns={columns}
+        pagination={false}
+        cardKey={(r) => r.id}
+        renderCard={(r) => (
+          <EntityCard
+            title={r.fullName}
+            subtitle={r.email}
+            fields={[
+              { label: t('users.role'), value: roleTag(r) },
+              { label: t('users.store'), value: r.storeName ?? <Typography.Text type="secondary">—</Typography.Text> },
+              { label: t('common.status'), value: statusTag(r) },
+            ]}
+            actions={rowActions(r)}
+          />
+        )}
+      />
 
-      <Modal
+      <FormDialog
         title={editing ? t('users.edit') : t('users.new')}
         open={open}
         onCancel={() => setOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={saveMutation.isPending}
-        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate(v)}>
           <Form.Item name="email" label={t('users.email')} rules={[{ required: true, type: 'email', message: t('users.validEmail') }]}>
-            <Input disabled={!!editing} />
+            <Input disabled={!!editing} inputMode="email" autoComplete="off" />
           </Form.Item>
           <Form.Item name="fullName" label={t('users.fullName')} rules={[{ required: true, message: t('common.nameRequired') }]}>
             <Input />
@@ -190,7 +212,7 @@ export default function UsersPage() {
             </Form.Item>
           )}
         </Form>
-      </Modal>
+      </FormDialog>
     </div>
   );
 }

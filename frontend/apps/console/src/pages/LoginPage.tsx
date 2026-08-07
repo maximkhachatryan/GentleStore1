@@ -33,14 +33,14 @@ export default function LoginPage() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'grid',
         placeItems: 'center',
         background: 'linear-gradient(135deg,#eef2ff,#faf5ff)',
-        padding: 16,
+        padding: '24px 16px calc(24px + env(safe-area-inset-bottom))',
       }}
     >
-      <Card style={{ width: 380, boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }}>
+      <Card style={{ width: '100%', maxWidth: 390, boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <LanguageSwitcher />
         </div>
@@ -52,12 +52,23 @@ export default function LoginPage() {
         </div>
         <Form<LoginValues> layout="vertical" onFinish={onFinish} requiredMark={false}>
           <Form.Item name="email" label={t('login.email')} rules={[{ required: true, message: t('login.emailRequired') }]}>
-            <Input prefix={<MailOutlined />} placeholder="admin@gentlestore.local" autoComplete="username" />
+            <Input
+              size="large"
+              prefix={<MailOutlined />}
+              placeholder="admin@gentlestore.local"
+              autoComplete="username"
+              inputMode="email"
+            />
           </Form.Item>
           <Form.Item name="password" label={t('login.password')} rules={[{ required: true, message: t('login.passwordRequired') }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="Your password" autoComplete="current-password" />
+            <Input.Password
+              size="large"
+              prefix={<LockOutlined />}
+              placeholder="Your password"
+              autoComplete="current-password"
+            />
           </Form.Item>
-          <Button type="primary" htmlType="submit" block loading={loading}>
+          <Button type="primary" htmlType="submit" size="large" block loading={loading}>
             {t('login.signIn')}
           </Button>
         </Form>

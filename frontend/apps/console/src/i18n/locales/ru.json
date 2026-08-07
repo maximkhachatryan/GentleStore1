@@ -14,7 +14,11 @@
     "logout": "Выйти",
     "viewStorefront": "Открыть витрину",
     "exitManage": "К админ-панели",
-    "managingStore": "Режим управления"
+    "managingStore": "Режим управления",
+    "workspace": "Рабочая область",
+    "menu": "Меню",
+    "account": "Аккаунт",
+    "language": "Язык"
   },
   "login": {
     "title": "Войдите в консоль",
@@ -50,7 +54,10 @@
     "phoneWhatsapp": "Телефон (WhatsApp)",
     "currencyCode": "Код валюты",
     "logo": "Логотип",
-    "uploadLogo": "Загрузить логотип"
+    "uploadLogo": "Загрузить логотип",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "more": "Другие действия"
   },
   "stores": {
     "title": "Магазины",

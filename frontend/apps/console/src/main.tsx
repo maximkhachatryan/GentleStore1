@@ -1,6 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@ant-design/v5-patch-for-react-19';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { App as AntApp, ConfigProvider } from 'antd';
@@ -10,6 +9,7 @@ import ruRU from 'antd/locale/ru_RU';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider } from './auth/AuthContext';
 import App from './App';
+import { consoleTheme } from './theme';
 import './i18n';
 import './index.css';
 
@@ -24,7 +24,7 @@ function Root() {
   const locale = ANTD_LOCALES[i18n.language as keyof typeof ANTD_LOCALES] ?? hyAM;
 
   return (
-    <ConfigProvider locale={locale} theme={{ token: { colorPrimary: '#4f46e5', borderRadius: 8 } }}>
+    <ConfigProvider locale={locale} theme={consoleTheme}>
       <AntApp>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
