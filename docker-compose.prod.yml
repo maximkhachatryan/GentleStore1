@@ -102,6 +102,8 @@ services:
       - nginx_vhost:/etc/nginx/vhost.d
       - nginx_html:/usr/share/nginx/html
       - nginx_conf:/etc/nginx/conf.d
+      # Raises the 1 MB default upload cap; see the file for details.
+      - ./nginx-proxy.conf:/etc/nginx/conf.d/zz-gentlestore.conf:ro
     depends_on:
       - api
       - console

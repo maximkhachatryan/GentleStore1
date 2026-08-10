@@ -175,7 +175,8 @@
   "imageUpload": {
     "upload": "Upload image",
     "uploaded": "Image uploaded",
-    "failed": "Upload failed"
+    "failed": "Upload failed",
+    "tooLarge": "Image must be smaller than {{mb}} MB"
   },
   "variantAttributes": {
     "title": "Variant Attributes",

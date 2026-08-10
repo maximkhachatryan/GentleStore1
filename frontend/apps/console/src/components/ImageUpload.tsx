@@ -5,6 +5,11 @@ import { UploadOutlined } from '@ant-design/icons';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../api';
 
+// Mirrors UploadsController.MaxBytes. Rejecting here keeps an oversized file from
+// hitting the reverse proxy, which answers 413 without CORS headers — the browser
+// surfaces that as an opaque network error rather than a readable message.
+const MAX_BYTES = 5 * 1024 * 1024;
+
 interface Props {
   value?: string | null;
   onChange?: (url: string) => void;
@@ -29,6 +34,13 @@ export default function ImageUpload({ value, onChange, buttonText }: Props) {
       <Upload
         accept="image/*"
         showUploadList={false}
+        beforeUpload={(file) => {
+          if (file.size > MAX_BYTES) {
+            message.error(t('imageUpload.tooLarge', { mb: MAX_BYTES / 1024 / 1024 }));
+            return Upload.LIST_IGNORE;
+          }
+          return true;
+        }}
         customRequest={async ({ file, onSuccess, onError }) => {
           setUploading(true);
           try {

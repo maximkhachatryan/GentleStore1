@@ -356,6 +356,16 @@ docker run --rm \
 - The upstream container may still be starting or unhealthy: `dcp ps`, `dcp logs api`.
 - Confirm the service exposes the right port (`VIRTUAL_PORT` is `8080` for the API, `80` for the SPAs).
 
+**413 Content Too Large when uploading an image**
+- nginx caps request bodies at **1 MB** by default and the `nginx-proxy` image does not override it,
+  so the upload is rejected before it reaches the API. `nginx-proxy.conf` (mounted into
+  `/etc/nginx/conf.d/`) raises this to 10 MB — make sure that file exists on the server and recreate
+  the proxy: `dcp up -d nginx-proxy`.
+- Verify it took effect:
+  `docker exec gentlestore-nginx-proxy grep -r client_max_body_size /etc/nginx/conf.d`.
+- Above 10 MB the request is still refused by nginx; between 5 and 10 MB the API answers with a
+  readable JSON error. The API's own cap lives in `UploadsController.MaxBytes`.
+
 **API can't reach the database**
 - Check `dcp logs postgres` for readiness and that the `ConnectionStrings__Default` host is
   `postgres` (the service name), not `localhost`.
