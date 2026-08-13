@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
@@ -85,6 +85,14 @@ export default function StorePage() {
               </div>
               <div className="sm:w-64">
                 <ContactButtons phone={store.phone} message={t('store.contactMessage', { store: store.name })} />
+                {store.visitor && (
+                  <Link
+                    to={`/${slug}/orders`}
+                    className="mt-2 block text-center text-sm font-medium text-slate-500 underline transition hover:text-emerald-600"
+                  >
+                    {t('orders.title')}
+                  </Link>
+                )}
               </div>
             </div>
           ) : (

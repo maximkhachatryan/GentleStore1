@@ -87,8 +87,17 @@ public class BackofficeCustomersController : BackofficeControllerBase
         if (_current.StoreId is not Guid storeId) return Forbidden();
         if (!TryReadPhone(req.Phone, out var phone, out var normalized, out var phoneError)) return phoneError!;
 
-        if (await _db.Customers.AnyAsync(c => c.StoreId == storeId && c.PhoneNormalized == normalized))
-            return Conflict(new { error = "A customer with this phone number already exists.", code = "phone_taken" });
+        // A public checkout may already have registered this number. Hand the existing record back
+        // so the console can offer to invite them instead of dead-ending on an error.
+        var duplicate = await ProjectAsync(
+            _db.Customers.Where(c => c.StoreId == storeId && c.PhoneNormalized == normalized));
+        if (duplicate.Count > 0)
+            return Conflict(new
+            {
+                error = "A customer with this phone number already exists.",
+                code = "phone_taken",
+                customer = duplicate[0]
+            });
 
         var customer = new Customer
         {
@@ -253,8 +262,10 @@ public class BackofficeCustomersController : BackofficeControllerBase
                 c.FullName,
                 c.Note,
                 c.IsBlocked,
+                c.Origin,
                 c.CreatedAt,
                 c.FirstActivatedAt,
+                OrderCount = c.Orders.Count,
                 ActiveDeviceCount = c.Sessions.Count(s => s.RevokedAt == null),
                 LastSeenAt = c.Sessions.Where(s => s.RevokedAt == null).Max(s => (DateTime?)s.LastSeenAt),
                 PendingInviteExpiresAt = c.Invites
@@ -271,7 +282,8 @@ public class BackofficeCustomersController : BackofficeControllerBase
                 : r.PendingInviteExpiresAt is not null ? "invited"
                 : r.InviteCount > 0 ? "expired"
                 : "new",
-            r.ActiveDeviceCount, r.PendingInviteExpiresAt, r.LastSeenAt, r.FirstActivatedAt, r.CreatedAt))
+            r.Origin.ToString(), r.ActiveDeviceCount, r.OrderCount,
+            r.PendingInviteExpiresAt, r.LastSeenAt, r.FirstActivatedAt, r.CreatedAt))
             .ToList();
     }
 

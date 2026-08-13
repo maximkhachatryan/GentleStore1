@@ -102,12 +102,15 @@ Two demo stores are seeded — **Bloom & Petal** (`/bloom-petal`) and **Bean Sce
 ## What you can do
 
 - **Storefront** (`http://localhost:5174`): browse the store directory, open a store, filter products
-  by category / tag / search, view product details, and tap **WhatsApp** / **Call** to order.
+  by category / tag / search, view product details, add to a cart and place an order — or tap
+  **WhatsApp** / **Call** to ask the store first.
 - **Console → Super Admin**: dashboard stats, create/edit/activate stores, manage users.
 - **Console → Store Owner**: edit store profile (with logo upload), manage categories, products
   (with image upload & tag assignment) and tags — all scoped to their own store.
 - **Console → Customers**: register customers by phone, hand each one a personal one-time invite
   link over WhatsApp, and see which devices are signed in (see below).
+- **Console → Orders**: incoming orders with the customer's identity tier, quoting for
+  "price on request" items, and the status flow (see below).
 
 ---
 
@@ -144,13 +147,71 @@ Cookies cannot literally live forever (browsers cap persistent cookies at ~400 d
 cookie is issued for the maximum window and its expiry is refreshed on every visit. A customer
 who keeps shopping is never signed out.
 
-### Ready for orders
+---
 
-Order functionality is not implemented yet, but the identity it needs is already in place. Every
-gated request resolves to a `CustomerSession` row (browser) belonging to a `Customer` row (person),
-so a future `Order` only has to carry `CustomerId` + `CustomerSessionId` to record who placed it
-and from which device. `PublicStoreDto.visitor` already exposes the signed-in customer to the
-storefront, which greets them by name.
+## Orders
+
+One checkout, one order pipeline, three identity tiers. The only thing that differs between a
+private and a public storefront is **how well the store knows who is ordering** — recorded on every
+order as `IdentityTier`:
+
+| Tier | How the browser was identified | Phone trust | Checkout asks for |
+|---|---|---|---|
+| `Invited` | Redeemed a store-issued invite link | **Verified** — the store sent that link to this WhatsApp number and only its owner could have opened it | Nothing |
+| `Returning` | Self-declared, but this browser has ordered here before | Self-declared | Nothing (prefilled) |
+| `Guest` | Self-declared, first order from this browser | Unverified | Name + phone |
+
+An invite-only store only ever produces `Invited` orders. A **public** store produces all three,
+because invite links keep working on public storefronts — so a merchant can hand regulars a link and
+give them the frictionless checkout while walk-ins still fill in the form.
+
+### What an order records
+
+Orders snapshot everything: product names, variant labels, unit prices, currency and the customer's
+contact details. Editing the catalogue later never rewrites history.
+
+- **Orders are requests, not reservations.** Availability is a yes/no flag with no stock counter, so
+  nothing is held back and two customers can order the last item. The store confirms what it can
+  actually fulfil.
+- **`UnitPrice` is nullable**, because `Product.Price` is. An order containing a "price on request"
+  item lands in `AwaitingQuote` with no total; the store fills in the prices (**Orders → Save prices
+  and quote**) and it becomes `Quoted`.
+- **Order numbers** are per-store and gapless (`BS-0001`), allocated under a row lock so two
+  simultaneous checkouts can never share one.
+
+Status flow: `New → Confirmed → Ready → Completed`, plus `AwaitingQuote → Quoted`, plus `Cancelled`.
+Transitions are validated server-side; the console only offers the moves that will be accepted.
+
+### Public checkout is also customer registration
+
+A guest checkout creates a `Customer` row with `Origin = SelfRegistered` and binds the browser with
+the same kind of session cookie an invite issues. Consequences:
+
+- A public store's customer list fills up on its own — which is what makes switching to invite-only
+  later viable instead of a cold start.
+- Repeat guests are recognised: prefilled checkout, no retyping.
+- `IX_Customers_StoreId_PhoneNormalized` means a later invite to that number lands on the **same
+  record**, so history merges. Adding a customer whose number already ordered returns that record
+  and the console offers **Send invite** — the upgrade from self-declared to verified.
+
+### Order history is scoped by how you got in
+
+| Session created by | Can read |
+|---|---|
+| An invite (verified binding) | Every order that customer ever placed |
+| A guest checkout (self-declared) | Only the orders that browser placed |
+
+Without that split, anyone who guessed a phone number could read a stranger's order history by
+checking out under it. Verified once at the gate, so a guessed order id cannot widen access either —
+`GET /orders/{id}` reads through the same scoped set as the list.
+
+### The WhatsApp confirmation step
+
+There is no SMS gateway and no WhatsApp Business API in this stack, so a public order cannot be
+OTP-verified. Instead the storefront hands the customer a prefilled WhatsApp message containing the
+order number, and the merchant confirms from their own inbox — where they already work. Orders that
+never produce a message self-identify as abandoned or spam. Invited customers get the same button,
+but the order is already trustworthy without it.
 
 ---
 
@@ -174,6 +235,18 @@ endpoints are never gated, because the locked-out screen needs them:
 |---|---|
 | `GET /api/public/stores/{slug}/access` | Store name, logo, phone, access mode, and whether this browser is in. |
 | `POST /api/public/stores/{slug}/access/redeem` | Claims an invite secret and sets the session cookie. |
+
+Ordering endpoints (both gated like the rest of the catalogue):
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/public/stores/{slug}/orders` | Places an order; on a public store the contact fields double as registration. |
+| `GET /api/public/stores/{slug}/orders` | Order history, scoped by how the browser was identified. |
+| `GET /api/backoffice/orders` | Store's order list with identity tiers. |
+| `POST /api/backoffice/orders/{id}/status` | Move the order along the status flow. |
+| `PUT /api/backoffice/orders/{id}/quote` | Price the "price on request" lines. |
+
+Invite redemption and order placement are both rate limited per IP.
 
 ---
 
@@ -205,14 +278,19 @@ npm run cap:sync         # copy the web build into the native projects
 
 ## Notes & future ideas
 
-- Cart / checkout / orders attributed to the invited customer (`CustomerId` + `CustomerSessionId`
-  are already resolved on every gated request).
-- Per-customer language, so invite messages go out in the customer's language rather than the
-  staff member's.
+- Payments. Orders are agreed and settled with the store directly today.
+- Delivery fees, minimum orders and delivery zones — currently a free-text delivery note.
+- Self-service cancellation for verified customers (deliberately not offered to unverified guests:
+  a guessed order number should not let anyone cancel someone else's order).
+- Per-customer language, so invite and order messages go out in the customer's language rather than
+  the staff member's.
 - Sending invite links over SMS as well as WhatsApp.
 - Native session storage for the Capacitor build, where remote cookies are less reliable than in
   a browser.
-- Customer accounts and payments.
+- A retention policy for public-checkout contact details, which are PII collected from people with
+  no prior relationship to the store.
+- Order POSTs should also check the `Origin` header once money is involved; `SameSite=Lax` is the
+  current CSRF floor.
 - Per-store subdomains or custom domains.
 - Cloud image storage (S3/Blob) instead of local files.
 - Multi-currency conversion and i18n.

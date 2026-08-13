@@ -71,9 +71,13 @@ public record UpdateVariantAttributeOptionRequest(string Value, int DisplayOrder
 /// Derived, not stored: <c>blocked</c>, <c>active</c> (at least one signed-in device),
 /// <c>invited</c> (link outstanding), <c>expired</c> (link lapsed unused), <c>new</c>.
 /// </param>
+/// <param name="Origin">
+/// <c>StoreInvited</c> or <c>SelfRegistered</c> — whether staff added this person or they
+/// introduced themselves at a public checkout.
+/// </param>
 public record CustomerDto(
     Guid Id, string Phone, string PhoneNormalized, string? FullName, string? Note,
-    bool IsBlocked, string Status, int ActiveDeviceCount,
+    bool IsBlocked, string Status, string Origin, int ActiveDeviceCount, int OrderCount,
     DateTime? PendingInviteExpiresAt, DateTime? LastSeenAt, DateTime? FirstActivatedAt, DateTime CreatedAt);
 
 public record CreateCustomerRequest(string Phone, string? FullName, string? Note);

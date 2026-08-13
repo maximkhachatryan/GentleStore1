@@ -16,6 +16,13 @@ import type {
   CustomerQuery,
   LoginRequest,
   LoginResponse,
+  OrderDetail,
+  OrderListItem,
+  OrderQuery,
+  PlaceOrderRequest,
+  PublicOrder,
+  QuoteOrderRequest,
+  UpdateOrderStatusRequest,
   Product,
   ProductImage,
   ProductQuery,
@@ -140,6 +147,14 @@ export function createApi(http: AxiosInstance) {
       blockCustomer: (id: string) => http.post<Customer>(`/api/backoffice/customers/${id}/block`).then((r) => r.data),
       unblockCustomer: (id: string) =>
         http.post<Customer>(`/api/backoffice/customers/${id}/unblock`).then((r) => r.data),
+      listOrders: (query?: OrderQuery) =>
+        http.get<OrderListItem[]>('/api/backoffice/orders', { params: query }).then((r) => r.data),
+      getOrder: (id: string) => http.get<OrderDetail>(`/api/backoffice/orders/${id}`).then((r) => r.data),
+      updateOrderStatus: (id: string, body: UpdateOrderStatusRequest) =>
+        http.post<OrderDetail>(`/api/backoffice/orders/${id}/status`, body).then((r) => r.data),
+      /** Fills in "price on request" lines and moves the order to Quoted. */
+      quoteOrder: (id: string, body: QuoteOrderRequest) =>
+        http.put<OrderDetail>(`/api/backoffice/orders/${id}/quote`, body).then((r) => r.data),
     },
     store: {
       list: (search?: string) =>
@@ -158,6 +173,16 @@ export function createApi(http: AxiosInstance) {
       /** Claims a personal invite link; the server replies with a long-lived session cookie. */
       redeemInvite: (slug: string, token: string) =>
         http.post<RedeemInviteResult>(`/api/public/stores/${slug}/access/redeem`, { token }).then((r) => r.data),
+      /**
+       * Places an order. On a public storefront the contact fields double as registration, and the
+       * response carries a session cookie so the next checkout is prefilled.
+       */
+      placeOrder: (slug: string, body: PlaceOrderRequest) =>
+        http.post<PublicOrder>(`/api/public/stores/${slug}/orders`, body).then((r) => r.data),
+      /** Orders this browser is allowed to see; empty when it carries no session. */
+      orders: (slug: string) => http.get<PublicOrder[]>(`/api/public/stores/${slug}/orders`).then((r) => r.data),
+      order: (slug: string, id: string) =>
+        http.get<PublicOrder>(`/api/public/stores/${slug}/orders/${id}`).then((r) => r.data),
     },
     uploads: {
       upload: (file: File) => {

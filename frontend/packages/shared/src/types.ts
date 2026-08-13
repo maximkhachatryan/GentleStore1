@@ -253,6 +253,9 @@ export type UpdateVariantAttributeOptionRequest = CreateVariantAttributeOptionRe
  */
 export type CustomerStatus = 'new' | 'invited' | 'active' | 'expired' | 'blocked';
 
+/** Whether staff added this person or they introduced themselves at a public checkout. */
+export type CustomerOrigin = 'StoreInvited' | 'SelfRegistered';
+
 export interface Customer {
   id: string;
   /** As the store typed it, for display. */
@@ -263,7 +266,9 @@ export interface Customer {
   note: string | null;
   isBlocked: boolean;
   status: CustomerStatus;
+  origin: CustomerOrigin;
   activeDeviceCount: number;
+  orderCount: number;
   pendingInviteExpiresAt: string | null;
   lastSeenAt: string | null;
   firstActivatedAt: string | null;
@@ -310,6 +315,132 @@ export interface CustomerDetail {
   customer: Customer;
   devices: CustomerDevice[];
   invites: CustomerInvite[];
+}
+
+// ---- Orders ----
+
+export type OrderStatus =
+  | 'New'
+  | 'AwaitingQuote'
+  | 'Quoted'
+  | 'Confirmed'
+  | 'Ready'
+  | 'Completed'
+  | 'Cancelled';
+
+/**
+ * How well the store knew the customer when the order arrived.
+ * `Invited` — phone verified out-of-band by the invite the store sent.
+ * `Returning` / `Guest` — self-declared at a public checkout.
+ */
+export type CustomerIdentityTier = 'Invited' | 'Returning' | 'Guest';
+
+export type FulfilmentMethod = 'Pickup' | 'Delivery';
+
+export interface PlaceOrderItem {
+  productId: string;
+  variantId?: string | null;
+  quantity: number;
+}
+
+export interface PlaceOrderRequest {
+  items: PlaceOrderItem[];
+  fulfilment: FulfilmentMethod;
+  deliveryAddress?: string | null;
+  note?: string | null;
+  /** Only used for a guest checkout — a stored customer record always wins. */
+  contactName?: string | null;
+  contactPhone?: string | null;
+}
+
+export interface PublicOrderLine {
+  productId: string | null;
+  productName: string;
+  variantLabel: string | null;
+  quantity: number;
+  /** Null for a "price on request" item the store has not quoted yet. */
+  unitPrice: number | null;
+  lineTotal: number | null;
+}
+
+export interface PublicOrder {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  currency: string;
+  total: number | null;
+  fulfilment: FulfilmentMethod;
+  deliveryAddress: string | null;
+  note: string | null;
+  contactName: string;
+  contactPhoneMasked: string;
+  awaitingQuote: boolean;
+  placedAt: string;
+  lines: PublicOrderLine[];
+}
+
+export interface OrderLine {
+  id: string;
+  productId: string | null;
+  productVariantId: string | null;
+  productName: string;
+  variantLabel: string | null;
+  quantity: number;
+  unitPrice: number | null;
+  lineTotal: number | null;
+}
+
+export interface OrderListItem {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  identityTier: CustomerIdentityTier;
+  customerId: string;
+  contactName: string;
+  contactPhone: string;
+  currency: string;
+  total: number | null;
+  itemCount: number;
+  fulfilment: FulfilmentMethod;
+  customerOrderCount: number;
+  placedAt: string;
+}
+
+export interface OrderDetail {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  identityTier: CustomerIdentityTier;
+  customerId: string;
+  contactName: string;
+  contactPhone: string;
+  contactPhoneNormalized: string;
+  customerOrigin: CustomerOrigin;
+  customerOrderCount: number;
+  fulfilment: FulfilmentMethod;
+  deliveryAddress: string | null;
+  customerNote: string | null;
+  storeNote: string | null;
+  currency: string;
+  total: number | null;
+  placedAt: string;
+  updatedAt: string;
+  lines: OrderLine[];
+}
+
+export interface OrderQuery {
+  search?: string;
+  status?: OrderStatus;
+}
+
+export interface UpdateOrderStatusRequest {
+  status: OrderStatus;
+  storeNote?: string | null;
+}
+
+export interface QuoteOrderRequest {
+  lines: { lineId: string; unitPrice: number }[];
+  storeNote?: string | null;
 }
 
 // ---- Public ----

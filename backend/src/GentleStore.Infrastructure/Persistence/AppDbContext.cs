@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<CustomerInvite> CustomerInvites => Set<CustomerInvite>();
     public DbSet<CustomerSession> CustomerSessions => Set<CustomerSession>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderLine> OrderLines => Set<OrderLine>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -128,9 +130,11 @@ public class AppDbContext : DbContext
             e.Property(x => x.PhoneNormalized).IsRequired().HasMaxLength(20);
             e.Property(x => x.FullName).HasMaxLength(150);
             e.Property(x => x.Note).HasMaxLength(1000);
+            e.Property(x => x.Origin).HasConversion<int>();
             e.HasOne(x => x.Store).WithMany(x => x.Customers)
                 .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
-            // One customer record per phone number within a store.
+            // One customer record per phone number within a store. This is what lets a guest
+            // checkout and a later store invite land on the same person.
             e.HasIndex(x => new { x.StoreId, x.PhoneNormalized }).IsUnique();
         });
 
@@ -160,6 +164,54 @@ public class AppDbContext : DbContext
             e.HasOne(x => x.Invite).WithMany(x => x.Sessions)
                 .HasForeignKey(x => x.CustomerInviteId).OnDelete(DeleteBehavior.SetNull);
             e.HasIndex(x => x.TokenHash).IsUnique();
+        });
+
+        mb.Entity<Order>(e =>
+        {
+            e.Property(x => x.OrderNumber).IsRequired().HasMaxLength(32);
+            e.Property(x => x.ContactName).IsRequired().HasMaxLength(150);
+            e.Property(x => x.ContactPhone).IsRequired().HasMaxLength(40);
+            e.Property(x => x.ContactPhoneNormalized).IsRequired().HasMaxLength(20);
+            e.Property(x => x.DeliveryAddress).HasMaxLength(500);
+            e.Property(x => x.CustomerNote).HasMaxLength(1000);
+            e.Property(x => x.StoreNote).HasMaxLength(1000);
+            e.Property(x => x.Currency).IsRequired().HasMaxLength(3);
+            e.Property(x => x.Total).HasPrecision(18, 2);
+            e.Property(x => x.Status).HasConversion<int>();
+            e.Property(x => x.IdentityTier).HasConversion<int>();
+            e.Property(x => x.Fulfilment).HasConversion<int>();
+
+            e.HasOne(x => x.Store).WithMany(x => x.Orders)
+                .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+            // Deleting a customer must not erase the store's sales history, so orders survive as
+            // records with the contact details they were placed with.
+            e.HasOne(x => x.Customer).WithMany(x => x.Orders)
+                .HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Session).WithMany()
+                .HasForeignKey(x => x.CustomerSessionId).OnDelete(DeleteBehavior.SetNull);
+
+            e.HasIndex(x => new { x.StoreId, x.OrderNumber }).IsUnique();
+            e.HasIndex(x => new { x.StoreId, x.Status });
+            e.HasIndex(x => new { x.StoreId, x.PlacedAt });
+            // Order history for a self-declared browser is scoped to its own session.
+            e.HasIndex(x => x.CustomerSessionId);
+        });
+
+        mb.Entity<OrderLine>(e =>
+        {
+            e.Property(x => x.ProductName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.VariantLabel).HasMaxLength(400);
+            e.Property(x => x.UnitPrice).HasPrecision(18, 2);
+            e.Ignore(x => x.LineTotal);
+
+            e.HasOne(x => x.Order).WithMany(x => x.Lines)
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            // The product may be deleted long after the order; the line keeps its snapshot.
+            e.HasOne<Product>().WithMany()
+                .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne<ProductVariant>().WithMany()
+                .HasForeignKey(x => x.ProductVariantId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(x => new { x.OrderId, x.DisplayOrder });
         });
 
         mb.Entity<User>(e =>

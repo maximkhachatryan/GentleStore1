@@ -30,7 +30,7 @@ import FormDialog from '../../components/FormDialog';
 import PageHeader from '../../components/PageHeader';
 import ResponsiveTable from '../../components/ResponsiveTable';
 import { useResponsive } from '../../hooks/useResponsive';
-import { apiErrorCode } from '../../lib/errors';
+import { apiErrorCode, apiErrorPayload } from '../../lib/errors';
 import { formatDate, formatDateTime } from '../../lib/format';
 
 interface CustomerValues {
@@ -90,6 +90,26 @@ export default function CustomersPage() {
     },
     onError: (error) => {
       const code = apiErrorCode(error);
+
+      // A public checkout may already have registered this number. Offer the upgrade — sending an
+      // invite turns a self-declared customer into a verified one — instead of a dead end.
+      const existing = apiErrorPayload<{ customer?: Customer }>(error)?.customer;
+      if (code === 'phone_taken' && existing) {
+        setEditorOpen(false);
+        modal.confirm({
+          title: t('customers.alreadyExists'),
+          content: t('customers.alreadyExistsBody', {
+            name: existing.fullName ?? existing.phone,
+            origin: t(`customers.origin.${existing.origin}`),
+            orders: existing.orderCount,
+          }),
+          okText: t('customers.sendInvite'),
+          cancelText: t('common.cancel'),
+          onOk: () => createInvite.mutate(existing),
+        });
+        return;
+      }
+
       message.error(
         code === 'phone_taken'
           ? t('customers.phoneTaken')
@@ -249,14 +269,29 @@ export default function CustomersPage() {
       key: 'customer',
       render: (_, r) => (
         <div>
-          <div style={{ fontWeight: 600 }}>{r.fullName ?? t('customers.unnamed')}</div>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {r.phone}
-          </Typography.Text>
+          <Space size={6}>
+            <span style={{ fontWeight: 600 }}>{r.fullName ?? t('customers.unnamed')}</span>
+            {r.origin === 'SelfRegistered' && (
+              <Tag color="purple" style={{ marginInlineEnd: 0 }}>
+                {t('customers.origin.SelfRegistered')}
+              </Tag>
+            )}
+          </Space>
+          <div>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {r.phone}
+            </Typography.Text>
+          </div>
         </div>
       ),
     },
     { title: t('common.status'), key: 'status', render: (_, r) => statusTag(r) },
+    {
+      title: t('customers.colOrders'),
+      key: 'orders',
+      width: 100,
+      render: (_, r) => r.orderCount,
+    },
     {
       title: t('customers.colDevices'),
       key: 'devices',
@@ -362,6 +397,7 @@ export default function CustomersPage() {
               </Space>
             }
             fields={[
+              { label: t('customers.colOrders'), value: r.orderCount },
               { label: t('customers.colDevices'), value: r.activeDeviceCount },
               { label: t('customers.colLastSeen'), value: formatDateTime(r.lastSeenAt, i18n.language) },
             ]}
@@ -462,6 +498,16 @@ export default function CustomersPage() {
             <Descriptions column={1} size="small" items={[
               { key: 'phone', label: t('common.phoneWhatsapp'), children: detailCustomer.phone },
               { key: 'status', label: t('common.status'), children: statusTag(detailCustomer) },
+              {
+                key: 'origin',
+                label: t('customers.originLabel'),
+                children: t(`customers.origin.${detailCustomer.origin}`),
+              },
+              {
+                key: 'orders',
+                label: t('customers.colOrders'),
+                children: detailCustomer.orderCount,
+              },
               {
                 key: 'activated',
                 label: t('customers.firstActivated'),

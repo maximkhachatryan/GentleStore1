@@ -1,3 +1,5 @@
+using GentleStore.Domain.Enums;
+
 namespace GentleStore.Domain.Entities;
 
 /// <summary>
@@ -24,6 +26,12 @@ public class Customer
     /// <summary>Blocked customers keep their sessions but are refused at the gate.</summary>
     public bool IsBlocked { get; set; }
 
+    /// <summary>
+    /// Whether the store added this person or they introduced themselves at a public checkout.
+    /// Self-registered customers can be upgraded later by sending them an invite.
+    /// </summary>
+    public CustomerOrigin Origin { get; set; } = CustomerOrigin.StoreInvited;
+
     public DateTime CreatedAt { get; set; }
 
     /// <summary>When this customer first redeemed an invite. Null while never activated.</summary>
@@ -35,4 +43,5 @@ public class Customer
     public Store? Store { get; set; }
     public ICollection<CustomerInvite> Invites { get; set; } = new List<CustomerInvite>();
     public ICollection<CustomerSession> Sessions { get; set; } = new List<CustomerSession>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

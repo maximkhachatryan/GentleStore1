@@ -17,11 +17,18 @@ public class Store
     /// <summary>Whether the storefront is open to everyone or only to invited customers.</summary>
     public StorefrontAccessMode StorefrontAccess { get; set; } = StorefrontAccessMode.Public;
 
+    /// <summary>
+    /// Counter behind the human-readable order numbers. Incremented by an atomic UPDATE so two
+    /// simultaneous checkouts cannot be handed the same number.
+    /// </summary>
+    public int OrderSequence { get; set; }
+
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public ICollection<Tag> Tags { get; set; } = new List<Tag>();
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Customer> Customers { get; set; } = new List<Customer>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<VariantAttributeDefinition> VariantAttributeDefinitions { get; set; }
         = new List<VariantAttributeDefinition>();
 }

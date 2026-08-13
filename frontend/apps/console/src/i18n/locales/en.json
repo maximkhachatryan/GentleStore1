@@ -8,7 +8,8 @@
     "products": "Products",
     "tags": "Tags",
     "variantAttributes": "Variant Attributes",
-    "customers": "Customers"
+    "customers": "Customers",
+    "orders": "Orders"
   },
   "layout": {
     "adminPanel": "Admin Panel",
@@ -194,7 +195,15 @@
     "deleted": "Customer deleted",
     "deleteConfirm": "Delete this customer?",
     "deleteConfirmBody": "Their links and signed-in devices stop working immediately.",
-    "actionError": "Could not complete that action"
+    "actionError": "Could not complete that action",
+    "colOrders": "Orders",
+    "originLabel": "Customer record",
+    "origin": {
+      "StoreInvited": "Added by your team",
+      "SelfRegistered": "Registered at checkout"
+    },
+    "alreadyExists": "This number is already a customer",
+    "alreadyExistsBody": "{{name}} is already on your list ({{origin}}, {{orders}} order(s)). Send them an invite link to give them the faster, verified checkout."
   },
   "categories": {
     "title": "Categories",
@@ -288,5 +297,77 @@
     "optionSaveError": "Could not save value. It may already exist.",
     "optionDeleted": "Value deleted",
     "optionDeleteError": "Could not delete value"
+  },
+  "orderStatus": {
+    "New": "Received",
+    "AwaitingQuote": "Awaiting quote",
+    "Quoted": "Quoted",
+    "Confirmed": "Confirmed",
+    "Ready": "Ready",
+    "Completed": "Completed",
+    "Cancelled": "Cancelled"
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "Orders from invited customers arrive with a verified phone number. Confirm the rest by chat before you fulfil them.",
+    "searchPlaceholder": "Order number, name or phone",
+    "allStatuses": "All statuses",
+    "empty": "No orders yet.",
+    "open": "Open",
+    "colOrder": "Order",
+    "colCustomer": "Customer",
+    "colTotal": "Total",
+    "toQuote": "To be quoted",
+    "identity": "Identity",
+    "repeatCustomer": "{{count}} orders in total",
+    "tier": {
+      "Invited": "Invited",
+      "Returning": "Returning",
+      "Guest": "New"
+    },
+    "tierInvitedHint": "This browser was signed in with an invite link you sent, so the phone number is verified.",
+    "tierSelfDeclaredHint": "The customer typed these details themselves. Confirm by chat before you fulfil the order.",
+    "unverifiedTitle": "Contact details are unverified",
+    "unverifiedBody": "This order came from a public checkout, so nobody has confirmed the phone number yet. Message the customer to confirm, then mark the order confirmed.",
+    "messageCustomer": "Message on WhatsApp",
+    "whatsappMessage": "Hello! About your order {{number}} —",
+    "customerName": "Name",
+    "customerRecord": "Customer record",
+    "customerHistory": "History",
+    "orderCount": "{{count}} order(s) with you",
+    "origin": {
+      "StoreInvited": "Added by your team",
+      "SelfRegistered": "Registered at checkout"
+    },
+    "fulfilment": "Fulfilment",
+    "fulfilmentMethod": {
+      "Pickup": "Pick up",
+      "Delivery": "Delivery"
+    },
+    "address": "Delivery address",
+    "customerNote": "Customer note",
+    "placedAt": "Placed",
+    "items": "Items",
+    "item": "Item",
+    "qty": "Qty",
+    "unitPrice": "Unit price",
+    "lineTotal": "Line total",
+    "setPrice": "Set price",
+    "sendQuote": "Save prices and quote",
+    "priceEveryLine": "Price every line to send the quote",
+    "storeNote": "Internal note",
+    "storeNotePlaceholder": "Only your team sees this",
+    "storeNoteHint": "Saved together with the next status change or quote.",
+    "markAs": {
+      "Confirmed": "Mark confirmed",
+      "Ready": "Mark ready",
+      "Completed": "Mark completed",
+      "Cancelled": "Cancel order"
+    },
+    "noFurtherActions": "This order is finished — no further changes are possible.",
+    "statusUpdated": "Order updated",
+    "statusError": "Could not update the order",
+    "quoteSent": "Quote saved",
+    "quoteError": "Could not save the quote"
   }
 }

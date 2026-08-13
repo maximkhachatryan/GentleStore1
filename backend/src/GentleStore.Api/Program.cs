@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using GentleStore.Api.Auth;
+using GentleStore.Api.Orders;
 using GentleStore.Api.Storefront;
 using GentleStore.Domain.Enums;
 using GentleStore.Infrastructure;
@@ -21,6 +22,7 @@ builder.Services.Configure<StorefrontOptions>(builder.Configuration.GetSection(S
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IStorefrontGate, StorefrontGate>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
@@ -63,6 +65,10 @@ builder.Services.AddRateLimiter(options =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(5) }));
+    options.AddPolicy(RateLimitPolicies.PlaceOrder, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(5) }));
 });
 
 builder.Services.AddControllers();

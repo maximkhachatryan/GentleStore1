@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
@@ -8,11 +8,14 @@ import ContactButtons from '../components/ContactButtons';
 import StoreGate from '../components/StoreGate';
 import { formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
+import { useCart } from '../lib/cart';
 import { api } from '../api';
 
 export default function ProductPage() {
   const { t } = useTranslation();
   const { slug = '', id = '' } = useParams();
+  const navigate = useNavigate();
+  const cart = useCart();
 
   const storeQuery = useQuery({ queryKey: ['store', slug], queryFn: () => api.store.get(slug), retry: false });
   const productQuery = useQuery({
@@ -58,6 +61,50 @@ export default function ProductPage() {
     const parts = attributeGroups.map((g) => (selected[g.name] ? `${g.name}: ${selected[g.name]}` : null)).filter(Boolean);
     return parts.length ? `${product.name} (${parts.join(', ')})` : product.name;
   }, [product, attributeGroups, selected]);
+
+  // With variants defined, nothing is orderable until one is fully specified — that is where the
+  // price lives.
+  const needsVariantChoice = hasVariants && !matchedVariant;
+  const canAddToCart = product !== undefined && displayInStock && !needsVariantChoice;
+
+  const addToCart = (thenCheckout: boolean) => {
+    if (!product || !canAddToCart) return;
+
+    cart.add({
+      productId: product.id,
+      variantId: matchedVariant?.id ?? null,
+      name: product.name,
+      variantLabel: matchedVariant
+        ? attributeGroups.map((g) => `${g.name}: ${selected[g.name]}`).join(', ')
+        : null,
+      unitPrice: displayPrice,
+      imageUrl: product.images[0]?.imageUrl ?? null,
+    });
+
+    if (thenCheckout) navigate(`/${slug}/cart`);
+  };
+
+  const addToCartControls = (
+    <div className="space-y-2">
+      <button
+        type="button"
+        disabled={!canAddToCart}
+        onClick={() => addToCart(false)}
+        className="w-full rounded-xl bg-emerald-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+      >
+        {needsVariantChoice ? t('product.chooseOptions') : t('product.addToCart')}
+      </button>
+      {canAddToCart && (
+        <button
+          type="button"
+          onClick={() => addToCart(true)}
+          className="w-full rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          {t('product.buyNow')}
+        </button>
+      )}
+    </div>
+  );
 
   if (productQuery.isError || storeQuery.isError) {
     if (isInviteRequired(storeQuery.error) || isInviteRequired(productQuery.error))
@@ -151,12 +198,15 @@ export default function ProductPage() {
               {product.description && (
                 <p className="mt-4 whitespace-pre-line leading-relaxed text-slate-600">{product.description}</p>
               )}
-              {store && (
-                <div className="mt-6 hidden md:block">
-                  <ContactButtons size="lg" phone={store.phone} message={t('product.orderMessage', { store: store.name, product: orderProductLabel })} />
-                  <p className="mt-2 text-xs text-slate-400">{t('product.ordersNote')}</p>
-                </div>
-              )}
+              <div className="mt-6 hidden md:block">
+                {addToCartControls}
+                {store && (
+                  <div className="mt-4 border-t border-slate-100 pt-4">
+                    <p className="mb-2 text-xs text-slate-400">{t('product.orAskFirst')}</p>
+                    <ContactButtons phone={store.phone} message={t('product.orderMessage', { store: store.name, product: orderProductLabel })} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -171,9 +221,9 @@ export default function ProductPage() {
         )}
       </div>
 
-      {store && product && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 md:hidden">
-          <ContactButtons size="lg" phone={store.phone} message={t('product.orderMessage', { store: store.name, product: orderProductLabel })} />
+      {product && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
+          {addToCartControls}
         </div>
       )}
     </div>

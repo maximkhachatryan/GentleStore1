@@ -33,7 +33,20 @@ public enum RedeemOutcome
 }
 
 /// <summary>The customer behind the current request, as much of them as the storefront may see.</summary>
-public sealed record StorefrontVisitor(Guid CustomerId, Guid SessionId, string? DisplayName, string PhoneMasked);
+/// <param name="FromInvite">
+/// True when this browser was bound by redeeming a store-issued invite, which means the phone
+/// number was verified out-of-band. False for a self-declared guest checkout binding.
+/// </param>
+public sealed record StorefrontVisitor(
+    Guid CustomerId, Guid SessionId, string? DisplayName, string PhoneMasked, bool FromInvite);
+
+public enum GuestOutcome
+{
+    Registered,
+    CustomerBlocked
+}
+
+public sealed record GuestRegistration(GuestOutcome Outcome, CustomerSession? Session, Customer? Customer);
 
 public sealed record StorefrontAccessResult(Store? Store, StorefrontVisitor? Visitor, StorefrontDenial Denial);
 
@@ -51,6 +64,16 @@ public interface IStorefrontGate
 
     /// <summary>Claims a one-time invite link for the calling browser.</summary>
     Task<RedeemResult> RedeemAsync(Store store, string token, CancellationToken ct = default);
+
+    /// <summary>
+    /// Binds this browser to a self-declared customer at a public checkout, creating the customer
+    /// record if this phone number is new to the store. The binding carries no verification.
+    /// </summary>
+    Task<GuestRegistration> RegisterGuestAsync(
+        Store store, string phone, string phoneNormalized, string? fullName, CancellationToken ct = default);
+
+    /// <summary>Resolves the session behind the request without touching or clearing anything.</summary>
+    Task<CustomerSession?> PeekSessionAsync(Store store, CancellationToken ct = default);
 }
 
 public class StorefrontGate : IStorefrontGate
@@ -192,6 +215,109 @@ public class StorefrontGate : IStorefrontGate
         return new RedeemResult(RedeemOutcome.Unlocked, ToVisitor(session));
     }
 
+    public Task<CustomerSession?> PeekSessionAsync(Store store, CancellationToken ct = default)
+    {
+        var cookie = ReadCookie(store.Id);
+        return cookie is null ? Task.FromResult<CustomerSession?>(null) : FindSessionAsync(store.Id, cookie, ct);
+    }
+
+    public async Task<GuestRegistration> RegisterGuestAsync(
+        Store store, string phone, string phoneNormalized, string? fullName, CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        var customer = await FindOrCreateGuestCustomerAsync(store.Id, phone, phoneNormalized, fullName, now, ct);
+
+        if (customer.IsBlocked)
+            return new GuestRegistration(GuestOutcome.CustomerBlocked, null, customer);
+
+        var presented = await PeekSessionAsync(store, ct);
+
+        // Checking out again from the same browser under the same phone number keeps the existing
+        // binding, which is what makes a returning guest recognisable at all.
+        if (presented is not null && presented.CustomerId == customer.Id)
+        {
+            await TouchAsync(presented, ct, force: true);
+            return new GuestRegistration(GuestOutcome.Registered, presented, customer);
+        }
+
+        // A different phone number on a browser that already held a session means a different
+        // person (a shared family phone, say). Retire the old binding rather than orphan it.
+        if (presented is not null) presented.RevokedAt = now;
+
+        var secret = StorefrontTokens.NewSecret();
+        var ip = Truncate(_accessor.HttpContext?.Connection.RemoteIpAddress?.ToString(), 64);
+        var session = new CustomerSession
+        {
+            Id = Guid.NewGuid(),
+            StoreId = store.Id,
+            CustomerId = customer.Id,
+            // No invite: this is the marker that says the binding is self-declared.
+            CustomerInviteId = null,
+            TokenHash = StorefrontTokens.Hash(secret),
+            CreatedAt = now,
+            LastSeenAt = now,
+            CreatedIp = ip,
+            LastSeenIp = ip,
+            UserAgent = Truncate(_accessor.HttpContext?.Request.Headers[HeaderNames.UserAgent].ToString(), 400)
+        };
+        _db.CustomerSessions.Add(session);
+
+        customer.FirstActivatedAt ??= now;
+        await _db.SaveChangesAsync(ct);
+
+        session.Customer = customer;
+        WriteCookie(store.Id, secret);
+        return new GuestRegistration(GuestOutcome.Registered, session, customer);
+    }
+
+    private async Task<Customer> FindOrCreateGuestCustomerAsync(
+        Guid storeId, string phone, string phoneNormalized, string? fullName, DateTime now, CancellationToken ct)
+    {
+        var existing = await _db.Customers
+            .FirstOrDefaultAsync(c => c.StoreId == storeId && c.PhoneNormalized == phoneNormalized, ct);
+
+        if (existing is not null)
+        {
+            // Fill in a name the customer volunteered, but never overwrite what staff typed —
+            // an unverified checkout must not be able to rename a customer the store curated.
+            if (existing.Origin == CustomerOrigin.SelfRegistered
+                && string.IsNullOrWhiteSpace(existing.FullName)
+                && !string.IsNullOrWhiteSpace(fullName))
+            {
+                existing.FullName = fullName.Trim();
+                await _db.SaveChangesAsync(ct);
+            }
+
+            return existing;
+        }
+
+        var customer = new Customer
+        {
+            Id = Guid.NewGuid(),
+            StoreId = storeId,
+            Phone = phone,
+            PhoneNormalized = phoneNormalized,
+            FullName = string.IsNullOrWhiteSpace(fullName) ? null : fullName.Trim(),
+            Origin = CustomerOrigin.SelfRegistered,
+            CreatedAt = now
+        };
+        _db.Customers.Add(customer);
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+            return customer;
+        }
+        catch (DbUpdateException)
+        {
+            // Two checkouts for the same new phone number raced; the unique index caught the
+            // loser, so fall back to the row the winner inserted.
+            _db.Entry(customer).State = EntityState.Detached;
+            return await _db.Customers
+                .FirstAsync(c => c.StoreId == storeId && c.PhoneNormalized == phoneNormalized, ct);
+        }
+    }
+
     private Task<CustomerSession?> FindSessionAsync(Guid storeId, string secret, CancellationToken ct)
     {
         if (!StorefrontTokens.LooksLikeSecret(secret)) return Task.FromResult<CustomerSession?>(null);
@@ -225,7 +351,10 @@ public class StorefrontGate : IStorefrontGate
         session.CustomerId,
         session.Id,
         string.IsNullOrWhiteSpace(session.Customer?.FullName) ? null : session.Customer!.FullName,
-        PhoneNumbers.Mask(session.Customer?.PhoneNormalized ?? string.Empty));
+        PhoneNumbers.Mask(session.Customer?.PhoneNormalized ?? string.Empty),
+        // An invite-born session carries the store's own vouching for the phone number; a guest
+        // checkout binding carries nothing but what the visitor typed.
+        FromInvite: session.CustomerInviteId is not null);
 
     private string CookieName(Guid storeId) => $"{_options.SessionCookie.NamePrefix}_{storeId:N}";
 

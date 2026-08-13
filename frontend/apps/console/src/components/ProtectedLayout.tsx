@@ -16,6 +16,7 @@ import {
   MenuOutlined,
   ProfileOutlined,
   ShopOutlined,
+  ShoppingCartOutlined,
   TagsOutlined,
   TeamOutlined,
   UserOutlined,
@@ -47,6 +48,7 @@ export default function ProtectedLayout() {
   const items = useMemo(() => {
     const backofficeItems = [
       { key: '/store', icon: <ProfileOutlined />, label: <Link to="/store">{t('nav.storeProfile')}</Link> },
+      { key: '/store/orders', icon: <ShoppingCartOutlined />, label: <Link to="/store/orders">{t('nav.orders')}</Link> },
       { key: '/store/categories', icon: <AppstoreOutlined />, label: <Link to="/store/categories">{t('nav.categories')}</Link> },
       { key: '/store/products', icon: <ShopOutlined />, label: <Link to="/store/products">{t('nav.products')}</Link> },
       { key: '/store/tags', icon: <TagsOutlined />, label: <Link to="/store/tags">{t('nav.tags')}</Link> },
