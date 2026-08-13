@@ -1,3 +1,5 @@
+using GentleStore.Domain.Enums;
+
 namespace GentleStore.Domain.Entities;
 
 public class Store
@@ -12,10 +14,14 @@ public class Store
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>Whether the storefront is open to everyone or only to invited customers.</summary>
+    public StorefrontAccessMode StorefrontAccess { get; set; } = StorefrontAccessMode.Public;
+
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public ICollection<Tag> Tags { get; set; } = new List<Tag>();
     public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<Customer> Customers { get; set; } = new List<Customer>();
     public ICollection<VariantAttributeDefinition> VariantAttributeDefinitions { get; set; }
         = new List<VariantAttributeDefinition>();
 }

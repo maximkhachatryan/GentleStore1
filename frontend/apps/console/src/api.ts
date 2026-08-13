@@ -10,7 +10,7 @@ export function setOnUnauthorized(handler: () => void): void {
   unauthorizedHandler = handler;
 }
 
-export const http = createHttp(API_URL, () => unauthorizedHandler?.());
+export const http = createHttp(API_URL, { onUnauthorized: () => unauthorizedHandler?.() });
 
 // Admins are not bound to a store, so scope backoffice requests to the store they are managing.
 http.interceptors.request.use((config) => {

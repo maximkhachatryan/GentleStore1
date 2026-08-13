@@ -12,6 +12,7 @@ import CategoriesPage from './pages/backoffice/CategoriesPage';
 import ProductsPage from './pages/backoffice/ProductsPage';
 import TagsPage from './pages/backoffice/TagsPage';
 import VariantAttributesPage from './pages/backoffice/VariantAttributesPage';
+import CustomersPage from './pages/backoffice/CustomersPage';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/store/products" element={<ProductsPage />} />
             <Route path="/store/tags" element={<TagsPage />} />
             <Route path="/store/variant-attributes" element={<VariantAttributesPage />} />
+            <Route path="/store/customers" element={<CustomersPage />} />
           </>
         )}
         <Route path="*" element={<Navigate to={isAdmin ? (managingStore ? '/store' : '/admin') : '/store'} replace />} />

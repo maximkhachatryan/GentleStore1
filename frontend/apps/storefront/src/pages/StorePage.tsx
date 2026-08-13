@@ -7,8 +7,10 @@ import Footer from '../components/Footer';
 import Chip from '../components/Chip';
 import ProductCard from '../components/ProductCard';
 import ContactButtons from '../components/ContactButtons';
+import StoreGate from '../components/StoreGate';
 import { GridSkeleton } from '../components/Skeletons';
 import { resolveAssetUrl } from '@gentlestore/shared';
+import { isInviteRequired } from '../lib/access';
 import { api, API_URL } from '../api';
 
 export default function StorePage() {
@@ -36,6 +38,10 @@ export default function StorePage() {
   });
 
   if (storeQuery.isError) {
+    // A private storefront answers with 403 rather than 404, so the customer gets a way back in
+    // instead of being told the store does not exist.
+    if (isInviteRequired(storeQuery.error)) return <StoreGate slug={slug} reason="locked" />;
+
     return (
       <div>
         <Navbar />
@@ -49,6 +55,7 @@ export default function StorePage() {
 
   const store = storeQuery.data;
   const logo = resolveAssetUrl(API_URL, store?.logoUrl);
+  const visitorName = store?.visitor?.displayName ?? null;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -66,6 +73,13 @@ export default function StorePage() {
                 )}
               </div>
               <div className="flex-1">
+                {store.visitor && (
+                  <p className="text-sm font-medium text-emerald-600">
+                    {visitorName
+                      ? t('store.greetingNamed', { name: visitorName })
+                      : t('store.greeting', { phone: store.visitor.phoneMasked })}
+                  </p>
+                )}
                 <h1 className="text-2xl font-bold text-slate-900">{store.name}</h1>
                 {store.description && <p className="mt-1 max-w-2xl text-slate-500">{store.description}</p>}
               </div>

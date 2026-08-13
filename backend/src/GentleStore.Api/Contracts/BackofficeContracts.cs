@@ -2,10 +2,11 @@ namespace GentleStore.Api.Contracts;
 
 public record StoreProfileDto(
     Guid Id, string Name, string Slug, string Phone, string? LogoUrl,
-    string? Description, string Currency, bool IsActive);
+    string? Description, string Currency, bool IsActive, string StorefrontAccess);
 
 public record UpdateStoreProfileRequest(
-    string Name, string Phone, string? LogoUrl, string? Description, string Currency);
+    string Name, string Phone, string? LogoUrl, string? Description, string Currency,
+    string? StorefrontAccess);
 
 public record CategoryDto(Guid Id, string Name, int DisplayOrder, int ProductCount);
 
@@ -63,3 +64,37 @@ public record UpdateVariantAttributeDefinitionRequest(string Name, int DisplayOr
 public record CreateVariantAttributeOptionRequest(string Value, int DisplayOrder);
 
 public record UpdateVariantAttributeOptionRequest(string Value, int DisplayOrder);
+
+// ---- Storefront customers ----
+
+/// <param name="Status">
+/// Derived, not stored: <c>blocked</c>, <c>active</c> (at least one signed-in device),
+/// <c>invited</c> (link outstanding), <c>expired</c> (link lapsed unused), <c>new</c>.
+/// </param>
+public record CustomerDto(
+    Guid Id, string Phone, string PhoneNormalized, string? FullName, string? Note,
+    bool IsBlocked, string Status, int ActiveDeviceCount,
+    DateTime? PendingInviteExpiresAt, DateTime? LastSeenAt, DateTime? FirstActivatedAt, DateTime CreatedAt);
+
+public record CreateCustomerRequest(string Phone, string? FullName, string? Note);
+
+public record UpdateCustomerRequest(string Phone, string? FullName, string? Note);
+
+/// <summary>
+/// The one and only time the invite secret leaves the server — the database keeps just its hash,
+/// so a link that is not delivered now has to be regenerated.
+/// </summary>
+public record CustomerInviteLinkDto(Guid Id, string Url, DateTime ExpiresAt);
+
+/// <param name="Status"><c>pending</c>, <c>used</c>, <c>revoked</c> or <c>expired</c>.</param>
+public record CustomerInviteDto(
+    Guid Id, string Status, DateTime CreatedAt, DateTime ExpiresAt,
+    DateTime? RedeemedAt, DateTime? RevokedAt, string? RedeemedUserAgent);
+
+/// <summary>One browser the customer is signed in on.</summary>
+public record CustomerDeviceDto(Guid Id, DateTime CreatedAt, DateTime LastSeenAt, string? UserAgent);
+
+public record CustomerDetailDto(
+    CustomerDto Customer,
+    IReadOnlyList<CustomerDeviceDto> Devices,
+    IReadOnlyList<CustomerInviteDto> Invites);

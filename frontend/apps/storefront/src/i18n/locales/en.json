@@ -11,7 +11,60 @@
     "all": "All",
     "tagsLabel": "Tags:",
     "noProducts": "No products found.",
-    "contactMessage": "Hi {{store}}, I have a question about your products."
+    "contactMessage": "Hi {{store}}, I have a question about your products.",
+    "greetingNamed": "Welcome back, {{name}}",
+    "greeting": "Signed in as {{phone}}"
+  },
+  "welcome": {
+    "title": "Welcome to {{store}}",
+    "titleFallback": "Opening your invitation",
+    "subtitle": "Unlocking the catalogue on this device..."
+  },
+  "gate": {
+    "privateBadge": "Private store",
+    "requestMessage": "Hi {{store}}, could you send me a new link to your catalogue?",
+    "browserNote": "Your link is remembered on this browser only. A private window, another phone, or clearing your browser data will need a new link.",
+    "footerNote": "Only {{store}} can hand out access to this catalogue.",
+    "locked": {
+      "title": "You need an invitation",
+      "body": "{{store}} shares this catalogue with invited customers only. Ask them for your personal link and it will open right here."
+    },
+    "already_used": {
+      "title": "This link is already in use",
+      "body": "An invitation opens on one device and stays there. This one was opened somewhere else, so ask {{store}} for a fresh link."
+    },
+    "expired": {
+      "title": "This link has expired",
+      "body": "Invitations do not stay open forever. Ask {{store}} to send you a new one — it only takes a moment."
+    },
+    "revoked": {
+      "title": "This link is no longer valid",
+      "body": "{{store}} replaced or cancelled this invitation. The newest link they sent you is the one that works."
+    },
+    "blocked": {
+      "title": "Access is paused",
+      "body": "{{store}} has paused access for your number. Get in touch with them to sort it out."
+    },
+    "invalid": {
+      "title": "We could not read this link",
+      "body": "It may have been cut short when it was copied. Ask {{store}} to send the link again and open it directly from the message."
+    },
+    "rate_limited": {
+      "title": "Too many attempts",
+      "body": "Please wait a few minutes and open your link again, or ask {{store}} for help."
+    },
+    "unlocked": {
+      "title": "You are in",
+      "body": "Taking you to {{store}}..."
+    },
+    "already_unlocked": {
+      "title": "You are already in",
+      "body": "Taking you to {{store}}..."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "body": "We could not open this link just now. Please try again, or ask {{store}} for a new one."
+    }
   },
   "product": {
     "notFound": "Product not found",

@@ -5,10 +5,15 @@ import type {
   AdminUser,
   Category,
   CreateCategoryRequest,
+  CreateCustomerRequest,
   CreateProductRequest,
   CreateStoreRequest,
   CreateTagRequest,
   CreateUserRequest,
+  Customer,
+  CustomerDetail,
+  CustomerInviteLink,
+  CustomerQuery,
   LoginRequest,
   LoginResponse,
   Product,
@@ -23,11 +28,14 @@ import type {
   PublicStore,
   PublicStoreListItem,
   PublicTag,
+  RedeemInviteResult,
   StoreDetail,
   StoreListItem,
   StoreProfile,
+  StorefrontAccess,
   Tag,
   UpdateCategoryRequest,
+  UpdateCustomerRequest,
   UpdateProductRequest,
   UpdateStoreProfileRequest,
   UpdateStoreRequest,
@@ -114,6 +122,24 @@ export function createApi(http: AxiosInstance) {
         http.put<VariantAttributeOption>(`/api/backoffice/variant-attributes/${id}/options/${optionId}`, body).then((r) => r.data),
       deleteVariantAttributeOption: (id: string, optionId: string) =>
         http.delete(`/api/backoffice/variant-attributes/${id}/options/${optionId}`).then((r) => r.data),
+      listCustomers: (query?: CustomerQuery) =>
+        http.get<Customer[]>('/api/backoffice/customers', { params: query }).then((r) => r.data),
+      getCustomer: (id: string) => http.get<CustomerDetail>(`/api/backoffice/customers/${id}`).then((r) => r.data),
+      createCustomer: (body: CreateCustomerRequest) =>
+        http.post<Customer>('/api/backoffice/customers', body).then((r) => r.data),
+      updateCustomer: (id: string, body: UpdateCustomerRequest) =>
+        http.put<Customer>(`/api/backoffice/customers/${id}`, body).then((r) => r.data),
+      deleteCustomer: (id: string) => http.delete(`/api/backoffice/customers/${id}`).then((r) => r.data),
+      /** Mints a fresh single-use link and revokes any outstanding one. The URL is returned once. */
+      createCustomerInvite: (id: string) =>
+        http.post<CustomerInviteLink>(`/api/backoffice/customers/${id}/invites`).then((r) => r.data),
+      revokeCustomerInvites: (id: string) =>
+        http.delete(`/api/backoffice/customers/${id}/invites`).then((r) => r.data),
+      revokeCustomerDevice: (id: string, deviceId: string) =>
+        http.post(`/api/backoffice/customers/${id}/devices/${deviceId}/revoke`).then((r) => r.data),
+      blockCustomer: (id: string) => http.post<Customer>(`/api/backoffice/customers/${id}/block`).then((r) => r.data),
+      unblockCustomer: (id: string) =>
+        http.post<Customer>(`/api/backoffice/customers/${id}/unblock`).then((r) => r.data),
     },
     store: {
       list: (search?: string) =>
@@ -126,6 +152,12 @@ export function createApi(http: AxiosInstance) {
         http.get<PublicProductListItem[]>(`/api/public/stores/${slug}/products`, { params: query }).then((r) => r.data),
       product: (slug: string, id: string) =>
         http.get<PublicProduct>(`/api/public/stores/${slug}/products/${id}`).then((r) => r.data),
+      /** Branding + whether this browser may see the catalogue. Never gated. */
+      access: (slug: string) =>
+        http.get<StorefrontAccess>(`/api/public/stores/${slug}/access`).then((r) => r.data),
+      /** Claims a personal invite link; the server replies with a long-lived session cookie. */
+      redeemInvite: (slug: string, token: string) =>
+        http.post<RedeemInviteResult>(`/api/public/stores/${slug}/access/redeem`, { token }).then((r) => r.data),
     },
     uploads: {
       upload: (file: File) => {

@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import ProductGallery from '../components/ProductGallery';
 import ContactButtons from '../components/ContactButtons';
+import StoreGate from '../components/StoreGate';
 import { formatPrice } from '../lib/format';
+import { isInviteRequired } from '../lib/access';
 import { api } from '../api';
 
 export default function ProductPage() {
@@ -58,6 +60,9 @@ export default function ProductPage() {
   }, [product, attributeGroups, selected]);
 
   if (productQuery.isError || storeQuery.isError) {
+    if (isInviteRequired(storeQuery.error) || isInviteRequired(productQuery.error))
+      return <StoreGate slug={slug} reason="locked" />;
+
     return (
       <div>
         <Navbar store={store} />

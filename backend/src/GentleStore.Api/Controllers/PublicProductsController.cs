@@ -1,25 +1,24 @@
 using GentleStore.Api.Contracts;
+using GentleStore.Api.Storefront;
 using GentleStore.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace GentleStore.Api.Controllers;
 
-[ApiController]
-[AllowAnonymous]
 [Route("api/public/stores/{slug}/products")]
-public class PublicProductsController : ControllerBase
+public class PublicProductsController : PublicStoreControllerBase
 {
     private readonly AppDbContext _db;
 
-    public PublicProductsController(AppDbContext db) => _db = db;
+    public PublicProductsController(AppDbContext db, IStorefrontGate gate) : base(gate) => _db = db;
 
     [HttpGet]
     public async Task<IActionResult> List(string slug, Guid? categoryId, Guid? tagId, string? search)
     {
-        var store = await _db.Stores.FirstOrDefaultAsync(s => s.IsActive && s.Slug == slug);
-        if (store is null) return NotFound();
+        var (resolved, _, error) = await OpenStorefrontAsync(slug);
+        if (error is not null) return error;
+        var store = resolved!;
 
         var query = _db.Products.Where(p => p.StoreId == store.Id && p.IsAvailable);
         if (categoryId is not null) query = query.Where(p => p.CategoryId == categoryId);
@@ -44,8 +43,9 @@ public class PublicProductsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(string slug, Guid id)
     {
-        var store = await _db.Stores.FirstOrDefaultAsync(s => s.IsActive && s.Slug == slug);
-        if (store is null) return NotFound();
+        var (resolved, _, error) = await OpenStorefrontAsync(slug);
+        if (error is not null) return error;
+        var store = resolved!;
 
         var product = await _db.Products
             .Where(p => p.Id == id && p.StoreId == store.Id && p.IsAvailable)

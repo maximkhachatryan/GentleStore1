@@ -102,6 +102,10 @@ export interface AdminStats {
 }
 
 // ---- Backoffice ----
+
+/** `Public`: anyone with the link. `InviteOnly`: only browsers that redeemed a personal invite. */
+export type StorefrontAccessMode = 'Public' | 'InviteOnly';
+
 export interface StoreProfile {
   id: string;
   name: string;
@@ -111,6 +115,7 @@ export interface StoreProfile {
   description: string | null;
   currency: string;
   isActive: boolean;
+  storefrontAccess: StorefrontAccessMode;
 }
 
 export interface UpdateStoreProfileRequest {
@@ -119,6 +124,7 @@ export interface UpdateStoreProfileRequest {
   logoUrl?: string | null;
   description?: string | null;
   currency: string;
+  storefrontAccess?: StorefrontAccessMode | null;
 }
 
 export interface Category {
@@ -238,6 +244,74 @@ export interface CreateVariantAttributeOptionRequest {
 }
 export type UpdateVariantAttributeOptionRequest = CreateVariantAttributeOptionRequest;
 
+// ---- Storefront customers ----
+
+/**
+ * Derived server-side from invites and sessions:
+ * `new` (never invited), `invited` (link outstanding), `active` (at least one signed-in browser),
+ * `expired` (link lapsed unused), `blocked`.
+ */
+export type CustomerStatus = 'new' | 'invited' | 'active' | 'expired' | 'blocked';
+
+export interface Customer {
+  id: string;
+  /** As the store typed it, for display. */
+  phone: string;
+  /** Digits only — what wa.me links need. */
+  phoneNormalized: string;
+  fullName: string | null;
+  note: string | null;
+  isBlocked: boolean;
+  status: CustomerStatus;
+  activeDeviceCount: number;
+  pendingInviteExpiresAt: string | null;
+  lastSeenAt: string | null;
+  firstActivatedAt: string | null;
+  createdAt: string;
+}
+
+export interface CreateCustomerRequest {
+  phone: string;
+  fullName?: string | null;
+  note?: string | null;
+}
+export type UpdateCustomerRequest = CreateCustomerRequest;
+
+export interface CustomerQuery {
+  search?: string;
+  status?: CustomerStatus;
+}
+
+/** Returned once, when the invite is minted — the server only keeps a hash of the secret. */
+export interface CustomerInviteLink {
+  id: string;
+  url: string;
+  expiresAt: string;
+}
+
+export interface CustomerInvite {
+  id: string;
+  status: 'pending' | 'used' | 'revoked' | 'expired';
+  createdAt: string;
+  expiresAt: string;
+  redeemedAt: string | null;
+  revokedAt: string | null;
+  redeemedUserAgent: string | null;
+}
+
+export interface CustomerDevice {
+  id: string;
+  createdAt: string;
+  lastSeenAt: string;
+  userAgent: string | null;
+}
+
+export interface CustomerDetail {
+  customer: Customer;
+  devices: CustomerDevice[];
+  invites: CustomerInvite[];
+}
+
 // ---- Public ----
 export interface PublicStoreListItem {
   slug: string;
@@ -254,6 +328,9 @@ export interface PublicStore {
   description: string | null;
   phone: string;
   currency: string;
+  accessMode: StorefrontAccessMode;
+  /** The customer this browser is signed in as; null on public storefronts. */
+  visitor: StorefrontVisitor | null;
 }
 
 export interface PublicCategory {
@@ -309,6 +386,37 @@ export interface PublicProduct {
   images: PublicImage[];
   tags: PublicTag[];
   variants: PublicVariant[];
+}
+
+export interface StorefrontVisitor {
+  displayName: string | null;
+  /** Only the last digits, so a shared device does not leak a full number. */
+  phoneMasked: string;
+}
+
+/** Gate status for a storefront — readable before the catalogue is unlocked. */
+export interface StorefrontAccess {
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  phone: string;
+  accessMode: StorefrontAccessMode;
+  unlocked: boolean;
+  visitor: StorefrontVisitor | null;
+}
+
+export type RedeemInviteStatus =
+  | 'unlocked'
+  | 'already_unlocked'
+  | 'already_used'
+  | 'expired'
+  | 'revoked'
+  | 'blocked'
+  | 'invalid';
+
+export interface RedeemInviteResult {
+  status: RedeemInviteStatus;
+  visitor: StorefrontVisitor | null;
 }
 
 export interface UploadResponse {

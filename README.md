@@ -106,6 +106,51 @@ Two demo stores are seeded — **Bloom & Petal** (`/bloom-petal`) and **Bean Sce
 - **Console → Super Admin**: dashboard stats, create/edit/activate stores, manage users.
 - **Console → Store Owner**: edit store profile (with logo upload), manage categories, products
   (with image upload & tag assignment) and tags — all scoped to their own store.
+- **Console → Customers**: register customers by phone, hand each one a personal one-time invite
+  link over WhatsApp, and see which devices are signed in (see below).
+
+---
+
+## Invite-only storefronts
+
+A store can keep its storefront open to everyone or restrict it to invited customers
+(**Store Profile → Who can see your storefront**). Invite-only stores are also hidden from the
+public store directory.
+
+### How it works
+
+1. The store adds a customer by phone number (**Customers → New customer**).
+2. **Send invite** mints a link like `https://shop.example.com/bloom-petal/welcome#i=<secret>` and
+   opens WhatsApp with the message — and the link — already typed into that customer's chat box.
+3. The first browser to open the link claims it and receives a long-lived `HttpOnly` cookie.
+   That browser can now browse the catalogue.
+4. The same link opened from **any other** browser is refused (`409 already_used`), while the
+   browser that claimed it can re-open the WhatsApp message as often as it likes.
+
+### Security properties
+
+| Concern | How it is handled |
+|---|---|
+| Secret in a URL | 256-bit random token carried in the **URL fragment**, which browsers never send to a server — so it stays out of access logs, `Referer` headers and analytics. The storefront wipes it from the address bar on arrival. |
+| Database leak | Only SHA-256 hashes of invite and session secrets are stored. Neither can be replayed. |
+| Link sharing / forwarding | Single use, enforced by a conditional `UPDATE ... WHERE RedeemedAt IS NULL`, so simultaneous opens cannot both win. |
+| Session theft via XSS | The session cookie is `HttpOnly` — page scripts cannot read it. |
+| CSRF | `SameSite=Lax`. The API and storefront share a registrable domain, so the cookie flows between them but is withheld from requests originated by unrelated sites. |
+| Brute force | Per-IP rate limit on the redeem endpoint (20 attempts / 5 min). |
+| Unused links | Invites expire (`Storefront:InviteExpiryDays`, default 14 days) and are revoked automatically when a new one is generated. |
+| Losing a device | The store can sign out a single device or block a customer outright. Blocking is reversible; revoking a device is not — that browser needs a new link. |
+
+Cookies cannot literally live forever (browsers cap persistent cookies at ~400 days), so the
+cookie is issued for the maximum window and its expiry is refreshed on every visit. A customer
+who keeps shopping is never signed out.
+
+### Ready for orders
+
+Order functionality is not implemented yet, but the identity it needs is already in place. Every
+gated request resolves to a `CustomerSession` row (browser) belonging to a `Customer` row (person),
+so a future `Order` only has to carry `CustomerId` + `CustomerSessionId` to record who placed it
+and from which device. `PublicStoreDto.visitor` already exposes the signed-in customer to the
+storefront, which greets them by name.
 
 ---
 
@@ -116,10 +161,19 @@ Two demo stores are seeded — **Bloom & Petal** (`/bloom-petal`) and **Bean Sce
 | Auth         | `/api/auth`          | anonymous (`login`) / bearer |
 | Admin        | `/api/admin`         | `SuperAdmin`                 |
 | Backoffice   | `/api/backoffice`    | `StoreOwner` / `StoreStaff`  |
-| Public       | `/api/public`        | anonymous                    |
+| Public       | `/api/public`        | anonymous (invite cookie for private stores) |
 | Uploads      | `/api/uploads`       | any authenticated user       |
 
 Uploaded images are stored under `backend/src/GentleStore.Api/wwwroot/uploads` and served at `/uploads/*`.
+
+Storefront endpoints for a store set to invited-customers-only answer
+`403 { "code": "invite_required" }` until the browser presents a valid session cookie. Two
+endpoints are never gated, because the locked-out screen needs them:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/public/stores/{slug}/access` | Store name, logo, phone, access mode, and whether this browser is in. |
+| `POST /api/public/stores/{slug}/access/redeem` | Claims an invite secret and sets the session cookie. |
 
 ---
 
@@ -151,7 +205,14 @@ npm run cap:sync         # copy the web build into the native projects
 
 ## Notes & future ideas
 
-- Cart / checkout / orders, customer accounts and payments.
+- Cart / checkout / orders attributed to the invited customer (`CustomerId` + `CustomerSessionId`
+  are already resolved on every gated request).
+- Per-customer language, so invite messages go out in the customer's language rather than the
+  staff member's.
+- Sending invite links over SMS as well as WhatsApp.
+- Native session storage for the Capacitor build, where remote cookies are less reliable than in
+  a browser.
+- Customer accounts and payments.
 - Per-store subdomains or custom domains.
 - Cloud image storage (S3/Blob) instead of local files.
 - Multi-currency conversion and i18n.

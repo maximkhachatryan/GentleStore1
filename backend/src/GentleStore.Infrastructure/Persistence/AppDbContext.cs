@@ -20,6 +20,9 @@ public class AppDbContext : DbContext
     public DbSet<VariantAttribute> VariantAttributes => Set<VariantAttribute>();
     public DbSet<VariantAttributeDefinition> VariantAttributeDefinitions => Set<VariantAttributeDefinition>();
     public DbSet<VariantAttributeOption> VariantAttributeOptions => Set<VariantAttributeOption>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerInvite> CustomerInvites => Set<CustomerInvite>();
+    public DbSet<CustomerSession> CustomerSessions => Set<CustomerSession>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -34,6 +37,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.LogoUrl).HasMaxLength(1000);
             e.Property(x => x.Description).HasMaxLength(4000);
             e.Property(x => x.Currency).IsRequired().HasMaxLength(3);
+            e.Property(x => x.StorefrontAccess).HasConversion<int>();
         });
 
         mb.Entity<Category>(e =>
@@ -116,6 +120,46 @@ public class AppDbContext : DbContext
             e.HasOne(x => x.Option).WithMany()
                 .HasForeignKey(x => x.VariantAttributeOptionId).OnDelete(DeleteBehavior.SetNull);
             e.HasIndex(x => new { x.ProductVariantId, x.Name }).IsUnique();
+        });
+
+        mb.Entity<Customer>(e =>
+        {
+            e.Property(x => x.Phone).IsRequired().HasMaxLength(40);
+            e.Property(x => x.PhoneNormalized).IsRequired().HasMaxLength(20);
+            e.Property(x => x.FullName).HasMaxLength(150);
+            e.Property(x => x.Note).HasMaxLength(1000);
+            e.HasOne(x => x.Store).WithMany(x => x.Customers)
+                .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+            // One customer record per phone number within a store.
+            e.HasIndex(x => new { x.StoreId, x.PhoneNormalized }).IsUnique();
+        });
+
+        mb.Entity<CustomerInvite>(e =>
+        {
+            e.Property(x => x.TokenHash).IsRequired().HasMaxLength(64);
+            e.Property(x => x.RedeemedIp).HasMaxLength(64);
+            e.Property(x => x.RedeemedUserAgent).HasMaxLength(400);
+            e.HasOne(x => x.Customer).WithMany(x => x.Invites)
+                .HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Store).WithMany()
+                .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+            // Redemption looks the invite up by hash alone, so it must be globally unique.
+            e.HasIndex(x => x.TokenHash).IsUnique();
+        });
+
+        mb.Entity<CustomerSession>(e =>
+        {
+            e.Property(x => x.TokenHash).IsRequired().HasMaxLength(64);
+            e.Property(x => x.CreatedIp).HasMaxLength(64);
+            e.Property(x => x.LastSeenIp).HasMaxLength(64);
+            e.Property(x => x.UserAgent).HasMaxLength(400);
+            e.HasOne(x => x.Customer).WithMany(x => x.Sessions)
+                .HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Store).WithMany()
+                .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Invite).WithMany(x => x.Sessions)
+                .HasForeignKey(x => x.CustomerInviteId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(x => x.TokenHash).IsUnique();
         });
 
         mb.Entity<User>(e =>

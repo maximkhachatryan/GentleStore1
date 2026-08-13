@@ -18,6 +18,7 @@ import {
   ShopOutlined,
   TagsOutlined,
   TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/AuthContext';
 import { managedStore, useManagedStore } from '../auth/managedStore';
@@ -50,6 +51,7 @@ export default function ProtectedLayout() {
       { key: '/store/products', icon: <ShopOutlined />, label: <Link to="/store/products">{t('nav.products')}</Link> },
       { key: '/store/tags', icon: <TagsOutlined />, label: <Link to="/store/tags">{t('nav.tags')}</Link> },
       { key: '/store/variant-attributes', icon: <BranchesOutlined />, label: <Link to="/store/variant-attributes">{t('nav.variantAttributes')}</Link> },
+      { key: '/store/customers', icon: <UserOutlined />, label: <Link to="/store/customers">{t('nav.customers')}</Link> },
     ];
     if (managingStore) return backofficeItems;
     if (isAdmin) {

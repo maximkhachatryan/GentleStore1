@@ -215,6 +215,9 @@ SUPERADMIN_PASSWORD=<strong admin password>
 
 # --- Keep demo data OFF in production ---
 SEED_DEMO_DATA=false
+
+# --- Invite links for invite-only storefronts (optional, defaults to 14) ---
+INVITE_EXPIRY_DAYS=14
 ```
 
 > **Important:** set `SUPERADMIN_PASSWORD` to a strong value **before** the first boot. The admin is
@@ -223,6 +226,24 @@ SEED_DEMO_DATA=false
 
 The frontends bake `VITE_API_URL=https://<API_DOMAIN>` at **build time**, so if you ever change
 `API_DOMAIN` you must rebuild the frontends (see §12).
+
+### Keep the API on a subdomain of the storefront
+
+Invite-only storefronts sign customers in with a cookie the API sets and the storefront reads.
+Browsers only send that cookie along if the two hosts are **same-site**, i.e. share a registrable
+domain — which the layout above satisfies (`api.example.com` and `example.com`).
+
+If you ever put the API on an unrelated domain (say `example.com` for the storefront and
+`gentlestore-api.net` for the API), the cookie will be dropped and every invite-only storefront
+will look permanently locked. In that case the cookie has to be relaxed in
+`docker-compose.prod.yml`:
+
+```yaml
+      Storefront__SessionCookie__SameSite: "None"   # requires Secure, i.e. HTTPS
+```
+
+Same-site hosts are the better setup — `SameSite=None` gives up the CSRF protection that `Lax`
+provides for free.
 
 ---
 
@@ -369,6 +390,23 @@ docker run --rm \
 **API can't reach the database**
 - Check `dcp logs postgres` for readiness and that the `ConnectionStrings__Default` host is
   `postgres` (the service name), not `localhost`.
+
+**An invite link opens but the storefront stays locked**
+- The session cookie is not surviving the round trip. Open the link and check the browser's
+  network tab: the `POST /access/redeem` response must carry a `Set-Cookie: gs_sf_…` header, and
+  the following `GET /api/public/stores/<slug>` must send it back.
+- If the cookie is set but never sent back, the API and storefront are not same-site — see
+  "Keep the API on a subdomain of the storefront" in §9.
+- If the response has no `Set-Cookie` at all, `Cors__Origins` is missing the storefront origin, so
+  the browser discarded a credentialed response.
+- Private/incognito windows discard the cookie when closed, so a link opened there needs
+  regenerating. This is expected, and the storefront says so on the locked screen.
+
+**A customer says their link says "already in use"**
+- The link was opened somewhere else first — a link preview bot in a group chat, or a forwarded
+  copy. Generate a new one from **Customers → New link**; the old one is revoked automatically.
+- Invite history for that customer (**Customers → Customer details**) shows when each link was
+  opened and by which browser.
 
 **Admin login fails**
 - The admin is created only on the first boot with an empty user table. If you booted once with a

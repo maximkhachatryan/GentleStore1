@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { App as AntApp, Button, Card, Col, Form, Input, Row } from 'antd';
+import { App as AntApp, Button, Card, Col, Form, Input, Radio, Row, Space, Typography } from 'antd';
+import type { StorefrontAccessMode } from '@gentlestore/shared';
 import { api } from '../../api';
 import ImageUpload from '../../components/ImageUpload';
 import PageHeader from '../../components/PageHeader';
@@ -12,6 +14,21 @@ interface ProfileValues {
   phone: string;
   currency: string;
   description?: string;
+  storefrontAccess: StorefrontAccessMode;
+}
+
+/** One radio option, with the consequence of picking it spelled out under the label. */
+function AccessOption({ value, title, description }: { value: StorefrontAccessMode; title: string; description: string }) {
+  return (
+    <Radio value={value} style={{ alignItems: 'flex-start', display: 'flex' }}>
+      <div style={{ paddingBottom: 8 }}>
+        <div style={{ fontWeight: 600 }}>{title}</div>
+        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          {description}
+        </Typography.Text>
+      </div>
+    </Radio>
+  );
 }
 
 export default function StoreProfilePage() {
@@ -31,6 +48,7 @@ export default function StoreProfilePage() {
         phone: data.phone,
         currency: data.currency,
         description: data.description ?? '',
+        storefrontAccess: data.storefrontAccess,
       });
       setLogoUrl(data.logoUrl ?? undefined);
     }
@@ -44,6 +62,7 @@ export default function StoreProfilePage() {
         currency: v.currency || 'USD',
         description: v.description,
         logoUrl,
+        storefrontAccess: v.storefrontAccess,
       }),
     onSuccess: () => {
       message.success(t('storeProfile.updated'));
@@ -80,6 +99,31 @@ export default function StoreProfilePage() {
           </Form.Item>
           <Form.Item label={t('common.logo')}>
             <ImageUpload value={logoUrl} onChange={setLogoUrl} buttonText={t('common.uploadLogo')} />
+          </Form.Item>
+          <Form.Item
+            name="storefrontAccess"
+            label={t('storeProfile.access')}
+            extra={
+              <Space size={4} wrap>
+                {t('storeProfile.accessExtra')}
+                <Link to="/store/customers">{t('storeProfile.accessExtraLink')}</Link>
+              </Space>
+            }
+          >
+            <Radio.Group>
+              <Space direction="vertical" size={4}>
+                <AccessOption
+                  value="Public"
+                  title={t('storeProfile.accessPublic')}
+                  description={t('storeProfile.accessPublicHint')}
+                />
+                <AccessOption
+                  value="InviteOnly"
+                  title={t('storeProfile.accessInviteOnly')}
+                  description={t('storeProfile.accessInviteOnlyHint')}
+                />
+              </Space>
+            </Radio.Group>
           </Form.Item>
           <Button type="primary" htmlType="submit" block={isMobile} loading={save.isPending}>
             {t('storeProfile.saveChanges')}

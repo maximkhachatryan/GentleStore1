@@ -1,10 +1,13 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using GentleStore.Api.Auth;
+using GentleStore.Api.Storefront;
 using GentleStore.Domain.Enums;
 using GentleStore.Infrastructure;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -14,8 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<StorefrontOptions>(builder.Configuration.GetSection(StorefrontOptions.SectionName));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<IStorefrontGate, StorefrontGate>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
@@ -46,7 +51,19 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services.AddCors(options => options.AddPolicy("frontend", policy =>
     policy.WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>())
           .AllowAnyHeader()
-          .AllowAnyMethod()));
+          .AllowAnyMethod()
+          // The storefront session cookie is set and read cross-origin (storefront host → API
+          // host), which browsers only allow on an explicit origin allow-list — never "*".
+          .AllowCredentials()));
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(RateLimitPolicies.InviteRedeem, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(5) }));
+});
 
 builder.Services.AddControllers();
 
@@ -105,6 +122,8 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseCors("frontend");
+// After CORS so a 429 still carries the headers the browser needs to read it.
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

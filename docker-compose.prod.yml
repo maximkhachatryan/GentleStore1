@@ -36,6 +36,14 @@ services:
       Jwt__Secret: ${JWT_SECRET}
       Cors__Origins__0: "https://${STOREFRONT_DOMAIN}"
       Cors__Origins__1: "https://${CONSOLE_DOMAIN}"
+      # Base of the invite links the backoffice hands out.
+      Storefront__Url: "https://${STOREFRONT_DOMAIN}"
+      Storefront__InviteExpiryDays: ${INVITE_EXPIRY_DAYS:-14}
+      # The storefront and the API share a registrable domain, so a Lax cookie still reaches the
+      # API on storefront requests while staying blocked on requests from unrelated sites.
+      # Put the two on unrelated domains and this has to become "None".
+      Storefront__SessionCookie__SameSite: "Lax"
+      Storefront__SessionCookie__Secure: "true"
       Seed__DemoData: ${SEED_DEMO_DATA:-false}
       Seed__SuperAdminEmail: ${SUPERADMIN_EMAIL}
       Seed__SuperAdminPassword: ${SUPERADMIN_PASSWORD}
