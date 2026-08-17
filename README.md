@@ -22,6 +22,9 @@ GentleStore/
 │     ├─ GentleStore.Domain/          # Entities + enums
 │     ├─ GentleStore.Infrastructure/  # EF Core DbContext, migrations, auth helpers, seeding
 │     └─ GentleStore.Api/             # Minimal-API endpoints, JWT, DI, file uploads
+├─ payment-service/                   # Payments microservice — own solution, own database
+│  ├─ PaymentService.sln
+│  └─ src/                            # Domain / Application / Infrastructure / Api
 └─ frontend/                          # npm workspaces monorepo
    ├─ packages/shared/                # Typed API client + shared TS types
    └─ apps/
@@ -276,9 +279,36 @@ npm run cap:sync         # copy the web build into the native projects
   Console uses Ant Design; the storefront uses Tailwind CSS and Capacitor.
 - **Database:** PostgreSQL 16.
 
+## Payments
+
+Payments live in a **separate microservice** — [`payment-service/`](payment-service/README.md) —
+with its own solution, its own database and its own deployment. It exposes the API GentleStore
+calls to take money, and hides the differences between payment gateways behind one port.
+
+**No gateway is integrated yet.** The service is the abstraction layer plus the machinery that has
+to exist around it: idempotency, an attempt log, a webhook inbox, status-transition rules, a
+callback outbox and a reconciler. Adding Stripe, Adyen or a local acquirer means one class
+implementing `IPaymentGateway` and one line of registration — nothing in GentleStore changes.
+
+The GentleStore side is not wired up yet either: linking an order to a payment needs a migration
+and `OrderStatus` changes here, which is its own step. Today orders are still agreed and settled
+with the store directly.
+
+Run it alongside the rest of the stack:
+
+```bash
+docker compose up -d postgres payments     # http://localhost:5090/swagger
+```
+
+See the [service README](payment-service/README.md) for the API, the callback contract, and what
+writing a gateway integration involves.
+
+---
+
 ## Notes & future ideas
 
-- Payments. Orders are agreed and settled with the store directly today.
+- Wiring GentleStore to the payment service: an `Order` → `Payment` link, a `Paid` status, and the
+  storefront redirect/return flow.
 - Delivery fees, minimum orders and delivery zones — currently a free-text delivery note.
 - Self-service cancellation for verified customers (deliberately not offered to unverified guests:
   a guessed order number should not let anyone cancel someone else's order).

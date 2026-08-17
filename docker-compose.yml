@@ -35,6 +35,26 @@ services:
       postgres:
         condition: service_healthy
 
+  # Its own service and its own database, in the same Postgres instance for development only.
+  # EF creates `gentlestore_payments` on first run, so no init script is needed.
+  payments:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: gentlestore-payments
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=gentlestore_payments;Username=gentlestore;Password=gentlestore_dev_pw"
+      # The sandbox is a test double, not a payment provider. Development only.
+      Gateways__sandbox__Enabled: "true"
+      Gateways__sandbox__Credentials__dev__ApiKey: "sandbox-dev-key"
+    ports:
+      - "5090:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   console:
     build:
       context: ./frontend

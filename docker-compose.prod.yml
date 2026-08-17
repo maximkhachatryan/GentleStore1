@@ -59,6 +59,33 @@ services:
       postgres:
         condition: service_healthy
 
+  # Deliberately has no VIRTUAL_HOST: the payment service is reachable from the compose network
+  # and nowhere else. Only `expose`, so nginx-proxy never routes to it and nothing outside the VM
+  # can reach an endpoint that can issue refunds.
+  #
+  # This changes the day a gateway that pushes webhooks is added — those arrive from the public
+  # internet. At that point set PAYMENTS_DOMAIN *and* PAYMENTS_INTERNAL_KEY together: the webhook
+  # path is exempt from the key (it carries a gateway signature instead) while everything else
+  # stops being open. Adding the host without the key would publish the payment API.
+  payments:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: gentlestore-payments
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_PAYMENTS_DB:-gentlestore_payments};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      # Empty disables the check. See PAYMENTS_INTERNAL_KEY in .env.example.
+      InternalAccess__Keys__0: ${PAYMENTS_INTERNAL_KEY:-}
+      # Signs the status callbacks posted back to the GentleStore API.
+      Payments__Callbacks__SigningSecret: ${PAYMENTS_CALLBACK_SECRET:-}
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   console:
     build:
       context: ./frontend
