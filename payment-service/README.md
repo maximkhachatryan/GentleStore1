@@ -3,10 +3,9 @@
 A standalone payments microservice for GentleStore. It owns everything about taking money —
 gateway integrations, payment state, refunds, webhooks, reconciliation — so the shop never has to.
 
-> **No payment provider is integrated yet.** This is the abstraction layer and the machinery
-> around it. Adding Stripe, Adyen or a local acquirer means writing one class against
-> `IPaymentGateway` and registering it; nothing in the orchestrator, the API or GentleStore
-> changes. See [Adding a gateway](#adding-a-gateway).
+**Integrated:** [Paynet](https://paynet.am) — ARCA cards, Idram and Telcell. Adding another
+provider means writing one class against `IPaymentGateway` and registering it; nothing in the
+orchestrator, the API or GentleStore changes. See [Adding a gateway](#adding-a-gateway).
 
 ---
 
@@ -54,9 +53,9 @@ dotnet run --urls http://localhost:5090
 
 The database (`gentlestore_payments`) is created and migrated on first run.
 
-In Development a **sandbox gateway** is enabled — a fake, not a provider. It exists so the port has
-a reference implementation and so the service can be exercised end to end before a provider is
-chosen. Delete `Gateways/Sandbox/` and `SandboxController` once a real gateway lands.
+In Development a **sandbox gateway** is also enabled — a fake, not a provider. It is now only
+useful for exercising flows Paynet does not support (manual capture, cancellation); delete
+`Gateways/Sandbox/` and `SandboxController` if you do not want it.
 
 <details>
 <summary>Exercising it end to end with the sandbox</summary>
@@ -167,6 +166,133 @@ Events: `payment.created`, `payment.requires_action`, `payment.authorized`, `pay
 
 ---
 
+## Paynet
+
+[`Infrastructure/Gateways/Paynet/`](src/PaymentService.Infrastructure/Gateways/Paynet/) —
+one aggregator in front of every Armenian processor.
+
+### Three gateway keys, one API key
+
+Paynet requires a `processor` slug on every payment, so each is registered as its own gateway:
+
+| Key | Method |
+|---|---|
+| `paynet-arca` | ARCA / bank card |
+| `paynet-idram` | Idram |
+| `paynet-telcell` | Telcell |
+
+To a customer these are different ways to pay, and a shop offers several at once — so making the
+choice a `gatewayKey` means the storefront picks one exactly as it would pick between two
+providers, and the routing, capability and account machinery all work unchanged. The merchant
+enrols each key, all pointing at the same `credentialRef`.
+
+Credentials are looked up under the exact gateway key first, then the provider family before the
+hyphen — so one `Gateways:paynet:Credentials:<ref>` block serves all three rather than being
+copied per method.
+
+### What Paynet can and cannot do
+
+Declared capabilities: `Refunds`, `PartialRefunds`, `StatusPolling`, `Webhooks`, `HostedRedirect`.
+
+**No `ManualCapture` and no `Cancellation`** — Paynet settles at checkout and has no void. The
+orchestrator checks capabilities before calling, so `captureMode: "Manual"` is refused with
+`409 not_supported` rather than failing at the gateway. An unpaid payment expires on its own; a
+paid one is undone with a refund.
+
+### AMD amounts
+
+ISO 4217 gives AMD two decimals (the luma), so `Money` stores 5 000 ֏ as 500 000 minor units.
+Paynet takes **whole drams**. The adapter divides on the way out and multiplies on the way back,
+and refuses a sub-dram amount rather than rounding on the merchant's behalf:
+
+```
+5000.00 AMD -> 500000 minor -> Paynet amount 5000   ✓
+5000.50 AMD -> 500050 minor -> not a whole dram     -> rejected
+```
+
+This lives in [`PaynetAmounts`](src/PaymentService.Infrastructure/Gateways/Paynet/PaynetAmounts.cs)
+rather than by declaring AMD zero-decimal in `Currencies`: that class is shared by every
+integration, and quietly disagreeing with ISO 4217 there would be a trap for the next one.
+
+### Status mapping
+
+| Paynet | Ours |
+|---|---|
+| `pending` | `RequiresAction` — Paynet returns a checkout URL immediately, so it is waiting on the customer |
+| `processing` | `Processing` |
+| `completed` | `Captured` |
+| `failed` | `Failed` |
+| `expired` | `Expired` |
+| `refunded` | `Refunded` |
+| *anything else* | `Processing`, and logged |
+
+An unrecognised status maps to "still working on it" because the transition rules refuse a move
+backwards from a terminal status — so a status Paynet adds later can never un-pay a captured
+payment, and the reconciler keeps polling until it means something.
+
+### Webhooks
+
+`POST /api/webhooks/paynet-{processor}`, verified against
+`X-Paynet-Signature: sha256=<hex>` — HMAC-SHA256 over the **raw body** with the account's
+`WebhookSecret`, compared in constant time across every candidate account.
+
+Paynet is told where to post via `Payments:PublicBaseUrl`. **Leave it unset and no
+`callback_url` is sent at all** — payments then resolve by the reconciler polling, which works but
+is slower.
+
+Deduplication keys on `{payment uuid}:{status}`, not on `X-Paynet-Delivery`. A delivery id
+identifies the *attempt*; what has to be deduplicated is the *event*. If Paynet's retries carry
+fresh delivery ids, keying on them would let one status change through several times — verified:
+a redelivery with a different `X-Paynet-Delivery` is answered `duplicate`, while a genuine status
+change is not.
+
+### A note on the published spec
+
+Two fields are handled defensively because Paynet's OpenAPI document is ambiguous about them:
+
+- **`amount`** is typed as a string on the payment resource and as a number on the webhook and
+  refund objects, so both are accepted.
+- **`metadata`** is described as key-value pairs but typed as an array of strings, so it is
+  **never sent** — guessing the wrong shape would be a 422 on every payment. Metadata stays on our
+  own record and is echoed in our own callbacks, which is where callers read it from anyway.
+
+The webhook `transaction` object also carries no `refunded_amount`. A `refunded` webhook is
+therefore read as a *full* refund (Paynet's status enum has one refunded value, and a partial
+refund leaves the payment `completed`), while a `completed` webhook reports nothing about refunds
+and leaves the recorded total alone.
+
+### Test mode
+
+Test versus live is decided by the **API key**, not the URL — there is no separate sandbox host.
+A test key runs payments through Paynet's fake processor and sends webhooks with `livemode: false`.
+Paynet's magic card numbers drive the outcome: `4111 1111 1111 1111` approves,
+`4000 0000 0000 0002` declines, `4000 0000 0000 0069` is insufficient funds, and so on.
+
+### Configuration
+
+```jsonc
+"Payments": { "PublicBaseUrl": "https://payments.example.com" },
+"Gateways": {
+  "paynet": {
+    "Enabled": true,
+    "BaseUrl": "https://paynet.am/api",
+    "Processors": [ "arca", "idram", "telcell" ],
+    "Credentials": {
+      "acme": {
+        "ApiKey": "sk_live_...",       // required
+        "WebhookSecret": "whsec_...",  // required to accept webhooks
+        "Domain": "shop.am",           // a verified domain; server-to-server calls carry no Origin
+        "RedirectMode": "hosted"       // or "direct" to skip Paynet's page and go straight to the bank
+      }
+    }
+  }
+}
+```
+
+Never commit keys — inject them as `Gateways__paynet__Credentials__acme__ApiKey`.
+
+---
+
 ## Adding a gateway
 
 1. Implement `IPaymentGateway` in `Infrastructure/Gateways/<Name>/`. Declare `Capabilities`
@@ -252,9 +378,15 @@ Two things sit alongside that:
 
 ## Not done yet
 
-- **No gateway integration.** The point of this pass.
+- **Never run against live Paynet.** The integration was built from the published OpenAPI document
+  and verified end to end against a stub implementing it exactly. Everything on our side of the
+  boundary is proven; what has not been proven is that Paynet behaves as documented. Run one test
+  payment with a real test key before trusting it.
 - **No GentleStore-side client.** Linking orders to payments needs a migration and `OrderStatus`
   changes there; that is its own step.
+- **No test project.** The stub-based verification lives outside the repo, so nothing guards these
+  mappings in CI. The status table, the dram conversion and the signature check are the parts worth
+  pinning down first.
 - **Outbox/reconciler claim rows with a time lease**, which is enough for a couple of instances but
   is not `SELECT … FOR UPDATE SKIP LOCKED`. Revisit before scaling out widely.
 - **No idempotency-record or delivered-outbox sweeper.** Both tables grow until one is added.

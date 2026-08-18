@@ -28,14 +28,37 @@ public sealed class ConfigurationCredentialProvider : IGatewayCredentialProvider
         if (string.IsNullOrWhiteSpace(gatewayKey) || string.IsNullOrWhiteSpace(credentialRef))
             return Task.FromResult<GatewayCredentials?>(null);
 
-        var section = _configuration.GetSection($"Gateways:{gatewayKey}:Credentials:{credentialRef}");
-        if (!section.Exists()) return Task.FromResult<GatewayCredentials?>(null);
+        foreach (var key in Lookup(gatewayKey))
+        {
+            var section = _configuration.GetSection($"Gateways:{key}:Credentials:{credentialRef}");
+            if (!section.Exists()) continue;
 
-        var values = section.GetChildren()
-            .Where(child => child.Value is not null)
-            .ToDictionary(child => child.Key, child => child.Value!, StringComparer.OrdinalIgnoreCase);
+            var values = section.GetChildren()
+                .Where(child => child.Value is not null)
+                .ToDictionary(child => child.Key, child => child.Value!, StringComparer.OrdinalIgnoreCase);
 
-        return Task.FromResult<GatewayCredentials?>(
-            values.Count == 0 ? null : new GatewayCredentials(values));
+            if (values.Count > 0) return Task.FromResult<GatewayCredentials?>(new GatewayCredentials(values));
+        }
+
+        return Task.FromResult<GatewayCredentials?>(null);
+    }
+
+    /// <summary>
+    /// The exact gateway key first, then the provider family before the first hyphen.
+    /// <para>
+    /// One provider can register several gateway keys when it fronts several payment methods —
+    /// Paynet is <c>paynet-arca</c>, <c>paynet-idram</c>, <c>paynet-telcell</c> — but the merchant
+    /// holds a single set of credentials for all of them. The fallback lets those live once under
+    /// <c>Gateways:paynet:Credentials</c> instead of being copied per method, which is both
+    /// tedious and a rotation hazard. A gateway that wants per-method credentials can still
+    /// override them under its own key.
+    /// </para>
+    /// </summary>
+    private static IEnumerable<string> Lookup(string gatewayKey)
+    {
+        yield return gatewayKey;
+
+        var separator = gatewayKey.IndexOf('-');
+        if (separator > 0) yield return gatewayKey[..separator];
     }
 }

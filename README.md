@@ -285,10 +285,12 @@ Payments live in a **separate microservice** — [`payment-service/`](payment-se
 with its own solution, its own database and its own deployment. It exposes the API GentleStore
 calls to take money, and hides the differences between payment gateways behind one port.
 
-**No gateway is integrated yet.** The service is the abstraction layer plus the machinery that has
-to exist around it: idempotency, an attempt log, a webhook inbox, status-transition rules, a
-callback outbox and a reconciler. Adding Stripe, Adyen or a local acquirer means one class
-implementing `IPaymentGateway` and one line of registration — nothing in GentleStore changes.
+**[Paynet](https://paynet.am) is integrated** — ARCA cards, Idram and Telcell, registered as three
+gateway keys (`paynet-arca`, `paynet-idram`, `paynet-telcell`) so a storefront can offer them side
+by side. Around it sits the machinery a payment service needs regardless of provider: idempotency,
+an attempt log, a webhook inbox, status-transition rules, a callback outbox and a reconciler.
+Adding another provider means one class implementing `IPaymentGateway` and one line of
+registration — nothing in GentleStore changes.
 
 The GentleStore side is not wired up yet either: linking an order to a payment needs a migration
 and `OrderStatus` changes here, which is its own step. Today orders are still agreed and settled
@@ -300,8 +302,9 @@ Run it alongside the rest of the stack:
 docker compose up -d postgres payments     # http://localhost:5090/swagger
 ```
 
-See the [service README](payment-service/README.md) for the API, the callback contract, and what
-writing a gateway integration involves.
+See the [service README](payment-service/README.md) for the API, the callback contract, the Paynet
+specifics (AMD dram conversion, status mapping, webhook verification) and what writing another
+gateway integration involves.
 
 ---
 

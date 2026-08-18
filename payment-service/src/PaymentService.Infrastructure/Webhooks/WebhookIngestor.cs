@@ -117,7 +117,10 @@ public sealed class WebhookIngestor : IWebhookIngestor
         {
             if (!_registry.TryGetWebhookReader(stored.GatewayKey, out var reader)) continue;
 
-            var delivery = new WebhookDelivery(stored.Payload, stored.Headers, new Dictionary<string, string>());
+            // Rebuilt case-insensitively: header names are, but the dictionary rehydrated from
+            // jsonb is not, and a reader looking for "X-Paynet-Signature" would miss it.
+            var headers = new Dictionary<string, string>(stored.Headers, StringComparer.OrdinalIgnoreCase);
+            var delivery = new WebhookDelivery(stored.Payload, headers, new Dictionary<string, string>());
             var candidates = await LoadCandidatesAsync(reader.Key, ct);
 
             // Re-read from the stored bytes rather than trusting a parse from an earlier version of

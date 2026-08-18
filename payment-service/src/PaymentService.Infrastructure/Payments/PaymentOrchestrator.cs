@@ -178,6 +178,7 @@ public sealed class PaymentOrchestrator : IPaymentOrchestrator
             payment.Amount,
             payment.CaptureMode,
             payment.Description,
+            payment.OrderNumber,
             new GatewayCustomer(payment.CustomerId, payment.CustomerName, payment.CustomerEmail, payment.CustomerPhone),
             payment.ReturnUrl,
             payment.CancelUrl,

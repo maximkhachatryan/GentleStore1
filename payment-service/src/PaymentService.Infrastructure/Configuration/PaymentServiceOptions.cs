@@ -10,6 +10,17 @@ public sealed class PaymentServiceOptions
     /// </summary>
     public int IdempotencyKeyLifetimeHours { get; set; } = 24;
 
+    /// <summary>
+    /// Public origin of this service, used to build the webhook URL handed to gateways
+    /// (<c>{PublicBaseUrl}/api/webhooks/{gatewayKey}</c>).
+    /// <para>
+    /// Unset means gateways are told not to send webhooks at all, and payments are resolved by the
+    /// reconciler polling instead. That works, but it is slower and noisier — set this as soon as
+    /// the service has a reachable hostname.
+    /// </para>
+    /// </summary>
+    public string? PublicBaseUrl { get; set; }
+
     public OutboxOptions Outbox { get; set; } = new();
     public ReconcilerOptions Reconciler { get; set; } = new();
     public CallbackOptions Callbacks { get; set; } = new();

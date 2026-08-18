@@ -49,6 +49,14 @@ services:
       # The sandbox is a test double, not a payment provider. Development only.
       Gateways__sandbox__Enabled: "true"
       Gateways__sandbox__Credentials__dev__ApiKey: "sandbox-dev-key"
+      # Paynet. Put a *test* key here and payments run through Paynet's sandbox — no real money.
+      # Webhooks need a callback URL Paynet can reach, so on a laptop use a tunnel (ngrok, cloudflared)
+      # and set Payments__PublicBaseUrl to it; without one, payments resolve by polling instead.
+      Gateways__paynet__Enabled: "${PAYNET_ENABLED:-false}"
+      Gateways__paynet__Credentials__test__ApiKey: "${PAYNET_API_KEY:-}"
+      Gateways__paynet__Credentials__test__WebhookSecret: "${PAYNET_WEBHOOK_SECRET:-}"
+      Gateways__paynet__Credentials__test__Domain: "${PAYNET_DOMAIN:-}"
+      Payments__PublicBaseUrl: "${PAYMENTS_PUBLIC_URL:-}"
     ports:
       - "5090:8080"
     depends_on:

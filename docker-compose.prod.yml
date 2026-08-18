@@ -59,14 +59,17 @@ services:
       postgres:
         condition: service_healthy
 
-  # Deliberately has no VIRTUAL_HOST: the payment service is reachable from the compose network
-  # and nowhere else. Only `expose`, so nginx-proxy never routes to it and nothing outside the VM
-  # can reach an endpoint that can issue refunds.
+  # Paynet pushes webhooks from the public internet, so unlike the other services this one needs a
+  # hostname the outside world can reach — set PAYMENTS_DOMAIN and the VIRTUAL_HOST/LETSENCRYPT_HOST
+  # below take effect.
   #
-  # This changes the day a gateway that pushes webhooks is added — those arrive from the public
-  # internet. At that point set PAYMENTS_DOMAIN *and* PAYMENTS_INTERNAL_KEY together: the webhook
-  # path is exempt from the key (it carries a gateway signature instead) while everything else
-  # stops being open. Adding the host without the key would publish the payment API.
+  # Publishing the host also publishes /api/payments, so PAYMENTS_INTERNAL_KEY must be set at the
+  # same time: the webhook path is exempt from it (a gateway has no key to present — it signs
+  # instead), while everything that can create or refund a payment stops being open. Setting the
+  # domain without the key would leave an unauthenticated refund endpoint on the internet.
+  #
+  # Leave PAYMENTS_DOMAIN empty and the service stays reachable only from the compose network. That
+  # is fine, but Paynet cannot then call back and payments resolve by polling instead.
   payments:
     build:
       context: ./payment-service
@@ -80,6 +83,18 @@ services:
       InternalAccess__Keys__0: ${PAYMENTS_INTERNAL_KEY:-}
       # Signs the status callbacks posted back to the GentleStore API.
       Payments__Callbacks__SigningSecret: ${PAYMENTS_CALLBACK_SECRET:-}
+      # Where gateways are told to post: {PublicBaseUrl}/api/webhooks/{gatewayKey}.
+      # Empty means no callback_url is sent and the reconciler polls instead.
+      Payments__PublicBaseUrl: ${PAYMENTS_PUBLIC_URL:-}
+      # --- Paynet ---
+      Gateways__paynet__Enabled: ${PAYNET_ENABLED:-false}
+      Gateways__paynet__Credentials__default__ApiKey: ${PAYNET_API_KEY:-}
+      Gateways__paynet__Credentials__default__WebhookSecret: ${PAYNET_WEBHOOK_SECRET:-}
+      Gateways__paynet__Credentials__default__Domain: ${PAYNET_DOMAIN:-}
+      # Routing + automatic TLS, only when PAYMENTS_DOMAIN is set.
+      VIRTUAL_HOST: ${PAYMENTS_DOMAIN:-}
+      VIRTUAL_PORT: "8080"
+      LETSENCRYPT_HOST: ${PAYMENTS_DOMAIN:-}
     expose:
       - "8080"
     depends_on:

@@ -23,6 +23,14 @@ public sealed record GatewayCustomer(Guid? Id, string? Name, string? Email, stri
 /// Ours, not the caller's, and stable per operation: a retry of the same operation must present
 /// the same key so the gateway collapses it instead of charging twice.
 /// </param>
+/// <param name="Reference">
+/// Our own payment code. Gateways that carry a merchant order reference get this rather than the
+/// caller's order number, because it is unique per attempt — a second attempt at the same order is
+/// a different payment, and gateways that require the reference to be unique reject the reuse.
+/// </param>
+/// <param name="OrderNumber">
+/// The caller's own number, for the merchant's dashboard. Never used as a gateway key.
+/// </param>
 public sealed record GatewayCreatePaymentRequest(
     GatewayContext Context,
     Guid PaymentId,
@@ -30,6 +38,7 @@ public sealed record GatewayCreatePaymentRequest(
     Money Amount,
     CaptureMode CaptureMode,
     string? Description,
+    string? OrderNumber,
     GatewayCustomer? Customer,
     string? ReturnUrl,
     string? CancelUrl,
