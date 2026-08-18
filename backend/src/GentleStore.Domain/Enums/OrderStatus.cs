@@ -18,5 +18,15 @@ public enum OrderStatus
     Ready = 4,
 
     Completed = 5,
-    Cancelled = 6
+    Cancelled = 6,
+
+    /// <summary>
+    /// Priced, and waiting for the customer to pay online. Only reachable in a store with payments
+    /// switched on.
+    /// <para>
+    /// Appended rather than slotted next to <see cref="New"/> because the values are persisted as
+    /// integers — renumbering would silently relabel every order already in the database.
+    /// </para>
+    /// </summary>
+    AwaitingPayment = 7
 }

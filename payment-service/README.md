@@ -141,6 +141,13 @@ Stable string codes, like GentleStore's public API. The status code carries the 
 
 ## How GentleStore uses it
 
+Wired up. A super admin switches payments on per tenant (**Admin → Stores → ⋯ → Payments**), which
+enrols that store's own account here via `PUT /api/merchants/{storeId}/gateway-accounts`. From then
+on its orders land as `AwaitingPayment` and are released once a payment is captured. See the
+[root README](../README.md#payments) for the tenant-facing behaviour.
+
+### The sequence
+
 1. Order is placed → `POST /api/payments` with `orderId`, `orderNumber`, `amount`, `currency`,
    `returnUrl` and `callbackUrl`. Send an `Idempotency-Key`.
 2. Storefront follows `action.url` if `action.kind` is not `None`.
@@ -382,11 +389,11 @@ Two things sit alongside that:
   and verified end to end against a stub implementing it exactly. Everything on our side of the
   boundary is proven; what has not been proven is that Paynet behaves as documented. Run one test
   payment with a real test key before trusting it.
-- **No GentleStore-side client.** Linking orders to payments needs a migration and `OrderStatus`
-  changes there; that is its own step.
 - **No test project.** The stub-based verification lives outside the repo, so nothing guards these
   mappings in CI. The status table, the dram conversion and the signature check are the parts worth
   pinning down first.
+- **Refunds are not exposed to merchants.** The API and the Paynet integration both support them;
+  nothing in GentleStore's console calls them yet.
 - **Outbox/reconciler claim rows with a time lease**, which is enough for a couple of instances but
   is not `SELECT … FOR UPDATE SKIP LOCKED`. Revisit before scaling out widely.
 - **No idempotency-record or delivered-outbox sweeper.** Both tables grow until one is added.

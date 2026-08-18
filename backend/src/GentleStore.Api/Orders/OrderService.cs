@@ -79,6 +79,10 @@ public class OrderService : IOrderService
         // the customer can agree to anything.
         var priced = lines!.All(l => l.UnitPrice is not null);
 
+        // Snapshotted, not read back from the store later: a merchant who switches payments off
+        // tomorrow must not turn an unpaid order into one nobody ever owed for. An unpriced order
+        // still waits for its quote first — there is no total to charge yet.
+
         // The order number is allocated and the order inserted in one transaction, so a number is
         // never burnt by a failed insert and two checkouts can never share one.
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
@@ -91,7 +95,10 @@ public class OrderService : IOrderService
             CustomerId = identity!.CustomerId,
             CustomerSessionId = identity.SessionId,
             IdentityTier = identity.Tier,
-            Status = priced ? OrderStatus.New : OrderStatus.AwaitingQuote,
+            Status = priced
+                ? store.PaymentsEnabled ? OrderStatus.AwaitingPayment : OrderStatus.New
+                : OrderStatus.AwaitingQuote,
+            PaymentRequired = store.PaymentsEnabled,
             ContactName = identity.ContactName,
             ContactPhone = identity.ContactPhone,
             ContactPhoneNormalized = identity.ContactPhoneNormalized,

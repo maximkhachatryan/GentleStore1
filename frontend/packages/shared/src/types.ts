@@ -30,6 +30,8 @@ export interface StoreListItem {
   logoUrl: string | null;
   isActive: boolean;
   currency: string;
+  /** Whether customers of this store pay online before it works their orders. */
+  paymentsEnabled: boolean;
   productCount: number;
   categoryCount: number;
   createdAt: string;
@@ -44,6 +46,7 @@ export interface StoreDetail {
   description: string | null;
   currency: string;
   isActive: boolean;
+  paymentsEnabled: boolean;
   createdAt: string;
 }
 
@@ -326,7 +329,9 @@ export type OrderStatus =
   | 'Confirmed'
   | 'Ready'
   | 'Completed'
-  | 'Cancelled';
+  | 'Cancelled'
+  /** Priced, and waiting for the customer to pay online. */
+  | 'AwaitingPayment';
 
 /**
  * How well the store knew the customer when the order arrived.
@@ -375,6 +380,13 @@ export interface PublicOrder {
   contactName: string;
   contactPhoneMasked: string;
   awaitingQuote: boolean;
+  /** This order has to be paid online. Fixed when the order was placed. */
+  paymentRequired: boolean;
+  /** The customer still owes for it and can pay now. */
+  awaitingPayment: boolean;
+  /** Mirrored from the payment service; null before any attempt. */
+  paymentStatus: string | null;
+  paidAt: string | null;
   placedAt: string;
   lines: PublicOrderLine[];
 }
@@ -402,6 +414,9 @@ export interface OrderListItem {
   total: number | null;
   itemCount: number;
   fulfilment: FulfilmentMethod;
+  paymentRequired: boolean;
+  paymentStatus: string | null;
+  paidAt: string | null;
   customerOrderCount: number;
   placedAt: string;
 }
@@ -423,6 +438,10 @@ export interface OrderDetail {
   storeNote: string | null;
   currency: string;
   total: number | null;
+  paymentRequired: boolean;
+  paymentReference: string | null;
+  paymentStatus: string | null;
+  paidAt: string | null;
   placedAt: string;
   updatedAt: string;
   lines: OrderLine[];
@@ -558,4 +577,68 @@ export interface ProductQuery {
   categoryId?: string;
   tagId?: string;
   search?: string;
+}
+
+// ---- Payments ----
+
+/**
+ * Whether a tenant takes online payments, and which methods it offers.
+ * `serviceAvailable` is false when the deployment has no payment service, or it is not answering —
+ * the screen explains that rather than offering a switch that cannot work.
+ */
+export interface StorePaymentSettings {
+  storeId: string;
+  storeName: string;
+  currency: string;
+  paymentsEnabled: boolean;
+  serviceAvailable: boolean;
+  serviceProblem: string | null;
+  /** Names the store's own credentials inside the payment service. Never the key itself. */
+  credentialRef: string | null;
+  mode: PaymentMode;
+  methods: PaymentMethod[];
+}
+
+export type PaymentMode = 'Test' | 'Live';
+
+export interface PaymentMethod {
+  key: string;
+  displayName: string;
+  supportedCurrencies: string[];
+  /** False when the method cannot take this store's currency at all. */
+  currencySupported: boolean;
+  enabled: boolean;
+}
+
+export interface UpdateStorePaymentsRequest {
+  enabled: boolean;
+  credentialRef?: string | null;
+  mode?: PaymentMode | null;
+  methods?: string[] | null;
+}
+
+// ---- Paying for an order (storefront) ----
+
+export interface PublicPaymentMethod {
+  key: string;
+  displayName: string;
+}
+
+export interface StartPaymentRequest {
+  /** A key from `paymentMethods`. Omit to let the store's own order of preference decide. */
+  method?: string | null;
+}
+
+/** Where to send the customer next. `Kind` is `Redirect`, `Display`, `ClientSdk` or `None`. */
+export interface PaymentAction {
+  kind: 'Redirect' | 'Display' | 'ClientSdk' | 'None';
+  url: string | null;
+  expiresAt: string | null;
+}
+
+/** The order as it now stands, plus what the customer has left to do. */
+export interface OrderPayment {
+  order: PublicOrder;
+  /** Null when there is nothing to do — most usefully when the order turned out to be paid. */
+  action: PaymentAction | null;
 }

@@ -22,11 +22,30 @@ public record PublicOrderLineDto(
     int Quantity, decimal? UnitPrice, decimal? LineTotal);
 
 /// <param name="ContactPhoneMasked">Masked even for its owner — storefronts get opened on shared phones.</param>
+/// <param name="AwaitingPayment">The customer still owes for this order and can pay it now.</param>
+/// <param name="PaymentStatus">Mirrored from the payment service; null before any attempt.</param>
 public record PublicOrderDto(
     Guid Id, string OrderNumber, string Status, string Currency, decimal? Total,
     string Fulfilment, string? DeliveryAddress, string? Note,
     string ContactName, string ContactPhoneMasked, bool AwaitingQuote,
+    bool PaymentRequired, bool AwaitingPayment, string? PaymentStatus, DateTime? PaidAt,
     DateTime PlacedAt, IReadOnlyList<PublicOrderLineDto> Lines);
+
+// ---- Paying for an order ----
+
+/// <param name="Method">A gateway key from <c>GET /payment-methods</c>. Omit to let the store's own order of preference decide.</param>
+public record StartPaymentRequest(string? Method);
+
+public record PublicPaymentMethodDto(string Key, string DisplayName);
+
+/// <param name="Kind"><c>Redirect</c>, <c>Display</c>, <c>ClientSdk</c> or <c>None</c>.</param>
+public record PaymentActionDto(string Kind, string? Url, DateTime? ExpiresAt);
+
+/// <summary>
+/// The order as it now stands, plus where to send the customer. <c>Action</c> is null when there is
+/// nothing left to do — most usefully when the order turned out to be paid already.
+/// </summary>
+public record OrderPaymentDto(PublicOrderDto Order, PaymentActionDto? Action);
 
 // ---- Backoffice ----
 
@@ -42,6 +61,7 @@ public record OrderListItemDto(
     Guid Id, string OrderNumber, string Status, string IdentityTier,
     Guid CustomerId, string ContactName, string ContactPhone,
     string Currency, decimal? Total, int ItemCount, string Fulfilment,
+    bool PaymentRequired, string? PaymentStatus, DateTime? PaidAt,
     int CustomerOrderCount, DateTime PlacedAt);
 
 public record OrderDetailDto(
@@ -49,7 +69,9 @@ public record OrderDetailDto(
     Guid CustomerId, string ContactName, string ContactPhone, string ContactPhoneNormalized,
     string CustomerOrigin, int CustomerOrderCount,
     string Fulfilment, string? DeliveryAddress, string? CustomerNote, string? StoreNote,
-    string Currency, decimal? Total, DateTime PlacedAt, DateTime UpdatedAt,
+    string Currency, decimal? Total,
+    bool PaymentRequired, string? PaymentReference, string? PaymentStatus, DateTime? PaidAt,
+    DateTime PlacedAt, DateTime UpdatedAt,
     IReadOnlyList<OrderLineDto> Lines);
 
 public record UpdateOrderStatusRequest(string Status, string? StoreNote);

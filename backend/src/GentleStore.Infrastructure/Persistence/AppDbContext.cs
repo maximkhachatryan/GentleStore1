@@ -180,6 +180,9 @@ public class AppDbContext : DbContext
             e.Property(x => x.Status).HasConversion<int>();
             e.Property(x => x.IdentityTier).HasConversion<int>();
             e.Property(x => x.Fulfilment).HasConversion<int>();
+            e.Property(x => x.PaymentReference).HasMaxLength(40);
+            e.Property(x => x.PaymentStatus).HasMaxLength(40);
+            e.Property(x => x.PaymentCheckoutUrl).HasMaxLength(2048);
 
             e.HasOne(x => x.Store).WithMany(x => x.Orders)
                 .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
@@ -195,6 +198,9 @@ public class AppDbContext : DbContext
             e.HasIndex(x => new { x.StoreId, x.PlacedAt });
             // Order history for a self-declared browser is scoped to its own session.
             e.HasIndex(x => x.CustomerSessionId);
+            // How the payment callback finds its order, and one payment can only ever settle one
+            // order — a second row claiming the same payment would be a double-credit.
+            e.HasIndex(x => x.PaymentId).IsUnique().HasFilter("\"PaymentId\" IS NOT NULL");
         });
 
         mb.Entity<OrderLine>(e =>

@@ -29,6 +29,10 @@ services:
       Jwt__Secret: "REPLACE_WITH_A_LONG_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS"
       Cors__Origins__0: "http://localhost:5173"
       Cors__Origins__1: "http://localhost:5174"
+      # Both sides of the payment conversation stay on the compose network: the API calls the
+      # payment service, and the payment service posts status callbacks back to the API.
+      PaymentService__BaseUrl: "http://payments:8080"
+      PaymentService__CallbackBaseUrl: "http://api:8080"
     ports:
       - "5080:8080"
     depends_on:
@@ -56,7 +60,9 @@ services:
       Gateways__paynet__Credentials__test__ApiKey: "${PAYNET_API_KEY:-}"
       Gateways__paynet__Credentials__test__WebhookSecret: "${PAYNET_WEBHOOK_SECRET:-}"
       Gateways__paynet__Credentials__test__Domain: "${PAYNET_DOMAIN:-}"
-      Payments__PublicBaseUrl: "${PAYMENTS_PUBLIC_URL:-}"
+      # Must be the origin a *browser* can reach, not the compose hostname: gateways put this in
+      # redirect URLs the customer follows. Hence the published port rather than http://payments:8080.
+      Payments__PublicBaseUrl: "${PAYMENTS_PUBLIC_URL:-http://localhost:5090}"
     ports:
       - "5090:8080"
     depends_on:

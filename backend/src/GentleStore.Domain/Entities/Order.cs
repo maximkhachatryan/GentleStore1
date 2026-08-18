@@ -45,6 +45,45 @@ public class Order
     /// <summary>Null while any line is still unpriced ("price on request").</summary>
     public decimal? Total { get; set; }
 
+    // ---- Online payment ----
+
+    /// <summary>
+    /// Whether this order has to be paid online. Snapshotted at placement rather than read from the
+    /// store: a merchant who switches payments off tomorrow must not turn an unpaid order into one
+    /// nobody ever owed for, and switching them on must not retroactively block orders already
+    /// agreed by phone.
+    /// </summary>
+    public bool PaymentRequired { get; set; }
+
+    /// <summary>PaymentService's payment id. Null until the customer starts paying.</summary>
+    public Guid? PaymentId { get; set; }
+
+    /// <summary>Short code both sides can quote in a support conversation ("PAY-7QK4M2XT").</summary>
+    public string? PaymentReference { get; set; }
+
+    /// <summary>
+    /// Last status PaymentService reported, mirrored so the order list can be rendered without a
+    /// call per row. PaymentService stays the authority; this is a cache.
+    /// </summary>
+    public string? PaymentStatus { get; set; }
+
+    /// <summary>Set once, when the money is confirmed captured. Never cleared.</summary>
+    public DateTime? PaidAt { get; set; }
+
+    /// <summary>
+    /// Where to send the customer to finish paying. Kept so an abandoned checkout can be resumed:
+    /// re-creating the payment would either return no redirect (the idempotency key already has
+    /// one) or charge the customer twice (a fresh key).
+    /// </summary>
+    public string? PaymentCheckoutUrl { get; set; }
+
+    /// <summary>
+    /// How many payments have been started for this order. Only ever incremented when the previous
+    /// one is dead — declined, cancelled or expired — and it is what makes each attempt's
+    /// idempotency key distinct without letting a reload become a second charge.
+    /// </summary>
+    public int PaymentAttempt { get; set; }
+
     public DateTime PlacedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

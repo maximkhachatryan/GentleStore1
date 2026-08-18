@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Options;
 using PaymentService.Application.Abstractions.Gateways;
 using PaymentService.Domain.Common;
 using PaymentService.Domain.Enums;
+using PaymentService.Infrastructure.Configuration;
 
 namespace PaymentService.Infrastructure.Gateways.Sandbox;
 
@@ -25,6 +27,16 @@ public sealed class SandboxPaymentGateway : IPaymentGateway
     private const int ErrorSuffix = 52;
 
     private readonly ConcurrentDictionary<string, SandboxPayment> _payments = new();
+
+    /// <summary>
+    /// Absolute, because the storefront hands this URL straight to the browser. A relative path
+    /// would resolve against the storefront's own origin rather than this service's, so the
+    /// customer would land on a 404 in the shop instead of the checkout page.
+    /// </summary>
+    private readonly string _checkoutBase;
+
+    public SandboxPaymentGateway(IOptions<PaymentServiceOptions> options) =>
+        _checkoutBase = options.Value.PublicBaseUrl?.TrimEnd('/') ?? string.Empty;
 
     public string Key => "sandbox";
     public string DisplayName => "Sandbox (test double)";
@@ -95,7 +107,17 @@ public sealed class SandboxPaymentGateway : IPaymentGateway
     public Task<GatewayResult<GatewayPaymentSnapshot>> FetchPaymentAsync(
         GatewayFetchRequest request, CancellationToken ct = default)
     {
-        if (!_payments.TryGetValue(request.GatewayPaymentId, out var payment)) return Task.FromResult(NotFound());
+        // State lives in memory, so restarting this service loses every payment still in flight.
+        // Reporting those as expired rather than as an error is both true — nothing can settle them
+        // now — and what lets a caller move on and start a fresh payment. Answering with an error
+        // instead would leave the order pointing at a payment that can never resolve, which is
+        // exactly the sort of dead end a reconciler exists to avoid.
+        if (!_payments.TryGetValue(request.GatewayPaymentId, out var payment))
+            return Task.FromResult(GatewayResult<GatewayPaymentSnapshot>.Success(
+                new GatewayPaymentSnapshot(
+                    request.GatewayPaymentId,
+                    PaymentStatus.Expired,
+                    GatewayStatusCode: "unknown_after_restart")));
 
         return Task.FromResult(Ok(payment));
     }
@@ -148,12 +170,12 @@ public sealed class SandboxPaymentGateway : IPaymentGateway
         GatewayResult<GatewayPaymentSnapshot>.Rejected(
             new GatewayError(GatewayErrorCodes.InvalidRequest, "No such sandbox payment."));
 
-    private static GatewayResult<GatewayPaymentSnapshot> Ok(SandboxPayment payment)
+    private GatewayResult<GatewayPaymentSnapshot> Ok(SandboxPayment payment)
     {
         var action = payment.Status == PaymentStatus.RequiresAction
             ? new CustomerAction(
                 CustomerActionKind.Redirect,
-                $"/api/sandbox/checkout/{payment.Id}",
+                $"{_checkoutBase}/api/sandbox/checkout/{payment.Id}",
                 "GET",
                 ExpiresAt: DateTime.UtcNow.AddMinutes(30))
             : CustomerAction.None;

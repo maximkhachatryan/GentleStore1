@@ -254,6 +254,30 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PaymentAttempt")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PaymentCheckoutUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<bool>("PaymentRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<DateTime>("PlacedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -279,6 +303,10 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("CustomerSessionId");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique()
+                        .HasFilter("\"PaymentId\" IS NOT NULL");
 
                     b.HasIndex("StoreId", "OrderNumber")
                         .IsUnique();
@@ -479,6 +507,9 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("OrderSequence")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("PaymentsEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Phone")
                         .IsRequired()

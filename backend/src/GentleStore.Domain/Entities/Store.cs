@@ -18,6 +18,17 @@ public class Store
     public StorefrontAccessMode StorefrontAccess { get; set; } = StorefrontAccessMode.Public;
 
     /// <summary>
+    /// Whether customers pay online before the store works the order. Switched on per tenant by a
+    /// super admin, who also points the store at its own account with the payment provider.
+    /// <para>
+    /// Only the switch lives here. Which providers are enabled, and with which credentials, is held
+    /// by PaymentService against this store id — duplicating it would give two answers to the same
+    /// question, and the one that matters is the one PaymentService will actually charge on.
+    /// </para>
+    /// </summary>
+    public bool PaymentsEnabled { get; set; }
+
+    /// <summary>
     /// Counter behind the human-readable order numbers. Incremented by an atomic UPDATE so two
     /// simultaneous checkouts cannot be handed the same number.
     /// </summary>

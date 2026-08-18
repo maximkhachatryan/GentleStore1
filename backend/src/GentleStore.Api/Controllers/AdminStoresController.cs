@@ -24,7 +24,7 @@ public class AdminStoresController : ControllerBase
         var stores = await _db.Stores
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new StoreListItemDto(
-                s.Id, s.Name, s.Slug, s.Phone, s.LogoUrl, s.IsActive, s.Currency,
+                s.Id, s.Name, s.Slug, s.Phone, s.LogoUrl, s.IsActive, s.Currency, s.PaymentsEnabled,
                 s.Products.Count, s.Categories.Count, s.CreatedAt))
             .ToListAsync();
         return Ok(stores);
@@ -36,7 +36,7 @@ public class AdminStoresController : ControllerBase
         var s = await _db.Stores.FirstOrDefaultAsync(x => x.Id == id);
         return s is null
             ? NotFound()
-            : Ok(new StoreDetailDto(s.Id, s.Name, s.Slug, s.Phone, s.LogoUrl, s.Description, s.Currency, s.IsActive, s.CreatedAt));
+            : Ok(new StoreDetailDto(s.Id, s.Name, s.Slug, s.Phone, s.LogoUrl, s.Description, s.Currency, s.IsActive, s.PaymentsEnabled, s.CreatedAt));
     }
 
     [HttpPost]
@@ -66,7 +66,7 @@ public class AdminStoresController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Created($"/api/admin/stores/{store.Id}",
-            new StoreDetailDto(store.Id, store.Name, store.Slug, store.Phone, store.LogoUrl, store.Description, store.Currency, store.IsActive, store.CreatedAt));
+            new StoreDetailDto(store.Id, store.Name, store.Slug, store.Phone, store.LogoUrl, store.Description, store.Currency, store.IsActive, store.PaymentsEnabled, store.CreatedAt));
     }
 
     [HttpPut("{id:guid}")]
@@ -92,7 +92,7 @@ public class AdminStoresController : ControllerBase
         store.IsActive = req.IsActive;
 
         await _db.SaveChangesAsync();
-        return Ok(new StoreDetailDto(store.Id, store.Name, store.Slug, store.Phone, store.LogoUrl, store.Description, store.Currency, store.IsActive, store.CreatedAt));
+        return Ok(new StoreDetailDto(store.Id, store.Name, store.Slug, store.Phone, store.LogoUrl, store.Description, store.Currency, store.IsActive, store.PaymentsEnabled, store.CreatedAt));
     }
 
     [HttpPost("{id:guid}/activate")]

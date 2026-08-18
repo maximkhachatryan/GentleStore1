@@ -1,5 +1,7 @@
 {
-  "footer": { "text": "Order directly from the store via WhatsApp or a quick call." },
+  "footer": {
+    "text": "Order directly from the store via WhatsApp or a quick call."
+  },
   "home": {
     "title": "No store selected",
     "subtitle": "Open a store's link to browse its products and place an order."
@@ -143,7 +145,24 @@
     "awaitingQuote": "This order contains an item priced on request. The store will send you a total.",
     "confirmTitle": "One more step",
     "confirmBody": "Send {{store}} your order number on WhatsApp so they can confirm it. Your order is saved either way.",
-    "whatsappMessage": "Hi {{store}}, I placed order {{number}}:\n{{items}}\nTotal: {{total}}"
+    "whatsappMessage": "Hi {{store}}, I placed order {{number}}:\n{{items}}\nTotal: {{total}}",
+    "payTitle": "Pay for this order",
+    "payBody": "{{store}} works this order once the payment goes through.",
+    "payNow": "Pay now",
+    "payWith": "Pay with {{method}}",
+    "checkingPayment": "Checking your payment…",
+    "paid": "Paid",
+    "paidOn": "Paid on {{date}}",
+    "paymentProcessing": "Your payment is going through. This page updates on its own.",
+    "paymentFailed": "That payment did not go through. You can try again.",
+    "payRetry": "Try again",
+    "noMethods": "This store cannot take card payments right now. Get in touch and it will sort the order out with you.",
+    "payError_payments_unavailable": "Payments are unavailable right now. Try again shortly.",
+    "payError_payment_unavailable": "We could not reach the payment provider. Try again shortly.",
+    "payError_not_payable": "This order is not waiting for a payment.",
+    "payError_awaiting_quote": "The store still has to price this order before you can pay.",
+    "payError_method_unavailable": "That payment method is not available for this store.",
+    "payError_declined": "The payment was declined. Try a different card or method."
   },
   "orderStatus": {
     "New": "Received",
@@ -152,15 +171,27 @@
     "Confirmed": "Confirmed",
     "Ready": "Ready",
     "Completed": "Completed",
-    "Cancelled": "Cancelled"
+    "Cancelled": "Cancelled",
+    "AwaitingPayment": "Awaiting payment"
   },
   "notFound": {
     "title": "Page not found",
     "subtitle": "We couldn't find what you were looking for.",
     "backHome": "Back home"
   },
-  "storeCard": { "browse": "Browse store" },
-  "productCard": { "noImage": "No image", "outOfStock": "Out of stock", "priceOnRequest": "Price on request" },
-  "gallery": { "noImage": "No image" },
-  "contact": { "whatsapp": "WhatsApp", "call": "Call" }
+  "storeCard": {
+    "browse": "Browse store"
+  },
+  "productCard": {
+    "noImage": "No image",
+    "outOfStock": "Out of stock",
+    "priceOnRequest": "Price on request"
+  },
+  "gallery": {
+    "noImage": "No image"
+  },
+  "contact": {
+    "whatsapp": "WhatsApp",
+    "call": "Call"
+  }
 }

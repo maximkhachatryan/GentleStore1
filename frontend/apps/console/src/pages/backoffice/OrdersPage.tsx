@@ -35,6 +35,7 @@ import { formatDateTime } from '../../lib/format';
 const STATUS_COLORS: Record<OrderStatus, string | undefined> = {
   New: 'blue',
   AwaitingQuote: 'gold',
+  AwaitingPayment: 'orange',
   Quoted: 'cyan',
   Confirmed: 'green',
   Ready: 'lime',
@@ -46,6 +47,9 @@ const STATUS_COLORS: Record<OrderStatus, string | undefined> = {
 const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   New: ['Confirmed', 'Cancelled'],
   AwaitingQuote: ['Cancelled'],
+  // Cancelling is all a store may do to an unpaid order — waving it through would defeat the
+  // setting the platform admin switched on.
+  AwaitingPayment: ['Cancelled'],
   Quoted: ['Confirmed', 'Cancelled'],
   Confirmed: ['Ready', 'Completed', 'Cancelled'],
   Ready: ['Completed', 'Cancelled'],
@@ -56,6 +60,7 @@ const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
 const ALL_STATUSES: OrderStatus[] = [
   'New',
   'AwaitingQuote',
+  'AwaitingPayment',
   'Quoted',
   'Confirmed',
   'Ready',

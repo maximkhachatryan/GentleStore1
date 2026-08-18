@@ -9,6 +9,8 @@ interface Props {
   onCancel: () => void;
   onOk: () => void;
   okText?: string;
+  /** Blocks submission while the form cannot usefully be saved at all. */
+  okDisabled?: boolean;
   confirmLoading?: boolean;
   width?: number;
   children: ReactNode;
@@ -24,6 +26,7 @@ export default function FormDialog({
   onCancel,
   onOk,
   okText,
+  okDisabled,
   confirmLoading,
   width = 560,
   children,
@@ -50,7 +53,7 @@ export default function FormDialog({
             <Button block onClick={onCancel}>
               {t('common.cancel')}
             </Button>
-            <Button block type="primary" loading={confirmLoading} onClick={onOk}>
+            <Button block type="primary" loading={confirmLoading} disabled={okDisabled} onClick={onOk}>
               {submitLabel}
             </Button>
           </div>
@@ -68,6 +71,7 @@ export default function FormDialog({
       onCancel={onCancel}
       onOk={onOk}
       okText={submitLabel}
+      okButtonProps={{ disabled: okDisabled }}
       cancelText={t('common.cancel')}
       confirmLoading={confirmLoading}
       width={width}

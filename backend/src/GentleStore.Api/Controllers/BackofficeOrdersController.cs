@@ -19,6 +19,10 @@ public class BackofficeOrdersController : BackofficeControllerBase
     {
         [OrderStatus.New] = [OrderStatus.Confirmed, OrderStatus.Cancelled],
         [OrderStatus.AwaitingQuote] = [OrderStatus.Cancelled],
+        // Cancelling is all a store may do to an unpaid order. Waving it through to Confirmed would
+        // quietly defeat the setting the platform admin switched on; a store that took the money
+        // some other way needs a way to record that, not a way to skip it.
+        [OrderStatus.AwaitingPayment] = [OrderStatus.Cancelled],
         [OrderStatus.Quoted] = [OrderStatus.Confirmed, OrderStatus.Cancelled],
         [OrderStatus.Confirmed] = [OrderStatus.Ready, OrderStatus.Completed, OrderStatus.Cancelled],
         [OrderStatus.Ready] = [OrderStatus.Completed, OrderStatus.Cancelled],
@@ -66,6 +70,7 @@ public class BackofficeOrdersController : BackofficeControllerBase
                 o.Id, o.OrderNumber, o.Status.ToString(), o.IdentityTier.ToString(),
                 o.CustomerId, o.ContactName, o.ContactPhone,
                 o.Currency, o.Total, o.Lines.Count, o.Fulfilment.ToString(),
+                o.PaymentRequired, o.PaymentStatus, o.PaidAt,
                 o.Customer!.Orders.Count, o.PlacedAt))
             .ToListAsync();
 
@@ -133,7 +138,9 @@ public class BackofficeOrdersController : BackofficeControllerBase
             return BadRequest(new { error = "Every line needs a price.", code = "quote_incomplete" });
 
         order.Total = order.Lines.Sum(l => l.UnitPrice!.Value * l.Quantity);
-        order.Status = OrderStatus.Quoted;
+        // Now that there is a total, an order in a paying store becomes payable rather than simply
+        // quoted — this is where a "price on request" basket joins the payment flow.
+        order.Status = order.PaymentRequired ? OrderStatus.AwaitingPayment : OrderStatus.Quoted;
         if (req.StoreNote is not null)
             order.StoreNote = string.IsNullOrWhiteSpace(req.StoreNote) ? null : req.StoreNote.Trim();
         order.UpdatedAt = DateTime.UtcNow;
@@ -157,7 +164,9 @@ public class BackofficeOrdersController : BackofficeControllerBase
             order.CustomerId, order.ContactName, order.ContactPhone, order.ContactPhoneNormalized,
             (order.Customer?.Origin ?? CustomerOrigin.SelfRegistered).ToString(), customerOrderCount,
             order.Fulfilment.ToString(), order.DeliveryAddress, order.CustomerNote, order.StoreNote,
-            order.Currency, order.Total, order.PlacedAt, order.UpdatedAt,
+            order.Currency, order.Total,
+            order.PaymentRequired, order.PaymentReference, order.PaymentStatus, order.PaidAt,
+            order.PlacedAt, order.UpdatedAt,
             order.Lines
                 .OrderBy(l => l.DisplayOrder)
                 .Select(l => new OrderLineDto(

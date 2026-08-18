@@ -47,6 +47,12 @@ services:
       Seed__DemoData: ${SEED_DEMO_DATA:-false}
       Seed__SuperAdminEmail: ${SUPERADMIN_EMAIL}
       Seed__SuperAdminPassword: ${SUPERADMIN_PASSWORD}
+      # Payments. The callback URL stays inside the compose network rather than going out through
+      # nginx and back — it is a service-to-service call, not a browser one.
+      PaymentService__BaseUrl: "http://payments:8080"
+      PaymentService__CallbackBaseUrl: "http://api:8080"
+      PaymentService__InternalKey: ${PAYMENTS_INTERNAL_KEY:-}
+      PaymentService__CallbackSecret: ${PAYMENTS_CALLBACK_SECRET:-}
       # Routing + automatic TLS via nginx-proxy / acme-companion
       VIRTUAL_HOST: ${API_DOMAIN}
       VIRTUAL_PORT: "8080"

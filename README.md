@@ -292,9 +292,41 @@ an attempt log, a webhook inbox, status-transition rules, a callback outbox and 
 Adding another provider means one class implementing `IPaymentGateway` and one line of
 registration — nothing in GentleStore changes.
 
-The GentleStore side is not wired up yet either: linking an order to a payment needs a migration
-and `OrderStatus` changes here, which is its own step. Today orders are still agreed and settled
-with the store directly.
+### Switching payments on for a tenant
+
+Payments are **off for every store until a super admin turns them on**, one tenant at a time
+(**Admin → Stores → ⋯ → Payments**).
+
+Each store is pointed at **its own account** with the provider, so customers pay the merchant
+directly and the platform never holds anyone else's money. The dialog asks for a *credential
+reference* rather than an API key: the key itself lives in the payment service's secret store, and
+neither this application, its logs nor its database ever sees it.
+
+Activation writes the payment service first and flips the local flag last. A store whose flag said
+"customers must pay" while no gateway was enrolled would block every checkout it has, so a failed
+enrolment leaves payments off rather than half-on.
+
+A method that cannot take the store's currency is shown but not selectable — Paynet is AMD-only, and
+a USD store finding that out at a customer's checkout is far too late.
+
+### What changes for a customer
+
+| Store | Order lands as | Then |
+|---|---|---|
+| Payments off | `New` | Settled with the store directly, as before |
+| Payments on | `AwaitingPayment` | Customer pays; the order becomes `New` once the money is captured |
+| Payments on, "price on request" item | `AwaitingQuote` | Becomes `AwaitingPayment` when the store quotes it |
+
+The storefront sends the customer to the provider's hosted page, so no card details touch this
+application. On their return the order page **re-reads the payment from the gateway** rather than
+trusting the query string they came back with — that was written by their own browser.
+
+`PaymentRequired` is snapshotted onto the order at placement. Switching payments off tomorrow does
+not turn an unpaid order into one nobody ever owed for, and switching them on does not retroactively
+block orders already agreed by phone.
+
+A store can only **cancel** an unpaid order, not wave it through to `Confirmed` — that would quietly
+defeat the setting the platform admin switched on.
 
 Run it alongside the rest of the stack:
 
@@ -310,8 +342,9 @@ gateway integration involves.
 
 ## Notes & future ideas
 
-- Wiring GentleStore to the payment service: an `Order` → `Payment` link, a `Paid` status, and the
-  storefront redirect/return flow.
+- Recording a payment taken out-of-band (cash on collection, bank transfer), so a store has an
+  honest way to release an `AwaitingPayment` order instead of cancelling it.
+- Refunds from the backoffice. The payment service supports them; nothing in the console calls them yet.
 - Delivery fees, minimum orders and delivery zones — currently a free-text delivery note.
 - Self-service cancellation for verified customers (deliberately not offered to unverified guests:
   a guessed order number should not let anyone cancel someone else's order).

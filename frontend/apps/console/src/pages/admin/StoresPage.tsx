@@ -15,6 +15,7 @@ import EntityCard from '../../components/EntityCard';
 import FormDialog from '../../components/FormDialog';
 import PageHeader from '../../components/PageHeader';
 import ResponsiveTable from '../../components/ResponsiveTable';
+import StorePaymentsDialog from './StorePaymentsDialog';
 
 interface StoreFormValues {
   name: string;
@@ -32,6 +33,7 @@ export default function StoresPage() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StoreListItem | null>(null);
+  const [payingStore, setPayingStore] = useState<StoreListItem | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [form] = Form.useForm<StoreFormValues>();
 
@@ -122,12 +124,14 @@ export default function StoresPage() {
         ),
       },
       { key: 'edit', label: t('common.edit') },
+      { key: 'payments', label: t('stores.payments') },
       { key: 'toggle', label: s.isActive ? t('stores.deactivate') : t('stores.activate') },
       { type: 'divider' },
       { key: 'delete', label: t('common.delete'), danger: true },
     ],
     onClick: ({ key }) => {
       if (key === 'edit') openEdit(s);
+      else if (key === 'payments') setPayingStore(s);
       else if (key === 'toggle') toggleActive.mutate(s);
       else if (key === 'delete') confirmDelete(s);
     },
@@ -135,6 +139,10 @@ export default function StoresPage() {
 
   const statusTag = (s: StoreListItem) =>
     s.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.inactive')}</Tag>;
+
+  // Only shown when on: a badge on every store that does not take payments would be noise.
+  const paymentsTag = (s: StoreListItem) =>
+    s.paymentsEnabled ? <Tag color="blue">{t('stores.paymentsOn')}</Tag> : null;
 
   const columns: ColumnsType<StoreListItem> = [
     {
@@ -156,7 +164,16 @@ export default function StoresPage() {
     },
     { title: t('stores.colPhone'), dataIndex: 'phone', key: 'phone' },
     { title: t('stores.colProducts'), dataIndex: 'productCount', key: 'productCount' },
-    { title: t('common.status'), key: 'status', render: (_, r) => statusTag(r) },
+    {
+      title: t('common.status'),
+      key: 'status',
+      render: (_, r) => (
+        <Space size={4} wrap>
+          {statusTag(r)}
+          {paymentsTag(r)}
+        </Space>
+      ),
+    },
     {
       title: t('common.actions'),
       key: 'actions',
@@ -210,7 +227,15 @@ export default function StoresPage() {
             fields={[
               { label: t('stores.colPhone'), value: r.phone },
               { label: t('stores.colProducts'), value: r.productCount },
-              { label: t('common.status'), value: statusTag(r) },
+              {
+                label: t('common.status'),
+                value: (
+                  <Space size={4} wrap>
+                    {statusTag(r)}
+                    {paymentsTag(r)}
+                  </Space>
+                ),
+              },
             ]}
             actions={
               <Button type="primary" block onClick={() => manageStore(r)}>
@@ -220,6 +245,8 @@ export default function StoresPage() {
           />
         )}
       />
+
+      <StorePaymentsDialog store={payingStore} onClose={() => setPayingStore(null)} />
 
       <FormDialog
         title={editing ? t('stores.edit') : t('stores.new')}

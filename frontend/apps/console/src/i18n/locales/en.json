@@ -81,7 +81,10 @@
     "saved": "Store saved",
     "saveError": "Could not save store",
     "deleted": "Store deleted",
-    "deleteError": "Could not delete store"
+    "deleteError": "Could not delete store",
+    "payments": "Payments",
+    "paymentsOn": "Payments on",
+    "paymentsOff": "Payments off"
   },
   "users": {
     "title": "Users",
@@ -305,7 +308,8 @@
     "Confirmed": "Confirmed",
     "Ready": "Ready",
     "Completed": "Completed",
-    "Cancelled": "Cancelled"
+    "Cancelled": "Cancelled",
+    "AwaitingPayment": "Awaiting payment"
   },
   "orders": {
     "title": "Orders",
@@ -368,6 +372,38 @@
     "statusUpdated": "Order updated",
     "statusError": "Could not update the order",
     "quoteSent": "Quote saved",
-    "quoteError": "Could not save the quote"
+    "quoteError": "Could not save the quote",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "colPayment": "Payment",
+    "paymentRef": "Payment reference"
+  },
+  "payments": {
+    "title": "Online payments",
+    "subtitle": "Customers of {{store}} pay before the store works their order.",
+    "enable": "Accept online payments",
+    "enableHint": "While this is off, orders arrive as they do today and are settled with the store directly.",
+    "credentialRef": "Credential reference",
+    "credentialRefHint": "Names this store's own account inside the payment service. Never paste an API key here — the key itself stays in the payment service.",
+    "credentialRefRequired": "A credential reference is required.",
+    "mode": "Mode",
+    "modeTest": "Test",
+    "modeLive": "Live",
+    "modeHint": "Test runs payments through the provider's sandbox. No real money moves.",
+    "methods": "Payment methods",
+    "methodsHint": "What the customer chooses between at checkout.",
+    "methodsRequired": "Choose at least one payment method.",
+    "currencyUnsupported": "Cannot take {{currency}}",
+    "unavailableTitle": "Payments are not available",
+    "unavailable_payments_not_configured": "This deployment has no payment service configured.",
+    "unavailable_payment_service_unavailable": "The payment service is not answering. Try again shortly.",
+    "saved": "Payment settings saved.",
+    "saveError": "Could not save the payment settings.",
+    "error_credential_ref_required": "A credential reference is required.",
+    "error_methods_required": "Choose at least one payment method.",
+    "error_method_unknown": "That payment method is not available in this deployment.",
+    "error_currency_unsupported": "That method cannot take this store's currency.",
+    "error_credentials_not_resolvable": "The payment service cannot find credentials under that reference.",
+    "error_payment_service_unavailable": "The payment service is not answering. Try again shortly."
   }
 }

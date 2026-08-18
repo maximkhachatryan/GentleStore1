@@ -4,6 +4,7 @@ import type { OrderStatus } from '@gentlestore/shared';
 const STYLES: Record<OrderStatus, string> = {
   New: 'bg-slate-100 text-slate-700',
   AwaitingQuote: 'bg-amber-100 text-amber-800',
+  AwaitingPayment: 'bg-orange-100 text-orange-800',
   Quoted: 'bg-sky-100 text-sky-800',
   Confirmed: 'bg-emerald-100 text-emerald-800',
   Ready: 'bg-emerald-600 text-white',

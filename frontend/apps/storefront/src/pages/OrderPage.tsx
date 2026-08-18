@@ -1,5 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { PublicOrder } from '@gentlestore/shared';
@@ -7,6 +8,7 @@ import Navbar from '../components/Navbar';
 import StoreGate from '../components/StoreGate';
 import ContactButtons from '../components/ContactButtons';
 import OrderStatusBadge from '../components/OrderStatusBadge';
+import PaymentPanel from '../components/PaymentPanel';
 import { formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
 import { api } from '../api';
@@ -14,9 +16,13 @@ import { api } from '../api';
 export default function OrderPage() {
   const { t, i18n } = useTranslation();
   const { slug = '', id = '' } = useParams();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
+  const queryClient = useQueryClient();
   // Set by the checkout redirect so the "thank you" framing only shows the first time.
   const justPlaced = params.get('placed') === '1';
+  // Set by the payment provider's return URL. A hint to go and check, never proof of anything:
+  // the customer's own browser put it there.
+  const returnedFromPayment = params.get('paid') === '1';
 
   const storeQuery = useQuery({ queryKey: ['store', slug], queryFn: () => api.store.get(slug), retry: false });
   const orderQuery = useQuery({
@@ -24,6 +30,22 @@ export default function OrderPage() {
     queryFn: () => api.store.order(slug, id),
     retry: false,
   });
+
+  const refreshed = useRef(false);
+
+  useEffect(() => {
+    if (!returnedFromPayment || refreshed.current) return;
+    refreshed.current = true;
+
+    // Ask the gateway what actually happened, then drop the flag so a reload does not re-ask.
+    api.store
+      .refreshPayment(slug, id)
+      .catch(() => undefined)
+      .finally(() => {
+        queryClient.invalidateQueries({ queryKey: ['store', slug, 'order', id] });
+        setParams({}, { replace: true });
+      });
+  }, [returnedFromPayment, slug, id, queryClient, setParams]);
 
   if (isInviteRequired(storeQuery.error) || isInviteRequired(orderQuery.error))
     return <StoreGate slug={slug} reason="locked" />;
@@ -112,6 +134,8 @@ export default function OrderPage() {
                 </span>
               </div>
             </section>
+
+            {order.paymentRequired && <PaymentPanel slug={slug} order={order} store={store} />}
 
             {order.awaitingQuote && (
               <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">

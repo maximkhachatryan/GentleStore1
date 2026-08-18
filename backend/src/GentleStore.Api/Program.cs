@@ -23,6 +23,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IStorefrontGate, StorefrontGate>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderPaymentService, OrderPaymentService>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()

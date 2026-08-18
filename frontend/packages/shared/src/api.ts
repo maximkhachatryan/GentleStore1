@@ -18,8 +18,13 @@ import type {
   LoginResponse,
   OrderDetail,
   OrderListItem,
+  OrderPayment,
   OrderQuery,
   PlaceOrderRequest,
+  PublicPaymentMethod,
+  StartPaymentRequest,
+  StorePaymentSettings,
+  UpdateStorePaymentsRequest,
   PublicOrder,
   QuoteOrderRequest,
   UpdateOrderStatusRequest,
@@ -74,6 +79,15 @@ export function createApi(http: AxiosInstance) {
       activateStore: (id: string) => http.post(`/api/admin/stores/${id}/activate`).then((r) => r.data),
       deactivateStore: (id: string) => http.post(`/api/admin/stores/${id}/deactivate`).then((r) => r.data),
       deleteStore: (id: string) => http.delete(`/api/admin/stores/${id}`).then((r) => r.data),
+      /** Current payment setting for a tenant, plus every method this deployment could offer it. */
+      getStorePayments: (id: string) =>
+        http.get<StorePaymentSettings>(`/api/admin/stores/${id}/payments`).then((r) => r.data),
+      /**
+       * Switches online payments on or off for a tenant. Enabling enrols the store's own account
+       * with the payment service first, so the switch only flips once payment can actually be taken.
+       */
+      updateStorePayments: (id: string, body: UpdateStorePaymentsRequest) =>
+        http.put<StorePaymentSettings>(`/api/admin/stores/${id}/payments`, body).then((r) => r.data),
       listUsers: () => http.get<AdminUser[]>('/api/admin/users').then((r) => r.data),
       createUser: (body: CreateUserRequest) => http.post<AdminUser>('/api/admin/users', body).then((r) => r.data),
       updateUser: (id: string, body: UpdateUserRequest) =>
@@ -183,6 +197,21 @@ export function createApi(http: AxiosInstance) {
       orders: (slug: string) => http.get<PublicOrder[]>(`/api/public/stores/${slug}/orders`).then((r) => r.data),
       order: (slug: string, id: string) =>
         http.get<PublicOrder>(`/api/public/stores/${slug}/orders/${id}`).then((r) => r.data),
+      /** What this store accepts. Empty when it does not take online payments. */
+      paymentMethods: (slug: string) =>
+        http.get<PublicPaymentMethod[]>(`/api/public/stores/${slug}/payment-methods`).then((r) => r.data),
+      /**
+       * Starts or resumes payment for an order. Safe to call twice — a customer who reloads
+       * mid-redirect is handed the payment they already started, not a second charge.
+       */
+      startPayment: (slug: string, id: string, body?: StartPaymentRequest) =>
+        http.post<OrderPayment>(`/api/public/stores/${slug}/orders/${id}/payment`, body ?? {}).then((r) => r.data),
+      /**
+       * Re-reads the payment from the gateway. Call this when the customer returns from a hosted
+       * checkout: the query string they arrive with was written by their own browser.
+       */
+      refreshPayment: (slug: string, id: string) =>
+        http.post<OrderPayment>(`/api/public/stores/${slug}/orders/${id}/payment/refresh`).then((r) => r.data),
     },
     uploads: {
       upload: (file: File) => {

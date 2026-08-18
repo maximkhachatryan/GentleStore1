@@ -65,7 +65,7 @@ public class PublicOrdersController : PublicStoreControllerBase
         return order is null ? NotFound() : Ok(ToDto(order));
     }
 
-    private static PublicOrderDto ToDto(Order order) => new(
+    internal static PublicOrderDto ToDto(Order order) => new(
         order.Id,
         order.OrderNumber,
         order.Status.ToString(),
@@ -77,6 +77,10 @@ public class PublicOrdersController : PublicStoreControllerBase
         order.ContactName,
         PhoneNumbers.Mask(order.ContactPhoneNormalized),
         AwaitingQuote: order.Status == OrderStatus.AwaitingQuote,
+        order.PaymentRequired,
+        AwaitingPayment: order.Status == OrderStatus.AwaitingPayment,
+        order.PaymentStatus,
+        order.PaidAt,
         order.PlacedAt,
         order.Lines
             .OrderBy(l => l.DisplayOrder)
