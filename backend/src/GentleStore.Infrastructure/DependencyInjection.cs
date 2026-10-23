@@ -30,7 +30,6 @@ public static class DependencyInjection
 
         services.AddHttpClient(TelegramClient.HttpClientName, client =>
             {
-                client.BaseAddress = new Uri("https://api.telegram.org/");
                 // Above the 25 s getUpdates long poll, so an idle poll ends on Telegram's side, not ours.
                 client.Timeout = TimeSpan.FromSeconds(40);
             })

@@ -128,7 +128,9 @@ public sealed class TelegramClient : ITelegramClient
 
     private HttpClient Http() => _clients.CreateClient(HttpClientName);
 
-    private string Method(string name) => $"bot{_options.BotToken}/{name}";
+    // Always absolute: the token contains a ':', so a relative "bot123:ABC/..." would parse as a URI
+    // with scheme "bot123" and never reach Telegram.
+    private Uri Method(string name) => new($"https://api.telegram.org/bot{_options.BotToken}/{name}", UriKind.Absolute);
 
     private static async Task<(string? Description, int? RetryAfter)> ReadErrorAsync(
         HttpResponseMessage response, CancellationToken ct)
