@@ -8,7 +8,7 @@ import { api, API_URL } from '../api';
 // Mirrors UploadsController.MaxBytes. Rejecting here keeps an oversized file from
 // hitting the reverse proxy, which answers 413 without CORS headers — the browser
 // surfaces that as an opaque network error rather than a readable message.
-const MAX_BYTES = 5 * 1024 * 1024;
+export const MAX_BYTES = 5 * 1024 * 1024;
 
 interface Props {
   value?: string | null;

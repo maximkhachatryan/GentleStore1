@@ -251,7 +251,7 @@
     "addTags": "Add tags",
     "images": "Images",
     "saveFirst": "Save the product first, then manage images and variants.",
-    "addImage": "Add image",
+    "addImage": "Add images",
     "sku": "SKU",
     "variants": "Variants",
     "addVariant": "Add variant",
@@ -273,7 +273,9 @@
     "upload": "Upload image",
     "uploaded": "Image uploaded",
     "failed": "Upload failed",
-    "tooLarge": "Image must be smaller than {{mb}} MB"
+    "tooLarge": "Image must be smaller than {{mb}} MB",
+    "uploadedMany": "Images uploaded: {{count}}",
+    "someFailed": "Images that failed to upload: {{count}}"
   },
   "variantAttributes": {
     "title": "Variant Attributes",

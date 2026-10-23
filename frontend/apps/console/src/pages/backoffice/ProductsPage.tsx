@@ -23,7 +23,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductVariant } from '@gentlestore/shared';
 import { resolveAssetUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../../api';
-import ImageUpload from '../../components/ImageUpload';
+import MultiImageUpload from '../../components/MultiImageUpload';
 import EntityCard from '../../components/EntityCard';
 import FormDialog from '../../components/FormDialog';
 import PageHeader from '../../components/PageHeader';
@@ -118,9 +118,13 @@ export default function ProductsPage() {
     onError: () => message.error(t('products.deleteError')),
   });
 
-  const addImage = useMutation({
-    mutationFn: (url: string) => api.backoffice.addProductImage(editing!.id, { imageUrl: url }),
-    onSuccess: () => {
+  const addImages = useMutation({
+    mutationFn: async (urls: string[]) => {
+      // One at a time: the API gives each image the next display order, so parallel
+      // adds would collide and lose the selection order.
+      for (const url of urls) await api.backoffice.addProductImage(editing!.id, { imageUrl: url });
+    },
+    onSettled: () => {
       refetchEditing();
       invalidateList();
     },
@@ -370,7 +374,7 @@ export default function ProductsPage() {
                 ))}
               </Space>
               <div style={{ marginTop: 8 }}>
-                <ImageUpload onChange={(url) => addImage.mutate(url)} buttonText={t('products.addImage')} />
+                <MultiImageUpload onUploaded={(urls) => addImages.mutateAsync(urls)} buttonText={t('products.addImage')} />
               </div>
             </div>
           )}
