@@ -39,6 +39,11 @@ services:
       # Base of the invite links the backoffice hands out.
       Storefront__Url: "https://${STOREFRONT_DOMAIN}"
       Storefront__InviteExpiryDays: ${INVITE_EXPIRY_DAYS:-14}
+      # Order alerts link back to the console.
+      Console__Url: "https://${CONSOLE_DOMAIN}"
+      # Telegram order alerts. Empty token or username switches them off.
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
+      Telegram__BotUsername: ${TELEGRAM_BOT_USERNAME:-}
       # The storefront and the API share a registrable domain, so a Lax cookie still reaches the
       # API on storefront requests while staying blocked on requests from unrelated sites.
       # Put the two on unrelated domains and this has to become "None".

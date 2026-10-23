@@ -14,6 +14,7 @@ import TagsPage from './pages/backoffice/TagsPage';
 import VariantAttributesPage from './pages/backoffice/VariantAttributesPage';
 import CustomersPage from './pages/backoffice/CustomersPage';
 import OrdersPage from './pages/backoffice/OrdersPage';
+import NotificationsPage from './pages/backoffice/NotificationsPage';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/store/orders" element={<OrdersPage />} />
           </>
         )}
+        {!isAdmin && <Route path="/store/notifications" element={<NotificationsPage />} />}
         <Route path="*" element={<Navigate to={isAdmin ? (managingStore ? '/store' : '/admin') : '/store'} replace />} />
       </Route>
     </Routes>

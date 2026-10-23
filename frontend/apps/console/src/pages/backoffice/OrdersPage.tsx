@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -86,6 +87,24 @@ export default function OrdersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | undefined>();
   const [openId, setOpenId] = useState<string | null>(null);
+  // Telegram and desktop alerts link straight to an order with ?order=<id>.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedOrder = searchParams.get('order');
+  useEffect(() => {
+    if (linkedOrder) setOpenId(linkedOrder);
+  }, [linkedOrder]);
+
+  const closeDrawer = () => {
+    setOpenId(null);
+    if (linkedOrder)
+      setSearchParams(
+        (params) => {
+          params.delete('order');
+          return params;
+        },
+        { replace: true },
+      );
+  };
   /** Prices being typed into the quote editor, keyed by line id. */
   const [quote, setQuote] = useState<Record<string, number | null>>({});
   const [storeNote, setStoreNote] = useState('');
@@ -274,7 +293,7 @@ export default function OrdersPage() {
 
       <Drawer
         open={openId !== null}
-        onClose={() => setOpenId(null)}
+        onClose={closeDrawer}
         placement={isMobile ? 'bottom' : 'right'}
         size={isMobile ? '92dvh' : 560}
         title={order?.orderNumber ?? t('orders.open')}

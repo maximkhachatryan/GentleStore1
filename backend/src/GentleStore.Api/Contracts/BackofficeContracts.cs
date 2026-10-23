@@ -102,3 +102,10 @@ public record CustomerDetailDto(
     CustomerDto Customer,
     IReadOnlyList<CustomerDeviceDto> Devices,
     IReadOnlyList<CustomerInviteDto> Invites);
+
+/// <param name="Available">False when this deployment has no bot configured.</param>
+public record TelegramStatusDto(bool Available, bool Linked, string? BotUsername);
+
+public record LinkTelegramRequest(string? Language);
+
+public record TelegramLinkDto(string Url, DateTime ExpiresAt);

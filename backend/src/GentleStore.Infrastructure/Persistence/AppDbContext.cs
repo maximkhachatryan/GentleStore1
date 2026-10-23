@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<CustomerSession> CustomerSessions => Set<CustomerSession>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
+    public DbSet<OrderNotification> OrderNotifications => Set<OrderNotification>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -196,6 +197,7 @@ public class AppDbContext : DbContext
             e.HasIndex(x => new { x.StoreId, x.OrderNumber }).IsUnique();
             e.HasIndex(x => new { x.StoreId, x.Status });
             e.HasIndex(x => new { x.StoreId, x.PlacedAt });
+            e.HasIndex(x => new { x.StoreId, x.PaidAt });
             // Order history for a self-declared browser is scoped to its own session.
             e.HasIndex(x => x.CustomerSessionId);
             // How the payment callback finds its order, and one payment can only ever settle one
@@ -227,8 +229,26 @@ public class AppDbContext : DbContext
             e.Property(x => x.PasswordHash).IsRequired().HasMaxLength(200);
             e.Property(x => x.FullName).IsRequired().HasMaxLength(150);
             e.Property(x => x.Role).HasConversion<int>();
+            e.Property(x => x.TelegramLanguage).HasMaxLength(8);
+            e.Property(x => x.TelegramLinkTokenHash).HasMaxLength(64);
+            e.HasIndex(x => x.TelegramLinkTokenHash).IsUnique().HasFilter("\"TelegramLinkTokenHash\" IS NOT NULL");
+            e.HasIndex(x => x.TelegramChatId);
             e.HasOne(x => x.Store).WithMany(x => x.Users)
                 .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        mb.Entity<OrderNotification>(e =>
+        {
+            e.Property(x => x.Event).HasConversion<int>();
+            e.Property(x => x.Status).HasConversion<int>();
+            e.Property(x => x.LastError).HasMaxLength(2000);
+            e.HasOne(x => x.Order).WithMany()
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.User).WithMany()
+                .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.Status, x.NextAttemptAt });
+            // A payment callback delivered twice must not message anyone twice.
+            e.HasIndex(x => new { x.OrderId, x.UserId, x.Event }).IsUnique();
         });
     }
 }

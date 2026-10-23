@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Avatar, Button, Drawer, Dropdown, Layout, Menu, Space, Tag, Typography } from 'antd';
+import { Avatar, Badge, Button, Drawer, Dropdown, Layout, Menu, Space, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   AppstoreOutlined,
+  BellOutlined,
   BranchesOutlined,
   CheckOutlined,
   DashboardOutlined,
@@ -24,6 +25,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { managedStore, useManagedStore } from '../auth/managedStore';
 import { STOREFRONT_URL } from '../api';
+import { useOrderAlerts } from '../hooks/useOrderAlerts';
 import { useResponsive } from '../hooks/useResponsive';
 import { SUPPORTED_LANGUAGES, LANGUAGE_NAMES, type Language } from '../i18n';
 import { BRAND } from '../theme';
@@ -44,11 +46,22 @@ export default function ProtectedLayout() {
   const isAdmin = user?.role === 'SuperAdmin';
   const managed = useManagedStore();
   const managingStore = isAdmin && managed !== null;
+  // Alerts are for the store's own staff; a platform admin looking in is not one of them.
+  const pendingOrders = useOrderAlerts(!!user && !isAdmin);
 
   const items = useMemo(() => {
     const backofficeItems = [
       { key: '/store', icon: <ProfileOutlined />, label: <Link to="/store">{t('nav.storeProfile')}</Link> },
-      { key: '/store/orders', icon: <ShoppingCartOutlined />, label: <Link to="/store/orders">{t('nav.orders')}</Link> },
+      {
+        key: '/store/orders',
+        icon: <ShoppingCartOutlined />,
+        label: (
+          <Link to="/store/orders" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            {t('nav.orders')}
+            <Badge count={pendingOrders} size="small" />
+          </Link>
+        ),
+      },
       { key: '/store/categories', icon: <AppstoreOutlined />, label: <Link to="/store/categories">{t('nav.categories')}</Link> },
       { key: '/store/products', icon: <ShopOutlined />, label: <Link to="/store/products">{t('nav.products')}</Link> },
       { key: '/store/tags', icon: <TagsOutlined />, label: <Link to="/store/tags">{t('nav.tags')}</Link> },
@@ -56,6 +69,13 @@ export default function ProtectedLayout() {
       { key: '/store/customers', icon: <UserOutlined />, label: <Link to="/store/customers">{t('nav.customers')}</Link> },
     ];
     if (managingStore) return backofficeItems;
+    if (!isAdmin) {
+      backofficeItems.push({
+        key: '/store/notifications',
+        icon: <BellOutlined />,
+        label: <Link to="/store/notifications">{t('nav.notifications')}</Link>,
+      });
+    }
     if (isAdmin) {
       return [
         { key: '/admin', icon: <DashboardOutlined />, label: <Link to="/admin">{t('nav.dashboard')}</Link> },
@@ -64,7 +84,7 @@ export default function ProtectedLayout() {
       ];
     }
     return backofficeItems;
-  }, [isAdmin, managingStore, t]);
+  }, [isAdmin, managingStore, pendingOrders, t]);
 
   const selectedKey = useMemo(() => {
     const matches = items

@@ -80,3 +80,9 @@ public record QuoteOrderLineRequest(Guid LineId, decimal UnitPrice);
 
 /// <summary>Fills in the prices of "price on request" lines and moves the order to Quoted.</summary>
 public record QuoteOrderRequest(List<QuoteOrderLineRequest> Lines, string? StoreNote);
+
+public record OrderPulseItemDto(Guid Id, string OrderNumber, DateTime At);
+
+/// <summary>What the console polls to notice new and newly paid orders without fetching the list.</summary>
+/// <param name="PendingCount">Orders waiting on the store: New and AwaitingQuote.</param>
+public record OrderPulseDto(int PendingCount, OrderPulseItemDto? LatestPlaced, OrderPulseItemDto? LatestPaid);

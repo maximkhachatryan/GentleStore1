@@ -311,6 +311,8 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                     b.HasIndex("StoreId", "OrderNumber")
                         .IsUnique();
 
+                    b.HasIndex("StoreId", "PaidAt");
+
                     b.HasIndex("StoreId", "PlacedAt");
 
                     b.HasIndex("StoreId", "Status");
@@ -361,6 +363,52 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrderId", "DisplayOrder");
 
                     b.ToTable("OrderLines");
+                });
+
+            modelBuilder.Entity("GentleStore.Domain.Entities.OrderNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Event")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "NextAttemptAt");
+
+                    b.HasIndex("OrderId", "UserId", "Event")
+                        .IsUnique();
+
+                    b.ToTable("OrderNotifications");
                 });
 
             modelBuilder.Entity("GentleStore.Domain.Entities.Product", b =>
@@ -590,12 +638,32 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("StoreId")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("TelegramChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TelegramLanguage")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<DateTime?>("TelegramLinkTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TelegramLinkTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
                     b.HasIndex("StoreId");
+
+                    b.HasIndex("TelegramChatId");
+
+                    b.HasIndex("TelegramLinkTokenHash")
+                        .IsUnique()
+                        .HasFilter("\"TelegramLinkTokenHash\" IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -799,6 +867,25 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("GentleStore.Domain.Entities.OrderNotification", b =>
+                {
+                    b.HasOne("GentleStore.Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GentleStore.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GentleStore.Domain.Entities.Product", b =>

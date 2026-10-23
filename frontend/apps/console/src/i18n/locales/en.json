@@ -9,6 +9,7 @@
     "tags": "Tags",
     "variantAttributes": "Variant Attributes",
     "customers": "Customers",
+    "notifications": "Notifications",
     "orders": "Orders"
   },
   "layout": {
@@ -406,5 +407,34 @@
     "error_currency_unsupported": "That method cannot take this store's currency.",
     "error_credentials_not_resolvable": "The payment service cannot find credentials under that reference.",
     "error_payment_service_unavailable": "The payment service is not answering. Try again shortly."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Find out about new orders and payments, even when the console is closed.",
+    "telegramTitle": "Telegram",
+    "telegramHint": "Each team member connects their own Telegram. You'll get a message for every new order and every payment received.",
+    "telegramUnavailable": "Telegram alerts aren't set up on this server yet. Ask your platform administrator to configure the bot.",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "connect": "Connect Telegram",
+    "openTelegram": "Open Telegram",
+    "waitingHint": "In Telegram, press Start. This page updates by itself once you're connected. The link works for 15 minutes.",
+    "disconnect": "Disconnect",
+    "disconnectConfirm": "Stop receiving order alerts in Telegram?",
+    "linkedSuccess": "Telegram connected",
+    "unlinked": "Telegram disconnected",
+    "linkError": "Couldn't create a Telegram link",
+    "desktopTitle": "Alerts in this browser",
+    "desktopHint": "While the console is open, it checks for new orders every 30 seconds.",
+    "desktopEnable": "Allow desktop notifications",
+    "desktopOn": "Desktop notifications are on",
+    "desktopDenied": "Notifications are blocked for this site. Allow them in your browser settings.",
+    "desktopUnsupported": "This browser doesn't support desktop notifications.",
+    "sound": "Play a sound for new orders"
+  },
+  "alerts": {
+    "newOrder": "New order {{number}}",
+    "orderPaid": "Order {{number}} has been paid",
+    "open": "Click to open the order"
   }
 }

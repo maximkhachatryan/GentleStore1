@@ -1,5 +1,6 @@
 using GentleStore.Api.Common;
 using GentleStore.Api.Contracts;
+using GentleStore.Api.Notifications;
 using GentleStore.Api.Storefront;
 using GentleStore.Domain.Entities;
 using GentleStore.Domain.Enums;
@@ -44,11 +45,13 @@ public class OrderService : IOrderService
 
     private readonly AppDbContext _db;
     private readonly IStorefrontGate _gate;
+    private readonly IOrderNotifier _notifier;
 
-    public OrderService(AppDbContext db, IStorefrontGate gate)
+    public OrderService(AppDbContext db, IStorefrontGate gate, IOrderNotifier notifier)
     {
         _db = db;
         _gate = gate;
+        _notifier = notifier;
     }
 
     public async Task<PlaceOrderResult> PlaceAsync(Store store, PlaceOrderRequest req, CancellationToken ct = default)
@@ -113,6 +116,7 @@ public class OrderService : IOrderService
         };
 
         _db.Orders.Add(order);
+        await _notifier.EnqueueAsync(order, OrderNotificationEvent.OrderPlaced, ct);
         await _db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
 

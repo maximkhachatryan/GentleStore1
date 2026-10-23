@@ -19,6 +19,9 @@ import type {
   OrderDetail,
   OrderListItem,
   OrderPayment,
+  OrderPulse,
+  TelegramLink,
+  TelegramStatus,
   OrderQuery,
   PlaceOrderRequest,
   PublicPaymentMethod,
@@ -169,6 +172,12 @@ export function createApi(http: AxiosInstance) {
       /** Fills in "price on request" lines and moves the order to Quoted. */
       quoteOrder: (id: string, body: QuoteOrderRequest) =>
         http.put<OrderDetail>(`/api/backoffice/orders/${id}/quote`, body).then((r) => r.data),
+      orderPulse: () => http.get<OrderPulse>('/api/backoffice/orders/pulse').then((r) => r.data),
+      getTelegram: () => http.get<TelegramStatus>('/api/backoffice/notifications/telegram').then((r) => r.data),
+      /** One-time t.me deep link; opening it and pressing Start binds this user's chat. */
+      linkTelegram: (language: string) =>
+        http.post<TelegramLink>('/api/backoffice/notifications/telegram/link', { language }).then((r) => r.data),
+      unlinkTelegram: () => http.delete('/api/backoffice/notifications/telegram').then((r) => r.data),
     },
     store: {
       list: (search?: string) =>

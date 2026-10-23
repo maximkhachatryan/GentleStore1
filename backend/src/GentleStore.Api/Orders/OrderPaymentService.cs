@@ -1,3 +1,4 @@
+using GentleStore.Api.Notifications;
 using GentleStore.Api.Storefront;
 using GentleStore.Domain.Entities;
 using GentleStore.Domain.Enums;
@@ -96,6 +97,7 @@ public sealed class OrderPaymentService : IOrderPaymentService
     private readonly IPaymentClient _payments;
     private readonly StorefrontOptions _storefront;
     private readonly PaymentServiceOptions _options;
+    private readonly IOrderNotifier _notifier;
     private readonly ILogger<OrderPaymentService> _log;
 
     public OrderPaymentService(
@@ -103,12 +105,14 @@ public sealed class OrderPaymentService : IOrderPaymentService
         IPaymentClient payments,
         IOptions<StorefrontOptions> storefront,
         IOptions<PaymentServiceOptions> options,
+        IOrderNotifier notifier,
         ILogger<OrderPaymentService> log)
     {
         _db = db;
         _payments = payments;
         _storefront = storefront.Value;
         _options = options.Value;
+        _notifier = notifier;
         _log = log;
     }
 
@@ -277,7 +281,7 @@ public sealed class OrderPaymentService : IOrderPaymentService
                 "Check the payment service's PublicBaseUrl.", payment.GatewayKey, action.Url);
 
         // A gateway that settles server-side can report the money already taken on the create call.
-        if (payment.Status == Captured) MarkPaid(order);
+        if (payment.Status == Captured) await MarkPaidAsync(order, ct);
 
         await _db.SaveChangesAsync(ct);
 
@@ -299,7 +303,7 @@ public sealed class OrderPaymentService : IOrderPaymentService
 
         if (status == Captured && order.PaidAt is null)
         {
-            MarkPaid(order);
+            await MarkPaidAsync(order, ct);
             changed = true;
         }
 
@@ -319,13 +323,15 @@ public sealed class OrderPaymentService : IOrderPaymentService
         Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 
-    private static void MarkPaid(Order order)
+    private async Task MarkPaidAsync(Order order, CancellationToken ct)
     {
         order.PaidAt = DateTime.UtcNow;
 
         // Paid orders join the ordinary queue: the store still has to acknowledge and fulfil them.
         // Guarded so a late notification cannot drag a Confirmed or Ready order back to New.
         if (order.Status == OrderStatus.AwaitingPayment) order.Status = OrderStatus.New;
+
+        await _notifier.EnqueueAsync(order, OrderNotificationEvent.OrderPaid, ct);
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using GentleStore.Infrastructure.Auth;
 using GentleStore.Infrastructure.Payments;
 using GentleStore.Infrastructure.Persistence;
+using GentleStore.Infrastructure.Telegram;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,8 +19,25 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 
         AddPayments(services, configuration);
+        AddTelegram(services, configuration);
 
         return services;
+    }
+
+    private static void AddTelegram(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
+
+        services.AddHttpClient(TelegramClient.HttpClientName, client =>
+            {
+                client.BaseAddress = new Uri("https://api.telegram.org/");
+                // Above the 25 s getUpdates long poll, so an idle poll ends on Telegram's side, not ours.
+                client.Timeout = TimeSpan.FromSeconds(40);
+            })
+            // The bot token is part of every request path; the default handlers would log it.
+            .RemoveAllLoggers();
+
+        services.AddScoped<ITelegramClient, TelegramClient>();
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using GentleStore.Api.Auth;
+using GentleStore.Api.Notifications;
 using GentleStore.Api.Orders;
 using GentleStore.Api.Storefront;
 using GentleStore.Domain.Enums;
@@ -24,6 +25,10 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IStorefrontGate, StorefrontGate>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderPaymentService, OrderPaymentService>();
+builder.Services.Configure<ConsoleAppOptions>(builder.Configuration.GetSection(ConsoleAppOptions.SectionName));
+builder.Services.AddScoped<IOrderNotifier, OrderNotifier>();
+builder.Services.AddHostedService<OrderNotificationDispatcher>();
+builder.Services.AddHostedService<TelegramLinkPoller>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()

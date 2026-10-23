@@ -77,6 +77,30 @@ public class BackofficeOrdersController : BackofficeControllerBase
         return Ok(orders);
     }
 
+    [HttpGet("pulse")]
+    public async Task<IActionResult> Pulse()
+    {
+        if (_current.StoreId is not Guid storeId) return Forbidden();
+
+        var orders = _db.Orders.Where(o => o.StoreId == storeId);
+
+        var pending = await orders.CountAsync(o =>
+            o.Status == OrderStatus.New || o.Status == OrderStatus.AwaitingQuote);
+
+        var latestPlaced = await orders
+            .OrderByDescending(o => o.PlacedAt)
+            .Select(o => new OrderPulseItemDto(o.Id, o.OrderNumber, o.PlacedAt))
+            .FirstOrDefaultAsync();
+
+        var latestPaid = await orders
+            .Where(o => o.PaidAt != null)
+            .OrderByDescending(o => o.PaidAt)
+            .Select(o => new OrderPulseItemDto(o.Id, o.OrderNumber, o.PaidAt!.Value))
+            .FirstOrDefaultAsync();
+
+        return Ok(new OrderPulseDto(pending, latestPlaced, latestPaid));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Get(Guid id)
     {

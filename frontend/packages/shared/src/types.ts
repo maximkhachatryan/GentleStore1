@@ -462,6 +462,32 @@ export interface QuoteOrderRequest {
   storeNote?: string | null;
 }
 
+export interface OrderPulseItem {
+  id: string;
+  orderNumber: string;
+  at: string;
+}
+
+/** Polled by the console to notice new and newly paid orders. */
+export interface OrderPulse {
+  /** Orders waiting on the store: New and AwaitingQuote. */
+  pendingCount: number;
+  latestPlaced: OrderPulseItem | null;
+  latestPaid: OrderPulseItem | null;
+}
+
+export interface TelegramStatus {
+  /** False when this deployment has no bot configured. */
+  available: boolean;
+  linked: boolean;
+  botUsername: string | null;
+}
+
+export interface TelegramLink {
+  url: string;
+  expiresAt: string;
+}
+
 // ---- Public ----
 export interface PublicStoreListItem {
   slug: string;
