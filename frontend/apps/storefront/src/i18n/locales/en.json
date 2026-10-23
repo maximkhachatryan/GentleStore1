@@ -13,7 +13,6 @@
     "all": "All",
     "tagsLabel": "Tags:",
     "noProducts": "No products found.",
-    "contactMessage": "Hi {{store}}, I have a question about your products.",
     "greetingNamed": "Welcome back, {{name}}",
     "greeting": "Signed in as {{phone}}"
   },
@@ -24,7 +23,7 @@
   },
   "gate": {
     "privateBadge": "Private store",
-    "requestMessage": "Hi {{store}}, could you send me a new link to your catalogue?",
+    "requestMessage": "Hi, could you send me a new link to your catalogue?",
     "browserNote": "Your link is remembered on this browser only. A private window, another phone, or clearing your browser data will need a new link.",
     "footerNote": "Only {{store}} can hand out access to this catalogue.",
     "locked": {
@@ -76,7 +75,7 @@
     "priceFrom": "From {{price}}",
     "priceOnRequest": "Price on request",
     "ordersNote": "Orders are placed directly with the store via WhatsApp or phone.",
-    "orderMessage": "Hi {{store}}, I'd like to order: {{product}}.",
+    "orderMessage": "Hi, I'd like to order: {{product}}.",
     "addToCart": "Add to cart",
     "buyNow": "Add and check out",
     "chooseOptions": "Choose your options",
@@ -145,7 +144,7 @@
     "awaitingQuote": "This order contains an item priced on request. The store will send you a total.",
     "confirmTitle": "One more step",
     "confirmBody": "Send {{store}} your order number on WhatsApp so they can confirm it. Your order is saved either way.",
-    "whatsappMessage": "Hi {{store}}, I placed order {{number}}:\n{{items}}\nTotal: {{total}}",
+    "whatsappMessage": "Hi, I placed order {{number}}:\n{{items}}\nTotal: {{total}}",
     "payTitle": "Pay for this order",
     "payBody": "{{store}} works this order once the payment goes through.",
     "payNow": "Pay now",

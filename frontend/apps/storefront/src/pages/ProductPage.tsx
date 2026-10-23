@@ -203,7 +203,7 @@ export default function ProductPage() {
                 {store && (
                   <div className="mt-4 border-t border-slate-100 pt-4">
                     <p className="mb-2 text-xs text-slate-400">{t('product.orAskFirst')}</p>
-                    <ContactButtons phone={store.phone} message={t('product.orderMessage', { store: store.name, product: orderProductLabel })} />
+                    <ContactButtons phone={store.phone} message={t('product.orderMessage', { product: orderProductLabel })} />
                   </div>
                 )}
               </div>

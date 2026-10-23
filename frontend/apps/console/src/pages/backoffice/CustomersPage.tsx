@@ -201,14 +201,8 @@ export default function CustomersPage() {
    * The message that lands in the WhatsApp chat box. It carries the link plus the one rule the
    * customer needs to know: whichever device opens it first is the device that keeps access.
    */
-  const inviteMessage = (customer: Customer, url: string) =>
-    customer.fullName
-      ? t('customers.whatsappMessageNamed', {
-          name: customer.fullName,
-          store: storeQuery.data?.name ?? '',
-          url,
-        })
-      : t('customers.whatsappMessage', { store: storeQuery.data?.name ?? '', url });
+  const inviteMessage = (url: string) =>
+    t('customers.whatsappMessage', { store: storeQuery.data?.name ?? '', url });
 
   const copyLink = async (url: string) => {
     try {
@@ -325,7 +319,7 @@ export default function CustomersPage() {
   const inviteUrl = invite?.link.url ?? '';
   // wa.me opens the chat with this number and drops the message into its text box, ready to send.
   const inviteWaLink = invite
-    ? whatsappLink(invite.customer.phoneNormalized, inviteMessage(invite.customer, inviteUrl))
+    ? whatsappLink(invite.customer.phoneNormalized, inviteMessage(inviteUrl))
     : '';
 
   return (

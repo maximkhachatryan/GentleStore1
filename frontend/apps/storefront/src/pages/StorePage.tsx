@@ -84,7 +84,7 @@ export default function StorePage() {
                 {store.description && <p className="mt-1 max-w-2xl text-slate-500">{store.description}</p>}
               </div>
               <div className="sm:w-64">
-                <ContactButtons phone={store.phone} message={t('store.contactMessage', { store: store.name })} />
+                <ContactButtons phone={store.phone} />
                 {store.visitor && (
                   <Link
                     to={`/${slug}/orders`}

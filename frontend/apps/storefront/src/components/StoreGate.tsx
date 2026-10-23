@@ -98,7 +98,7 @@ export default function StoreGate({ slug, reason }: Props) {
             <ContactButtons
               size="lg"
               phone={access.phone}
-              message={t('gate.requestMessage', { store: access.name })}
+              message={t('gate.requestMessage')}
             />
           </div>
 

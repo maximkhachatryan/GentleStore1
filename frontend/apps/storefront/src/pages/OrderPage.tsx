@@ -102,7 +102,7 @@ export default function OrderPage() {
                     <ContactButtons
                       size="lg"
                       phone={store.phone}
-                      message={whatsappMessage(order, store.name, t)}
+                      message={whatsappMessage(order, t)}
                     />
                   </div>
                 </div>
@@ -184,13 +184,12 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 /** Summary the store can read at a glance in its own WhatsApp inbox. */
-function whatsappMessage(order: PublicOrder, storeName: string, t: TFunction): string {
+function whatsappMessage(order: PublicOrder, t: TFunction): string {
   const items = order.lines
     .map((l) => `• ${l.quantity} × ${l.productName}${l.variantLabel ? ` (${l.variantLabel})` : ''}`)
     .join('\n');
 
   return t('order.whatsappMessage', {
-    store: storeName,
     number: order.orderNumber,
     items,
     total: order.total === null ? t('cart.quoteNeeded') : formatPrice(order.total, order.currency),

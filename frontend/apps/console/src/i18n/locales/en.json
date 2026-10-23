@@ -170,7 +170,6 @@
     "linkCopied": "Link copied",
     "linkCopyFailed": "Could not copy the link. Select it and copy manually.",
     "whatsappMessage": "Hello! Here is your personal link to {{store}}: {{url}} — please open it on your own phone, it only works on the first device that uses it.",
-    "whatsappMessageNamed": "Hello {{name}}! Here is your personal link to {{store}}: {{url}} — please open it on your own phone, it only works on the first device that uses it.",
     "devices": "Signed-in devices",
     "devicesHint": "Each device got in with its own link. Signing one out asks the customer for a new link on that device.",
     "noDevices": "No device has opened a link yet.",

@@ -3,7 +3,7 @@ import { callLink, whatsappLink } from '../lib/contact';
 
 interface Props {
   phone: string;
-  message: string;
+  message?: string;
   size?: 'md' | 'lg';
 }
 
