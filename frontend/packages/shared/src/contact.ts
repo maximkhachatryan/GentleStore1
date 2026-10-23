@@ -12,6 +12,11 @@ export function whatsappLink(phone: string, message?: string): string {
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
 
+/** Opens WhatsApp with `message` ready to send and lets the user pick who gets it. */
+export function whatsappShareLink(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
 export function callLink(phone: string): string {
   return `tel:${phone.replace(/\s+/g, '')}`;
 }

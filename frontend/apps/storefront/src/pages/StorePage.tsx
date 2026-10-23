@@ -15,8 +15,8 @@ import { api, API_URL } from '../api';
 
 export default function StorePage() {
   const { t } = useTranslation();
-  const { slug = '' } = useParams();
-  const [categoryId, setCategoryId] = useState<string | undefined>();
+  // The category lives in the URL so a store can send a customer straight to one.
+  const { slug = '', categoryId } = useParams();
   const [tagId, setTagId] = useState<string | undefined>();
   const [search, setSearch] = useState('');
 
@@ -55,6 +55,9 @@ export default function StorePage() {
 
   const store = storeQuery.data;
   const logo = resolveAssetUrl(API_URL, store?.logoUrl);
+  // An old link to a category the store has since deleted.
+  const categoryMissing =
+    !!categoryId && !!categoriesQuery.data && !categoriesQuery.data.some((c) => c.id === categoryId);
   const visitorName = store?.visitor?.displayName ?? null;
 
   return (
@@ -110,11 +113,11 @@ export default function StorePage() {
             className="w-full rounded-xl border border-slate-200 px-4 py-2 outline-none focus:border-emerald-400"
           />
           <div className="flex gap-2 overflow-x-auto pb-1">
-            <Chip active={!categoryId} onClick={() => setCategoryId(undefined)}>
+            <Chip active={!categoryId} to={`/${slug}`}>
               {t('store.all')}
             </Chip>
             {categoriesQuery.data?.map((c) => (
-              <Chip key={c.id} active={categoryId === c.id} onClick={() => setCategoryId(c.id)}>
+              <Chip key={c.id} active={categoryId === c.id} to={`/${slug}/category/${c.id}`}>
                 {c.name}
               </Chip>
             ))}
@@ -140,7 +143,14 @@ export default function StorePage() {
       </div>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        {productsQuery.isLoading ? (
+        {categoryMissing ? (
+          <div className="py-16 text-center text-slate-500">
+            <p>{t('store.categoryNotFound')}</p>
+            <Link to={`/${slug}`} className="mt-3 inline-block font-medium text-emerald-600">
+              {t('store.showAll')}
+            </Link>
+          </div>
+        ) : productsQuery.isLoading ? (
           <GridSkeleton />
         ) : productsQuery.data && productsQuery.data.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">

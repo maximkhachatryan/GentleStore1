@@ -13,6 +13,8 @@
     "all": "All",
     "tagsLabel": "Tags:",
     "noProducts": "No products found.",
+    "categoryNotFound": "This category is no longer available.",
+    "showAll": "Show all products",
     "greetingNamed": "Welcome back, {{name}}",
     "greeting": "Signed in as {{phone}}"
   },

@@ -127,9 +127,19 @@ export default function ProductPage() {
     <div className="min-h-screen pb-24 md:pb-0">
       <Navbar store={store} />
       <div className="mx-auto max-w-5xl px-4 py-6">
-        <Link to={`/${slug}`} className="text-sm text-slate-500 transition hover:text-emerald-600">
-          ← {store?.name ?? t('product.backToStore')}
-        </Link>
+        <nav className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+          <Link to={`/${slug}`} className="transition hover:text-emerald-600">
+            ← {store?.name ?? t('product.backToStore')}
+          </Link>
+          {product && (
+            <>
+              <span aria-hidden="true">/</span>
+              <Link to={`/${slug}/category/${product.categoryId}`} className="transition hover:text-emerald-600">
+                {product.categoryName}
+              </Link>
+            </>
+          )}
+        </nav>
 
         {product ? (
           <div className="mt-4 grid gap-8 md:grid-cols-2">

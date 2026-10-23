@@ -15,6 +15,7 @@ export default function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/:slug" element={<StoreLayout />}>
         <Route index element={<StorePage />} />
+        <Route path="category/:categoryId" element={<StorePage />} />
         {/* Target of the personal invite links; the secret arrives in the URL fragment. */}
         <Route path="welcome" element={<WelcomePage />} />
         <Route path="product/:id" element={<ProductPage />} />

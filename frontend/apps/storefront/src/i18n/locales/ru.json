@@ -13,6 +13,8 @@
     "all": "Все",
     "tagsLabel": "Теги:",
     "noProducts": "Товары не найдены.",
+    "categoryNotFound": "Эта категория больше недоступна.",
+    "showAll": "Показать все товары",
     "greetingNamed": "С возвращением, {{name}}",
     "greeting": "Вы вошли как {{phone}}"
   },

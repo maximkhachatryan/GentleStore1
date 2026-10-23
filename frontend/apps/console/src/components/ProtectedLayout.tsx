@@ -27,6 +27,7 @@ import { managedStore, useManagedStore } from '../auth/managedStore';
 import { STOREFRONT_URL } from '../api';
 import { useOrderAlerts } from '../hooks/useOrderAlerts';
 import { useResponsive } from '../hooks/useResponsive';
+import { useStorefrontBase } from '../hooks/useStorefrontBase';
 import { SUPPORTED_LANGUAGES, LANGUAGE_NAMES, type Language } from '../i18n';
 import { BRAND } from '../theme';
 import Brand from './Brand';
@@ -48,6 +49,7 @@ export default function ProtectedLayout() {
   const managingStore = isAdmin && managed !== null;
   // Alerts are for the store's own staff; a platform admin looking in is not one of them.
   const pendingOrders = useOrderAlerts(!!user && !isAdmin);
+  const storefrontBase = useStorefrontBase();
 
   const items = useMemo(() => {
     const backofficeItems = [
@@ -114,8 +116,7 @@ export default function ProtectedLayout() {
     navigate('/admin/stores');
   };
 
-  const storefrontSlug = managingStore ? managed?.slug : !isAdmin ? user.storeSlug : null;
-  const storefrontUrl = storefrontSlug ? `${STOREFRONT_URL}/${storefrontSlug}` : STOREFRONT_URL;
+  const storefrontUrl = storefrontBase ?? STOREFRONT_URL;
   const contextLabel = managingStore ? managed?.name : isAdmin ? t('layout.adminPanel') : user.storeName;
 
   const navMenu = (

@@ -39,6 +39,12 @@
     "products": "Products",
     "users": "Users"
   },
+  "share": {
+    "whatsapp": "Send link via WhatsApp",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copyError": "Couldn't copy the link"
+  },
   "common": {
     "name": "Name",
     "edit": "Edit",

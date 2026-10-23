@@ -10,6 +10,8 @@ import EntityCard from '../../components/EntityCard';
 import FormDialog from '../../components/FormDialog';
 import PageHeader from '../../components/PageHeader';
 import ResponsiveTable from '../../components/ResponsiveTable';
+import ShareButtons from '../../components/ShareButtons';
+import { useStorefrontBase } from '../../hooks/useStorefrontBase';
 
 interface CategoryValues {
   name: string;
@@ -23,6 +25,7 @@ export default function CategoriesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form] = Form.useForm<CategoryValues>();
+  const storefront = useStorefrontBase();
 
   const { data, isLoading } = useQuery({ queryKey: ['backoffice', 'categories'], queryFn: () => api.backoffice.listCategories() });
   const invalidate = () => qc.invalidateQueries({ queryKey: ['backoffice', 'categories'] });
@@ -62,6 +65,7 @@ export default function CategoriesPage() {
 
   const rowActions = (c: Category) => (
     <>
+      {storefront && <ShareButtons url={`${storefront}/category/${c.id}`} label={c.name} />}
       <Button size="small" onClick={() => openEdit(c)}>
         {t('common.edit')}
       </Button>
@@ -80,7 +84,7 @@ export default function CategoriesPage() {
     {
       title: t('common.actions'),
       key: 'actions',
-      width: 180,
+      width: 260,
       align: 'end',
       fixed: 'right',
       render: (_, r) => <Space>{rowActions(r)}</Space>,

@@ -1,16 +1,17 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 interface Props {
   active?: boolean;
-  onClick?: () => void;
+  to: string;
   children: ReactNode;
 }
 
-export default function Chip({ active, onClick, children }: Props) {
+export default function Chip({ active, to, children }: Props) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Link
+      to={to}
+      aria-current={active ? 'page' : undefined}
       className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition ${
         active
           ? 'bg-emerald-600 text-white shadow'
@@ -18,6 +19,6 @@ export default function Chip({ active, onClick, children }: Props) {
       }`}
     >
       {children}
-    </button>
+    </Link>
   );
 }

@@ -28,6 +28,8 @@ import EntityCard from '../../components/EntityCard';
 import FormDialog from '../../components/FormDialog';
 import PageHeader from '../../components/PageHeader';
 import ResponsiveTable from '../../components/ResponsiveTable';
+import ShareButtons from '../../components/ShareButtons';
+import { useStorefrontBase } from '../../hooks/useStorefrontBase';
 
 interface ProductValues {
   name: string;
@@ -55,6 +57,7 @@ export default function ProductsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
+  const storefront = useStorefrontBase();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>();
@@ -224,6 +227,7 @@ export default function ProductsPage() {
 
   const rowActions = (p: Product) => (
     <>
+      {storefront && <ShareButtons url={`${storefront}/product/${p.id}`} label={p.name} />}
       <Button size="small" onClick={() => openEdit(p)}>
         {t('common.edit')}
       </Button>
