@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PublicImage } from '@gentlestore/shared';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
 
 interface Props {
@@ -21,7 +21,7 @@ export default function ProductGallery({ images, alt }: Props) {
     );
   }
 
-  const current = resolveAssetUrl(API_URL, images[index]?.imageUrl);
+  const current = resolveImageUrl(API_URL, images[index]?.imageUrl, 'lg');
 
   return (
     <div>
@@ -39,7 +39,7 @@ export default function ProductGallery({ images, alt }: Props) {
                 i === index ? 'border-emerald-500' : 'border-transparent'
               }`}
             >
-              <img src={resolveAssetUrl(API_URL, img.imageUrl)} alt="" className="h-full w-full object-cover" />
+              <img src={resolveImageUrl(API_URL, img.imageUrl, 'sm')} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

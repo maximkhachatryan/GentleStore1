@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useOptionalCart } from '../lib/cart';
 import { API_URL } from '../api';
@@ -26,7 +26,7 @@ function BagIcon() {
 
 export default function Navbar({ store, children }: { store?: NavbarStore; children?: ReactNode }) {
   const { t } = useTranslation();
-  const logo = resolveAssetUrl(API_URL, store?.logoUrl);
+  const logo = resolveImageUrl(API_URL, store?.logoUrl, 'sm');
   // Null outside a store's pages (the directory landing page has no cart).
   const cart = useOptionalCart();
 

@@ -229,6 +229,10 @@ but the order is already trustworthy without it.
 | Uploads      | `/api/uploads`       | any authenticated user       |
 
 Uploaded images are stored under `backend/src/GentleStore.Api/wwwroot/uploads` and served at `/uploads/*`.
+Any photo up to 30 MB is accepted and re-encoded on arrival: the upload itself is kept as a WebP of
+at most 2560px, with smaller copies at `/uploads/{sm|md|lg}/{id}.webp` (320, 640 and 1600px on the
+longest side) for thumbnails, product cards and the product page. Pick one with `resolveImageUrl` from
+`@gentlestore/shared`. Images uploaded before sizes existed get theirs made on first request.
 
 Storefront endpoints for a store set to invited-customers-only answer
 `403 { "code": "invite_required" }` until the browser presents a valid session cookie. Two

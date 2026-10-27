@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import type { FulfilmentMethod } from '@gentlestore/shared';
 import Navbar from '../components/Navbar';
 import StoreGate from '../components/StoreGate';
@@ -131,7 +131,7 @@ export default function CartPage() {
 
         <section className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
           {cart.lines.map((line) => {
-            const image = resolveAssetUrl(API_URL, line.imageUrl);
+            const image = resolveImageUrl(API_URL, line.imageUrl, 'sm');
             return (
               <div key={`${line.productId}:${line.variantId ?? ''}`} className="flex gap-3 p-3">
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">

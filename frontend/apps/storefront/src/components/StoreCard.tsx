@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { PublicStoreListItem } from '@gentlestore/shared';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
 
 export default function StoreCard({ store }: { store: PublicStoreListItem }) {
   const { t } = useTranslation();
-  const logo = resolveAssetUrl(API_URL, store.logoUrl);
+  const logo = resolveImageUrl(API_URL, store.logoUrl, 'sm');
 
   return (
     <Link

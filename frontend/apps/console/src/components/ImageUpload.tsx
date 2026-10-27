@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { App as AntApp, Button, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../api';
 
 // Mirrors UploadsController.MaxBytes. Rejecting here keeps an oversized file from
 // hitting the reverse proxy, which answers 413 without CORS headers — the browser
 // surfaces that as an opaque network error rather than a readable message.
-export const MAX_BYTES = 5 * 1024 * 1024;
+export const MAX_BYTES = 30 * 1024 * 1024;
 
 interface Props {
   value?: string | null;
@@ -20,7 +20,7 @@ export default function ImageUpload({ value, onChange, buttonText }: Props) {
   const { t } = useTranslation();
   const { message } = AntApp.useApp();
   const [uploading, setUploading] = useState(false);
-  const preview = resolveAssetUrl(API_URL, value);
+  const preview = resolveImageUrl(API_URL, value, 'sm');
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

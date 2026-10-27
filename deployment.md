@@ -380,11 +380,11 @@ docker run --rm \
 **413 Content Too Large when uploading an image**
 - nginx caps request bodies at **1 MB** by default and the `nginx-proxy` image does not override it,
   so the upload is rejected before it reaches the API. `nginx-proxy.conf` (mounted into
-  `/etc/nginx/conf.d/`) raises this to 10 MB — make sure that file exists on the server and recreate
+  `/etc/nginx/conf.d/`) raises this to 40 MB — make sure that file exists on the server and recreate
   the proxy: `dcp up -d nginx-proxy`.
 - Verify it took effect:
   `docker exec gentlestore-nginx-proxy grep -r client_max_body_size /etc/nginx/conf.d`.
-- Above 10 MB the request is still refused by nginx; between 5 and 10 MB the API answers with a
+- Above 40 MB the request is still refused by nginx; between 30 and 40 MB the API answers with a
   readable JSON error. The API's own cap lives in `UploadsController.MaxBytes`.
 
 **API can't reach the database**

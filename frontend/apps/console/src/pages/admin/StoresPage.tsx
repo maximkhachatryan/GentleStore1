@@ -7,7 +7,7 @@ import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { MoreOutlined, PlusOutlined } from '@ant-design/icons';
 import type { StoreListItem } from '@gentlestore/shared';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { api, API_URL, STOREFRONT_URL } from '../../api';
 import { managedStore } from '../../auth/managedStore';
 import ImageUpload from '../../components/ImageUpload';
@@ -150,7 +150,7 @@ export default function StoresPage() {
       key: 'store',
       render: (_, r) => (
         <Space>
-          <Avatar src={resolveAssetUrl(API_URL, r.logoUrl)} shape="square">
+          <Avatar src={resolveImageUrl(API_URL, r.logoUrl, 'sm')} shape="square">
             {r.name.charAt(0)}
           </Avatar>
           <div>
@@ -213,7 +213,7 @@ export default function StoresPage() {
         renderCard={(r) => (
           <EntityCard
             media={
-              <Avatar size={44} src={resolveAssetUrl(API_URL, r.logoUrl)} shape="square">
+              <Avatar size={44} src={resolveImageUrl(API_URL, r.logoUrl, 'sm')} shape="square">
                 {r.name.charAt(0)}
               </Avatar>
             }

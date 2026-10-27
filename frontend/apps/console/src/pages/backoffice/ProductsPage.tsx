@@ -21,7 +21,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductVariant } from '@gentlestore/shared';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../../api';
 import MultiImageUpload from '../../components/MultiImageUpload';
 import EntityCard from '../../components/EntityCard';
@@ -244,7 +244,7 @@ export default function ProductsPage() {
       title: '',
       key: 'image',
       width: 60,
-      render: (_, r) => <Thumb url={resolveAssetUrl(API_URL, r.images[0]?.imageUrl)} size={44} />,
+      render: (_, r) => <Thumb url={resolveImageUrl(API_URL, r.images[0]?.imageUrl, 'sm')} size={44} />,
     },
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
     { title: t('products.category'), dataIndex: 'categoryName', key: 'categoryName' },
@@ -295,7 +295,7 @@ export default function ProductsPage() {
         cardKey={(r) => r.id}
         renderCard={(r) => (
           <EntityCard
-            media={<Thumb url={resolveAssetUrl(API_URL, r.images[0]?.imageUrl)} size={56} />}
+            media={<Thumb url={resolveImageUrl(API_URL, r.images[0]?.imageUrl, 'sm')} size={56} />}
             title={r.name}
             subtitle={r.categoryName}
             extra={availabilityTag(r)}
@@ -363,7 +363,7 @@ export default function ProductsPage() {
                 {images.map((img) => (
                   <div key={img.id} style={{ position: 'relative' }}>
                     <img
-                      src={resolveAssetUrl(API_URL, img.imageUrl)}
+                      src={resolveImageUrl(API_URL, img.imageUrl, 'sm')}
                       alt=""
                       style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, border: '1px solid #f0f0f0' }}
                     />

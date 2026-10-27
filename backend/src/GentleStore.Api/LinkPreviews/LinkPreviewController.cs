@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using GentleStore.Api.Storefront;
+using GentleStore.Api.Uploads;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -121,7 +122,7 @@ public class LinkPreviewController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(imageUrl)) return null;
 
-        if (LinkPreviewImages.UploadFileName(imageUrl) is { } upload)
+        if (UploadImages.UploadFileName(imageUrl) is { } upload)
         {
             // Made now rather than on the crawler's follow-up request, so the page can state the
             // size and the image is ready the moment it is asked for.

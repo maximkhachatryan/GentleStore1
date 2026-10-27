@@ -9,7 +9,7 @@ import ProductCard from '../components/ProductCard';
 import ContactButtons from '../components/ContactButtons';
 import StoreGate from '../components/StoreGate';
 import { GridSkeleton } from '../components/Skeletons';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { isInviteRequired } from '../lib/access';
 import { api, API_URL } from '../api';
 
@@ -54,7 +54,7 @@ export default function StorePage() {
   }
 
   const store = storeQuery.data;
-  const logo = resolveAssetUrl(API_URL, store?.logoUrl);
+  const logo = resolveImageUrl(API_URL, store?.logoUrl, 'sm');
   // An old link to a category the store has since deleted.
   const categoryMissing =
     !!categoryId && !!categoriesQuery.data && !categoriesQuery.data.some((c) => c.id === categoryId);

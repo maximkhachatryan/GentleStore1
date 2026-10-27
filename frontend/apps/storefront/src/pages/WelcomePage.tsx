@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import Navbar from '../components/Navbar';
 import StoreGate from '../components/StoreGate';
 import { readInviteToken, redeemFailureReason, scrubInviteToken } from '../lib/access';
@@ -87,7 +87,7 @@ export default function WelcomePage() {
 
 function Unlocking({ storeName, logoUrl }: { storeName?: string; logoUrl?: string | null }) {
   const { t } = useTranslation();
-  const logo = resolveAssetUrl(API_URL, logoUrl);
+  const logo = resolveImageUrl(API_URL, logoUrl, 'sm');
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">

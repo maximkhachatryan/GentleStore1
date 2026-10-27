@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { PublicProductListItem } from '@gentlestore/shared';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
 import { formatPrice } from '../lib/format';
 
@@ -12,7 +12,7 @@ interface Props {
 
 export default function ProductCard({ slug, product }: Props) {
   const { t } = useTranslation();
-  const img = resolveAssetUrl(API_URL, product.primaryImageUrl);
+  const img = resolveImageUrl(API_URL, product.primaryImageUrl, 'md');
 
   return (
     <Link

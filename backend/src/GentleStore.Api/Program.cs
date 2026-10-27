@@ -5,6 +5,7 @@ using GentleStore.Api.LinkPreviews;
 using GentleStore.Api.Notifications;
 using GentleStore.Api.Orders;
 using GentleStore.Api.Storefront;
+using GentleStore.Api.Uploads;
 using GentleStore.Domain.Enums;
 using GentleStore.Infrastructure;
 using GentleStore.Infrastructure.Persistence;
@@ -30,6 +31,7 @@ builder.Services.Configure<ConsoleAppOptions>(builder.Configuration.GetSection(C
 builder.Services.AddScoped<IOrderNotifier, OrderNotifier>();
 builder.Services.AddHostedService<OrderNotificationDispatcher>();
 builder.Services.AddHostedService<TelegramLinkPoller>();
+builder.Services.AddSingleton<UploadImages>();
 builder.Services.AddSingleton<LinkPreviewImages>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
@@ -132,8 +134,15 @@ Directory.CreateDirectory(uploadsPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
-    RequestPath = "/uploads"
+    RequestPath = "/uploads",
+    // Upload names are random and never reused, so browsers may keep them for good: a repeat visit
+    // on a slow connection shows pictures without asking for them again.
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = UploadImages.CacheControl
 });
+
+// Routing runs after static files, so a sized copy that exists is served straight from disk and
+// only a missing one reaches UploadsController.Sized. Matched first, the endpoint would win every time.
+app.UseRouting();
 
 app.UseCors("frontend");
 // After CORS so a 429 still carries the headers the browser needs to read it.

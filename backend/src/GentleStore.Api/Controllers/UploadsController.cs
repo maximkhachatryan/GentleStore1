@@ -1,3 +1,4 @@
+using GentleStore.Api.Uploads;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,42 +8,61 @@ namespace GentleStore.Api.Controllers;
 [Route("api/uploads")]
 public class UploadsController : ControllerBase
 {
-    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-    private const long MaxBytes = 5 * 1024 * 1024;
+    // Generous on purpose: photos straight off a phone are welcome, and are shrunk on arrival.
+    private const long MaxBytes = 30 * 1024 * 1024;
 
-    private readonly IWebHostEnvironment _env;
+    private readonly UploadImages _images;
 
-    public UploadsController(IWebHostEnvironment env) => _env = env;
+    public UploadsController(UploadImages images) => _images = images;
 
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> Upload()
+    // Above Kestrel's ~28 MB default, with room for the multipart wrapping around the file.
+    [RequestSizeLimit(MaxBytes + 1024 * 1024)]
+    public async Task<IActionResult> Upload(CancellationToken ct)
     {
         if (!Request.HasFormContentType)
             return BadRequest(new { error = "Expected multipart/form-data." });
 
-        var form = await Request.ReadFormAsync();
+        var form = await Request.ReadFormAsync(ct);
         var file = form.Files.GetFile("file") ?? form.Files.FirstOrDefault();
 
         if (file is null || file.Length == 0)
             return BadRequest(new { error = "No file provided." });
 
         if (file.Length > MaxBytes)
-            return BadRequest(new { error = "File exceeds the 5 MB limit." });
+            return BadRequest(new { error = "File exceeds the 30 MB limit." });
 
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedExtensions.Contains(ext))
-            return BadRequest(new { error = "Unsupported file type." });
+        // Only the re-encoded image is kept; the upload itself is just read once from a temp file.
+        var temp = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():n}.upload");
+        try
+        {
+            await using (var stream = System.IO.File.Create(temp))
+                await file.CopyToAsync(stream, ct);
 
-        var uploads = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
-        Directory.CreateDirectory(uploads);
+            var fileName = await _images.SaveAsync(temp, ct);
+            return fileName is null
+                ? BadRequest(new { error = "Unsupported or damaged image." })
+                : Ok(new { url = $"/uploads/{fileName}" });
+        }
+        finally
+        {
+            System.IO.File.Delete(temp);
+        }
+    }
 
-        var fileName = $"{Guid.NewGuid():n}{ext}";
-        var fullPath = Path.Combine(uploads, fileName);
+    /// <summary>
+    /// Sized copies are served as static files. This only runs when one is missing — an upload from
+    /// before sizes existed — and makes it on first request.
+    /// </summary>
+    [HttpGet("~/uploads/{size}/{fileName}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Sized(string size, string fileName, CancellationToken ct)
+    {
+        var path = await _images.EnsureSizeAsync(size, fileName, ct);
+        if (path is null) return NotFound();
 
-        await using (var stream = System.IO.File.Create(fullPath))
-            await file.CopyToAsync(stream);
-
-        return Ok(new { url = $"/uploads/{fileName}" });
+        Response.Headers.CacheControl = UploadImages.CacheControl;
+        return PhysicalFile(path, "image/webp");
     }
 }

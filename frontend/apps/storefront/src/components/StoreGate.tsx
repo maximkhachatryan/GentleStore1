@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { resolveAssetUrl } from '@gentlestore/shared';
+import { resolveImageUrl } from '@gentlestore/shared';
 import Navbar from './Navbar';
 import ContactButtons from './ContactButtons';
 import type { GateReason } from '../lib/access';
@@ -63,7 +63,7 @@ export default function StoreGate({ slug, reason }: Props) {
     );
   }
 
-  const logo = resolveAssetUrl(API_URL, access.logoUrl);
+  const logo = resolveImageUrl(API_URL, access.logoUrl, 'sm');
   // 'locked' and 'already_used' are the two cases where the browser itself is the reason, so
   // they are the ones worth explaining private windows and cleared cookies for.
   const explainBrowserBinding = reason === 'locked' || reason === 'already_used';
