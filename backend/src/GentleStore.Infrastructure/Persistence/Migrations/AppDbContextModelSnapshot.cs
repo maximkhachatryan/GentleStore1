@@ -537,6 +537,10 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
+                    b.Property<string>("CustomDomain")
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -573,6 +577,10 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomDomain")
+                        .IsUnique()
+                        .HasFilter("\"CustomDomain\" IS NOT NULL");
 
                     b.HasIndex("Slug")
                         .IsUnique();

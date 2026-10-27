@@ -1,20 +1,22 @@
 namespace GentleStore.Api.Contracts;
 
 public record StoreListItemDto(
-    Guid Id, string Name, string Slug, string Phone, string? LogoUrl,
+    Guid Id, string Name, string Slug, string? CustomDomain, string Phone, string? LogoUrl,
     bool IsActive, string Currency, bool PaymentsEnabled,
     int ProductCount, int CategoryCount, DateTime CreatedAt);
 
 public record StoreDetailDto(
-    Guid Id, string Name, string Slug, string Phone, string? LogoUrl,
+    Guid Id, string Name, string Slug, string? CustomDomain, string Phone, string? LogoUrl,
     string? Description, string Currency, bool IsActive, bool PaymentsEnabled, DateTime CreatedAt);
 
+/// <param name="CustomDomain">The store's own domain, if any; blank for none.</param>
 public record CreateStoreRequest(
-    string Name, string? Slug, string Phone, string? LogoUrl,
+    string Name, string? Slug, string? CustomDomain, string Phone, string? LogoUrl,
     string? Description, string? Currency, bool? IsActive);
 
+/// <param name="CustomDomain">The store's own domain; blank removes it.</param>
 public record UpdateStoreRequest(
-    string Name, string? Slug, string Phone, string? LogoUrl,
+    string Name, string? Slug, string? CustomDomain, string Phone, string? LogoUrl,
     string? Description, string Currency, bool IsActive);
 
 public record AdminUserDto(

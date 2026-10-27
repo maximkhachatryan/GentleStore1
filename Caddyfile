@@ -1,0 +1,53 @@
+# Edge proxy for the production stack (docker-compose.prod.yml): routes by host name and terminates
+# TLS. Certificates for the platform's own hosts are obtained at startup. Certificates for stores'
+# own domains are obtained on demand, the first time someone visits one, once the API has confirmed
+# that a store owns the name.
+{
+	email {$ACME_EMAIL}
+	on_demand_tls {
+		ask http://api:8080/api/internal/tls/allowed
+	}
+}
+
+{$STOREFRONT_DOMAIN} {
+	reverse_proxy storefront:80
+}
+
+{$CONSOLE_DOMAIN} {
+	reverse_proxy console:80
+}
+
+{$API_DOMAIN} {
+	# Asked only by Caddy itself, over the compose network.
+	respond /api/internal/* 404
+	reverse_proxy api:8080
+}
+
+# The payment service, published only so gateways can post webhooks to it. Publishing it also
+# publishes /api/payments, so set PAYMENTS_INTERNAL_KEY before you do (see .env.example). To publish:
+# set PAYMENTS_DOMAIN and uncomment this block.
+# {$PAYMENTS_DOMAIN} {
+# 	reverse_proxy payments:8080
+# }
+
+# Stores' own domains (flowers.am, www.flowers.am). Any other name pointed at this server is refused
+# a certificate by the ask endpoint above, so it never gets this far.
+https:// {
+	tls {
+		on_demand
+	}
+
+	@www header_regexp www Host ^www\.(.+)$
+	redir @www https://{re.www.1}{uri} permanent
+
+	# The storefront calls the API on its own domain, which keeps the customer's session cookie
+	# first-party there; a cookie from the platform's API host would be third-party and not sent.
+	@api path /api/public/* /uploads/*
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		reverse_proxy storefront:80
+	}
+}

@@ -9,11 +9,15 @@ import StoreGate from '../components/StoreGate';
 import { formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
 import { useCart } from '../lib/cart';
+import { usePageTitle } from '../lib/pageTitle';
+import { useStoreDomainRedirect, useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api } from '../api';
 
 export default function ProductPage() {
   const { t } = useTranslation();
-  const { slug = '', id = '' } = useParams();
+  const { id = '' } = useParams();
+  const slug = useStoreSlug();
+  const storePath = useStorePath();
   const navigate = useNavigate();
   const cart = useCart();
 
@@ -26,6 +30,8 @@ export default function ProductPage() {
 
   const product = productQuery.data;
   const store = storeQuery.data;
+  usePageTitle(product?.name, store?.name);
+  useStoreDomainRedirect(store);
 
   const attributeGroups = useMemo(() => {
     const groups = new Map<string, string[]>();
@@ -81,7 +87,7 @@ export default function ProductPage() {
       imageUrl: product.images[0]?.imageUrl ?? null,
     });
 
-    if (thenCheckout) navigate(`/${slug}/cart`);
+    if (thenCheckout) navigate(storePath('/cart'));
   };
 
   const addToCartControls = (
@@ -115,7 +121,7 @@ export default function ProductPage() {
         <Navbar store={store} />
         <div className="mx-auto max-w-md px-4 py-24 text-center">
           <h1 className="text-2xl font-bold text-slate-900">{t('product.notFound')}</h1>
-          <Link to={`/${slug}`} className="mt-4 inline-block font-medium text-emerald-600">
+          <Link to={storePath()} className="mt-4 inline-block font-medium text-emerald-600">
             ← {t('product.backToStore')}
           </Link>
         </div>
@@ -128,13 +134,13 @@ export default function ProductPage() {
       <Navbar store={store} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <nav className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
-          <Link to={`/${slug}`} className="transition hover:text-emerald-600">
+          <Link to={storePath()} className="transition hover:text-emerald-600">
             ← {store?.name ?? t('product.backToStore')}
           </Link>
           {product && (
             <>
               <span aria-hidden="true">/</span>
-              <Link to={`/${slug}/category/${product.categoryId}`} className="transition hover:text-emerald-600">
+              <Link to={storePath(`/category/${product.categoryId}`)} className="transition hover:text-emerald-600">
                 {product.categoryName}
               </Link>
             </>

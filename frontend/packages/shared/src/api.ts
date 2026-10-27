@@ -179,6 +179,9 @@ export function createApi(http: AxiosInstance) {
         http.post<TelegramLink>('/api/backoffice/notifications/telegram/link', { language }).then((r) => r.data),
       unlinkTelegram: () => http.delete('/api/backoffice/notifications/telegram').then((r) => r.data),
     },
+    /** Which store a custom domain belongs to; 404 when none does. */
+    host: (hostname: string) =>
+      http.get<{ slug: string }>(`/api/public/hosts/${encodeURIComponent(hostname)}`).then((r) => r.data),
     store: {
       list: (search?: string) =>
         http.get<PublicStoreListItem[]>('/api/public/stores', { params: { search } }).then((r) => r.data),

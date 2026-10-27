@@ -366,8 +366,8 @@ without touching any gateway.
 
 ### Access control
 
-The primary control is the network: in `docker-compose.prod.yml` the service has no `VIRTUAL_HOST`,
-so nginx never routes to it and only the compose network can reach it. There is no per-request auth
+The primary control is the network: the service's site in the root `Caddyfile` ships commented out,
+so the edge proxy never routes to it and only the compose network can reach it. There is no per-request auth
 between GentleStore and PaymentService by design.
 
 Two things sit alongside that:

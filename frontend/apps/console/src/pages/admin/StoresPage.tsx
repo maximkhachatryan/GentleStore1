@@ -8,18 +8,28 @@ import type { ColumnsType } from 'antd/es/table';
 import { MoreOutlined, PlusOutlined } from '@ant-design/icons';
 import type { StoreListItem } from '@gentlestore/shared';
 import { resolveImageUrl } from '@gentlestore/shared';
-import { api, API_URL, STOREFRONT_URL } from '../../api';
+import { api, API_URL } from '../../api';
 import { managedStore } from '../../auth/managedStore';
 import ImageUpload from '../../components/ImageUpload';
 import EntityCard from '../../components/EntityCard';
 import FormDialog from '../../components/FormDialog';
 import PageHeader from '../../components/PageHeader';
 import ResponsiveTable from '../../components/ResponsiveTable';
+import { storefrontBaseFor } from '../../hooks/useStorefrontBase';
+import { apiErrorCode } from '../../lib/errors';
 import StorePaymentsDialog from './StorePaymentsDialog';
+
+// Why the API turned a domain down; each has its own message.
+const DOMAIN_ERRORS: Record<string, string> = {
+  domain_invalid: 'stores.domainInvalid',
+  domain_platform: 'stores.domainPlatform',
+  domain_taken: 'stores.domainTaken',
+};
 
 interface StoreFormValues {
   name: string;
   slug?: string;
+  customDomain?: string;
   phone: string;
   currency: string;
   description?: string;
@@ -45,6 +55,8 @@ export default function StoresPage() {
       const payload = {
         name: values.name,
         slug: values.slug,
+        // Sent even when blank: on an edit, blank is how a domain is removed.
+        customDomain: values.customDomain ?? '',
         phone: values.phone,
         currency: values.currency || 'USD',
         description: values.description,
@@ -58,7 +70,11 @@ export default function StoresPage() {
       setOpen(false);
       invalidate();
     },
-    onError: () => message.error(t('stores.saveError')),
+    onError: (error) => {
+      const domainError = DOMAIN_ERRORS[apiErrorCode(error) ?? ''];
+      if (domainError) form.setFields([{ name: 'customDomain', errors: [t(domainError)] }]);
+      else message.error(t('stores.saveError'));
+    },
   });
 
   const toggleActive = useMutation({
@@ -94,7 +110,7 @@ export default function StoresPage() {
   };
 
   const manageStore = (s: StoreListItem) => {
-    managedStore.set({ id: s.id, name: s.name, slug: s.slug });
+    managedStore.set({ id: s.id, name: s.name, slug: s.slug, customDomain: s.customDomain });
     navigate('/store');
   };
 
@@ -105,6 +121,7 @@ export default function StoresPage() {
     form.setFieldsValue({
       name: detail.name,
       slug: detail.slug,
+      customDomain: detail.customDomain ?? '',
       phone: detail.phone,
       currency: detail.currency,
       description: detail.description ?? '',
@@ -118,7 +135,7 @@ export default function StoresPage() {
       {
         key: 'view',
         label: (
-          <a href={`${STOREFRONT_URL}/${s.slug}`} target="_blank" rel="noreferrer">
+          <a href={storefrontBaseFor(s)} target="_blank" rel="noreferrer">
             {t('stores.view')}
           </a>
         ),
@@ -136,6 +153,8 @@ export default function StoresPage() {
       else if (key === 'delete') confirmDelete(s);
     },
   });
+
+  const storeAddress = (s: StoreListItem) => s.customDomain ?? `/${s.slug}`;
 
   const statusTag = (s: StoreListItem) =>
     s.isActive ? <Tag color="green">{t('common.active')}</Tag> : <Tag>{t('common.inactive')}</Tag>;
@@ -156,7 +175,7 @@ export default function StoresPage() {
           <div>
             <div style={{ fontWeight: 600 }}>{r.name}</div>
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              /{r.slug}
+              {storeAddress(r)}
             </Typography.Text>
           </div>
         </Space>
@@ -218,7 +237,7 @@ export default function StoresPage() {
               </Avatar>
             }
             title={r.name}
-            subtitle={`/${r.slug}`}
+            subtitle={storeAddress(r)}
             extra={
               <Dropdown menu={moreMenu(r)} trigger={['click']} placement="bottomRight">
                 <Button type="text" icon={<MoreOutlined />} aria-label={t('common.more')} />
@@ -261,6 +280,9 @@ export default function StoresPage() {
           </Form.Item>
           <Form.Item name="slug" label={t('stores.slug')} tooltip={t('stores.slugTooltip')}>
             <Input placeholder={t('stores.slugPlaceholder')} />
+          </Form.Item>
+          <Form.Item name="customDomain" label={t('stores.customDomain')} extra={t('stores.customDomainHelp')}>
+            <Input placeholder="flowers.am" autoCapitalize="none" spellCheck={false} />
           </Form.Item>
           <Form.Item name="phone" label={t('common.phoneWhatsapp')} rules={[{ required: true, message: t('common.phoneRequired') }]}>
             <Input placeholder="+1 555 123 4567" inputMode="tel" />

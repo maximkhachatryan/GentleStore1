@@ -1,10 +1,18 @@
 namespace GentleStore.Api.Contracts;
 
-public record PublicStoreListItemDto(string Slug, string Name, string? LogoUrl, string? Description, string Phone);
+/// <param name="CustomDomain">The store's own domain, where the directory links to instead of "/{Slug}".</param>
+public record PublicStoreListItemDto(
+    string Slug, string Name, string? LogoUrl, string? Description, string Phone, string? CustomDomain);
 
+/// <param name="CustomDomain">
+/// The store's own domain. The storefront moves people there from the platform's "/{Slug}" pages.
+/// </param>
 public record PublicStoreDto(
     string Slug, string Name, string? LogoUrl, string? Description, string Phone, string Currency,
-    string AccessMode, StorefrontVisitorDto? Visitor);
+    string AccessMode, string? CustomDomain, StorefrontVisitorDto? Visitor);
+
+/// <summary>The store a custom domain belongs to.</summary>
+public record StoreHostDto(string Slug);
 
 public record PublicCategoryDto(Guid Id, string Name, int DisplayOrder, int ProductCount);
 

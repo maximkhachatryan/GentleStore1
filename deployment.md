@@ -1,7 +1,7 @@
 # Deploying GentleStore to Hetzner (with a domain + HTTPS)
 
 This guide walks you through deploying the full GentleStore stack (PostgreSQL, .NET API, the
-console and storefront frontends, and an nginx reverse proxy with automatic HTTPS) to a single
+console and storefront frontends, and a Caddy reverse proxy with automatic HTTPS) to a single
 **Hetzner Cloud** VM using Docker Compose.
 
 > No domain yet? See [DEPLOYMENT-without-domain.md](DEPLOYMENT-without-domain.md) to deploy by raw IP
@@ -19,20 +19,25 @@ The production stack is defined in [`docker-compose.prod.yml`](docker-compose.pr
 | `api`            | built from `backend/`    | No (via proxy)      | ASP.NET Core API on port 8080                       |
 | `console`        | built from `frontend/`   | No (via proxy)      | Admin + backoffice SPA (nginx on port 80)           |
 | `storefront`     | built from `frontend/`   | No (via proxy)      | Public storefront SPA (nginx on port 80)            |
-| `nginx-proxy`    | `nginxproxy/nginx-proxy` | **Yes (80/443)**    | Reverse proxy; routes by domain                     |
-| `acme-companion` | `nginxproxy/acme-companion` | No               | Issues/renews Let's Encrypt TLS certificates        |
+| `payments`       | built from `payment-service/` | No (unless published) | Payment microservice                       |
+| `caddy`          | `caddy:2.10-alpine`      | **Yes (80/443)**    | Reverse proxy; routes by domain, issues/renews Let's Encrypt certificates |
 
-`nginx-proxy` reads each service's `VIRTUAL_HOST` / `LETSENCRYPT_HOST` env vars and automatically
-generates the vhosts and certificates — you don't hand-write any nginx config.
+Caddy's routing lives in the [`Caddyfile`](Caddyfile) and reads the domains from `.env`.
+It gets certificates for the platform's three hosts when it starts. It gets a certificate for a
+**store's own domain** the first time someone visits it, after asking the API whether a store owns
+that name (see §13a).
 
 ```
                        ┌────────────── Hetzner VM ──────────────┐
-Internet ── 80/443 ──▶ │  nginx-proxy ──┬─▶ storefront (:80)     │
-                       │                ├─▶ console    (:80)     │
-                       │                └─▶ api        (:8080) ──┼─▶ postgres (:5432)
-                       │  acme-companion (TLS certs)             │
+Internet ── 80/443 ──▶ │  caddy ──┬─▶ storefront (:80)           │
+                       │          ├─▶ console    (:80)           │
+                       │          └─▶ api        (:8080) ────────┼─▶ postgres (:5432)
                        └─────────────────────────────────────────┘
 ```
+
+The storefront's nginx also forwards a few requests to the API on its own: each page's title,
+description and search-engine tags (spliced into the HTML), `robots.txt`, `sitemap.xml` and
+link-preview images.
 
 ---
 
@@ -101,6 +106,7 @@ In the Cloud Console → **Firewalls**, create a firewall and apply it to the se
 | Inbound   | TCP      | 22   | your IP¹    | SSH          |
 | Inbound   | TCP      | 80   | Any (0.0.0.0/0, ::/0) | HTTP → HTTPS redirect + ACME |
 | Inbound   | TCP      | 443  | Any         | HTTPS        |
+| Inbound   | UDP      | 443  | Any         | HTTP/3 (optional) |
 
 ¹ Restrict SSH to your own IP if it's static; otherwise leave `Any` but keep key-only auth.
 
@@ -245,6 +251,10 @@ will look permanently locked. In that case the cookie has to be relaxed in
 Same-site hosts are the better setup — `SameSite=None` gives up the CSRF protection that `Lax`
 provides for free.
 
+Stores on their **own domain** don't depend on this: there the storefront calls the API through the
+store's domain (Caddy forwards `/api/public/*` and `/uploads/*`), so the cookie is first-party.
+Leave `Storefront__SessionCookie__Domain` unset, so each cookie belongs to the host that set it.
+
 ---
 
 ## 10. Build and start the stack
@@ -258,15 +268,29 @@ The first run will:
 1. Build the API and both frontend images (this takes a few minutes).
 2. Start Postgres and wait until it's healthy.
 3. Start the API, which **applies EF Core migrations** and **creates the super admin** on boot.
-4. Start `nginx-proxy`, then `acme-companion` requests TLS certificates from Let's Encrypt.
+4. Start Caddy, which requests TLS certificates from Let's Encrypt for the three domains.
 
 Check status and logs:
 
 ```bash
 docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs -f api
-docker compose -f docker-compose.prod.yml logs -f acme-companion
+docker compose -f docker-compose.prod.yml logs -f caddy
 ```
+
+### Upgrading a server that ran the old nginx-proxy stack
+
+Earlier versions used `nginx-proxy` + `acme-companion` instead of Caddy. Those containers still hold
+ports 80 and 443 until they are removed, so the first deploy after the switch must remove them too:
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build --remove-orphans
+```
+
+Caddy requests fresh certificates for every domain on its first start, which takes a minute or two.
+The old `nginx_*` and `acme_state` volumes are no longer used; once the site works over HTTPS,
+`docker volume ls` shows them and `docker volume rm` deletes them.
 
 ---
 
@@ -365,27 +389,80 @@ docker run --rm \
 
 ---
 
+## 13a. Giving a store its own domain
+
+A store can have its storefront on its own domain (`flowers.am`) instead of at
+`example.com/flowers`. Nothing on the server changes: no `.env` edit, no restart.
+
+1. **The store owner points the domain at the server.** At their DNS provider:
+
+   | Type  | Name  | Value           |
+   |-------|-------|-----------------|
+   | A     | `@`   | `<server-ipv4>` |
+   | CNAME | `www` | `flowers.am.`   |
+
+   Do this first, and wait until `nslookup flowers.am` answers with the server's address.
+2. **Enter the domain in the console:** Admin → Stores → ⋯ → Edit → **Own domain**. It is stored
+   without `www.`; `www.flowers.am` redirects to `flowers.am`.
+3. **Open `https://flowers.am`.** The very first request takes a few seconds while Caddy obtains the
+   certificate; every request after that is normal.
+
+Caddy only obtains certificates for domains a store owns: before requesting one it asks the API
+(`/api/internal/tls/allowed`, reachable only from inside the compose network). Pointing some other
+domain at the server gets a TLS error, not a certificate.
+
+What changes once the domain is saved:
+
+- The store's pages sit at the root of its domain: `flowers.am/product/<id>`, `flowers.am/cart`.
+- For a **public** store, its catalogue pages on the platform (`example.com/flowers/…`) send visitors
+  to the same page on the domain, and tell search engines that the domain's copy is the one to index.
+  That is why DNS comes first: saved before the domain resolves, the store would be sending its
+  visitors to an address that does not answer yet.
+- Invite links, payment return links and the console's share links use the domain from then on.
+  Order pages and invite links sent earlier keep working at the old address.
+- **Sessions do not move with the store.** A browser signed in at `example.com/flowers` (an invited
+  customer, a returning guest) is a stranger to `flowers.am`, because cookies belong to the domain
+  that set them. That is why invite-only stores are not redirected: their customers keep using the
+  old address until they get a new invite link, which points at the domain.
+
+For search engines, the store owner can verify the domain in
+[Google Search Console](https://search.google.com/search-console) (a DNS TXT record) and submit
+`https://flowers.am/sitemap.xml`.
+
+**If the domain shows a TLS error**
+
+- Check that DNS answers with the server's address: `nslookup flowers.am`.
+- Check that the API vouches for the name. This must print `HTTP/1.1 200 OK`; a 404 means no
+  *active* store has that domain saved:
+  ```bash
+  docker exec gentlestore-caddy wget -S -O /dev/null "http://api:8080/api/internal/tls/allowed?domain=flowers.am"
+  ```
+- Look for the name in Caddy's log: `dcp logs caddy | grep flowers.am`. After repeated failures
+  Let's Encrypt makes Caddy wait before it tries the same name again.
+
+---
+
 ## 14. Troubleshooting
 
 **HTTPS / certificate not issued**
 - Confirm DNS resolves to the server (`nslookup <domain>`), and ports **80 and 443** are open in the
-  Hetzner firewall — Let's Encrypt validates over HTTP on port 80.
-- Watch the ACME logs: `dcp logs -f acme-companion`.
-- Ensure `ACME_EMAIL` is a real address and each domain's `LETSENCRYPT_HOST` matches its DNS name.
+  Hetzner firewall — Let's Encrypt validates over port 80 or 443.
+- Watch Caddy's logs: `dcp logs -f caddy`.
+- Ensure `ACME_EMAIL` is a real address and the three domains in `.env` match their DNS names.
+- For a store's own domain, see §13a.
 
-**502 Bad Gateway from nginx-proxy**
+**502 Bad Gateway from Caddy**
 - The upstream container may still be starting or unhealthy: `dcp ps`, `dcp logs api`.
-- Confirm the service exposes the right port (`VIRTUAL_PORT` is `8080` for the API, `80` for the SPAs).
+- The Caddyfile reaches services by name and port (`api:8080`, `storefront:80`, `console:80`), so
+  a renamed service needs the Caddyfile changed too.
 
-**413 Content Too Large when uploading an image**
-- nginx caps request bodies at **1 MB** by default and the `nginx-proxy` image does not override it,
-  so the upload is rejected before it reaches the API. `nginx-proxy.conf` (mounted into
-  `/etc/nginx/conf.d/`) raises this to 40 MB — make sure that file exists on the server and recreate
-  the proxy: `dcp up -d nginx-proxy`.
-- Verify it took effect:
-  `docker exec gentlestore-nginx-proxy grep -r client_max_body_size /etc/nginx/conf.d`.
-- Above 40 MB the request is still refused by nginx; between 30 and 40 MB the API answers with a
-  readable JSON error. The API's own cap lives in `UploadsController.MaxBytes`.
+**"Ports are already allocated" when Caddy starts**
+- The old `nginx-proxy` container is still running. See "Upgrading a server that ran the old
+  nginx-proxy stack" in §10.
+
+**Uploads over 30 MB are refused**
+- That limit is the API's own (`UploadsController.MaxBytes`), and it answers with a readable JSON
+  error. Caddy sets no body-size limit of its own.
 
 **API can't reach the database**
 - Check `dcp logs postgres` for readiness and that the `ConnectionStrings__Default` host is

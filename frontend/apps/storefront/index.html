@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="hy">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,8 +9,17 @@
     <meta name="theme-color" content="#059669" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <!--
+      In production nginx replaces the block below with the page's own head from the API
+      (nginx.storefront.conf, SeoController.Head), keeping it only if that comes back empty.
+      Anywhere else — the dev server, the Capacitor app — the SSI comments do nothing and the
+      block is the head.
+    -->
+    <!--# block name="default_head" -->
     <meta name="description" content="Browse products and order directly from the store." />
     <title>Store</title>
+    <!--# endblock -->
+    <!--# include virtual="/_head$page_path" stub="default_head" -->
   </head>
   <body>
     <div id="root"></div>

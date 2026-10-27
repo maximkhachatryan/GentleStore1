@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { resolveImageUrl } from '@gentlestore/shared';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useOptionalCart } from '../lib/cart';
+import { useStorePath } from '../lib/storeBase';
 import { API_URL } from '../api';
 
 interface NavbarStore {
-  slug: string;
   name: string;
   logoUrl: string | null;
 }
@@ -29,12 +29,13 @@ export default function Navbar({ store, children }: { store?: NavbarStore; child
   const logo = resolveImageUrl(API_URL, store?.logoUrl, 'sm');
   // Null outside a store's pages (the directory landing page has no cart).
   const cart = useOptionalCart();
+  const storePath = useStorePath();
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {store ? (
-          <Link to={`/${store.slug}`} className="flex items-center gap-2 text-lg font-bold text-slate-900">
+          <Link to={storePath()} className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-emerald-600 text-white">
               {logo ? (
                 <img src={logo} alt={store.name} className="h-full w-full object-cover" />
@@ -51,7 +52,7 @@ export default function Navbar({ store, children }: { store?: NavbarStore; child
           {children}
           {store && cart && (
             <Link
-              to={`/${store.slug}/cart`}
+              to={storePath('/cart')}
               aria-label={t('cart.title')}
               className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-emerald-600"
             >

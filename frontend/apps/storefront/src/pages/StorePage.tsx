@@ -11,12 +11,16 @@ import StoreGate from '../components/StoreGate';
 import { GridSkeleton } from '../components/Skeletons';
 import { resolveImageUrl } from '@gentlestore/shared';
 import { isInviteRequired } from '../lib/access';
+import { usePageTitle } from '../lib/pageTitle';
+import { useStoreDomainRedirect, useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api, API_URL } from '../api';
 
 export default function StorePage() {
   const { t } = useTranslation();
   // The category lives in the URL so a store can send a customer straight to one.
-  const { slug = '', categoryId } = useParams();
+  const { categoryId } = useParams();
+  const slug = useStoreSlug();
+  const storePath = useStorePath();
   const [tagId, setTagId] = useState<string | undefined>();
   const [search, setSearch] = useState('');
 
@@ -37,6 +41,10 @@ export default function StorePage() {
     enabled: storeQuery.isSuccess,
   });
 
+  const category = categoriesQuery.data?.find((c) => c.id === categoryId);
+  usePageTitle(...(categoryId ? [category?.name, storeQuery.data?.name] : [storeQuery.data?.name]));
+  useStoreDomainRedirect(storeQuery.data);
+
   if (storeQuery.isError) {
     // A private storefront answers with 403 rather than 404, so the customer gets a way back in
     // instead of being told the store does not exist.
@@ -56,8 +64,7 @@ export default function StorePage() {
   const store = storeQuery.data;
   const logo = resolveImageUrl(API_URL, store?.logoUrl, 'sm');
   // An old link to a category the store has since deleted.
-  const categoryMissing =
-    !!categoryId && !!categoriesQuery.data && !categoriesQuery.data.some((c) => c.id === categoryId);
+  const categoryMissing = !!categoryId && !!categoriesQuery.data && !category;
   const visitorName = store?.visitor?.displayName ?? null;
 
   return (
@@ -90,7 +97,7 @@ export default function StorePage() {
                 <ContactButtons phone={store.phone} />
                 {store.visitor && (
                   <Link
-                    to={`/${slug}/orders`}
+                    to={storePath('/orders')}
                     className="mt-2 block text-center text-sm font-medium text-slate-500 underline transition hover:text-emerald-600"
                   >
                     {t('orders.title')}
@@ -113,11 +120,11 @@ export default function StorePage() {
             className="w-full rounded-xl border border-slate-200 px-4 py-2 outline-none focus:border-emerald-400"
           />
           <div className="flex gap-2 overflow-x-auto pb-1">
-            <Chip active={!categoryId} to={`/${slug}`}>
+            <Chip active={!categoryId} to={storePath()}>
               {t('store.all')}
             </Chip>
             {categoriesQuery.data?.map((c) => (
-              <Chip key={c.id} active={categoryId === c.id} to={`/${slug}/category/${c.id}`}>
+              <Chip key={c.id} active={categoryId === c.id} to={storePath(`/category/${c.id}`)}>
                 {c.name}
               </Chip>
             ))}
@@ -146,7 +153,7 @@ export default function StorePage() {
         {categoryMissing ? (
           <div className="py-16 text-center text-slate-500">
             <p>{t('store.categoryNotFound')}</p>
-            <Link to={`/${slug}`} className="mt-3 inline-block font-medium text-emerald-600">
+            <Link to={storePath()} className="mt-3 inline-block font-medium text-emerald-600">
               {t('store.showAll')}
             </Link>
           </div>
@@ -155,7 +162,7 @@ export default function StorePage() {
         ) : productsQuery.data && productsQuery.data.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {productsQuery.data.map((p) => (
-              <ProductCard key={p.id} slug={slug} product={p} />
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         ) : (

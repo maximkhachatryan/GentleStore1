@@ -176,7 +176,7 @@ public class BackofficeCustomersController : BackofficeControllerBase
         _db.CustomerInvites.Add(invite);
         await _db.SaveChangesAsync();
 
-        var url = StorefrontLinks.Invite(_storefront.Url, customer.Store.Slug, secret);
+        var url = StorefrontLinks.Invite(_storefront.Url, customer.Store, secret);
         return Ok(new CustomerInviteLinkDto(invite.Id, url, invite.ExpiresAt));
     }
 

@@ -1,9 +1,11 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using GentleStore.Api.Auth;
+using GentleStore.Api.Domains;
 using GentleStore.Api.LinkPreviews;
 using GentleStore.Api.Notifications;
 using GentleStore.Api.Orders;
+using GentleStore.Api.Seo;
 using GentleStore.Api.Storefront;
 using GentleStore.Api.Uploads;
 using GentleStore.Domain.Enums;
@@ -33,6 +35,8 @@ builder.Services.AddHostedService<OrderNotificationDispatcher>();
 builder.Services.AddHostedService<TelegramLinkPoller>();
 builder.Services.AddSingleton<UploadImages>();
 builder.Services.AddSingleton<LinkPreviewImages>();
+builder.Services.AddScoped<StorefrontPageMeta>();
+builder.Services.AddScoped<StoreDomains>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()

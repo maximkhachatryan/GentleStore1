@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
@@ -6,11 +6,13 @@ import StoreGate from '../components/StoreGate';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
+import { useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api } from '../api';
 
 export default function OrdersPage() {
   const { t, i18n } = useTranslation();
-  const { slug = '' } = useParams();
+  const slug = useStoreSlug();
+  const storePath = useStorePath();
 
   const storeQuery = useQuery({ queryKey: ['store', slug], queryFn: () => api.store.get(slug), retry: false });
   const ordersQuery = useQuery({
@@ -39,7 +41,7 @@ export default function OrdersPage() {
             {/* Order history lives on the browser's session, so a cleared cookie loses the list. */}
             <p className="mt-1 text-sm text-slate-500">{t('orders.emptyHint')}</p>
             <Link
-              to={`/${slug}`}
+              to={storePath()}
               className="mt-6 inline-block rounded-xl bg-emerald-600 px-5 py-2.5 font-semibold text-white transition hover:bg-emerald-700"
             >
               {t('cart.browse')}
@@ -49,7 +51,7 @@ export default function OrdersPage() {
           orders.map((order) => (
             <Link
               key={order.id}
-              to={`/${slug}/orders/${order.id}`}
+              to={storePath(`/orders/${order.id}`)}
               className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-300"
             >
               <div className="flex items-center justify-between gap-3">

@@ -234,7 +234,7 @@ public sealed class OrderPaymentService : IOrderPaymentService
         // Only ever incremented when the previous payment is dead, so a reload reuses the same key
         // and PaymentService replays the original answer instead of charging again.
         var attempt = order.PaymentAttempt + 1;
-        var orderUrl = $"{_storefront.Url.TrimEnd('/')}/{store.Slug}/orders/{order.Id}";
+        var orderUrl = $"{StorefrontLinks.StoreBase(_storefront.Url, store)}/orders/{order.Id}";
 
         var request = new CreatePaymentRequest(
             MerchantId: store.Id,

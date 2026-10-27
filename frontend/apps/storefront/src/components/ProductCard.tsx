@@ -4,19 +4,20 @@ import type { PublicProductListItem } from '@gentlestore/shared';
 import { resolveImageUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
 import { formatPrice } from '../lib/format';
+import { useStorePath } from '../lib/storeBase';
 
 interface Props {
-  slug: string;
   product: PublicProductListItem;
 }
 
-export default function ProductCard({ slug, product }: Props) {
+export default function ProductCard({ product }: Props) {
   const { t } = useTranslation();
+  const storePath = useStorePath();
   const img = resolveImageUrl(API_URL, product.primaryImageUrl, 'md');
 
   return (
     <Link
-      to={`/${slug}/product/${product.id}`}
+      to={storePath(`/product/${product.id}`)}
       className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-lg"
     >
       <div className="relative aspect-square overflow-hidden bg-slate-100">

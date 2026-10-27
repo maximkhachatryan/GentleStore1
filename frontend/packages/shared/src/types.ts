@@ -13,6 +13,7 @@ export interface UserDto {
   storeId: string | null;
   storeName: string | null;
   storeSlug: string | null;
+  storeCustomDomain: string | null;
 }
 
 export interface LoginResponse {
@@ -26,6 +27,8 @@ export interface StoreListItem {
   id: string;
   name: string;
   slug: string;
+  /** The store's own domain ("flowers.am"); its storefront lives there instead of at /{slug}. */
+  customDomain: string | null;
   phone: string;
   logoUrl: string | null;
   isActive: boolean;
@@ -41,6 +44,7 @@ export interface StoreDetail {
   id: string;
   name: string;
   slug: string;
+  customDomain: string | null;
   phone: string;
   logoUrl: string | null;
   description: string | null;
@@ -53,6 +57,7 @@ export interface StoreDetail {
 export interface CreateStoreRequest {
   name: string;
   slug?: string | null;
+  customDomain?: string | null;
   phone: string;
   logoUrl?: string | null;
   description?: string | null;
@@ -63,6 +68,8 @@ export interface CreateStoreRequest {
 export interface UpdateStoreRequest {
   name: string;
   slug?: string | null;
+  /** Blank removes the store's domain. */
+  customDomain?: string | null;
   phone: string;
   logoUrl?: string | null;
   description?: string | null;
@@ -495,6 +502,7 @@ export interface PublicStoreListItem {
   logoUrl: string | null;
   description: string | null;
   phone: string;
+  customDomain: string | null;
 }
 
 export interface PublicStore {
@@ -505,6 +513,8 @@ export interface PublicStore {
   phone: string;
   currency: string;
   accessMode: StorefrontAccessMode;
+  /** The store's own domain; its pages on the platform's domain send people there. */
+  customDomain: string | null;
   /** The customer this browser is signed in as; null on public storefronts. */
   visitor: StorefrontVisitor | null;
 }

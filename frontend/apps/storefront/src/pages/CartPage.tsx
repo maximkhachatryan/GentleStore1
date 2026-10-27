@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -10,6 +10,7 @@ import StoreGate from '../components/StoreGate';
 import { formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
 import { useCart } from '../lib/cart';
+import { useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api, API_URL } from '../api';
 
 /** Maps the API's refusal codes onto copy; anything unrecognised falls back to a generic line. */
@@ -38,7 +39,8 @@ function checkoutErrorKey(error: unknown): string {
 
 export default function CartPage() {
   const { t } = useTranslation();
-  const { slug = '' } = useParams();
+  const slug = useStoreSlug();
+  const storePath = useStorePath();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const cart = useCart();
@@ -80,7 +82,7 @@ export default function CartPage() {
       cart.clear();
       // The new order belongs in the history list, and a guest checkout just created a session.
       queryClient.invalidateQueries({ queryKey: ['store', slug] });
-      navigate(`/${slug}/orders/${order.id}?placed=1`, { replace: true });
+      navigate(storePath(`/orders/${order.id}?placed=1`), { replace: true });
     },
     onError: (error) => setErrorKey(checkoutErrorKey(error)),
   });
@@ -112,7 +114,7 @@ export default function CartPage() {
           <h1 className="text-xl font-bold text-slate-900">{t('cart.empty')}</h1>
           <p className="mt-2 text-sm text-slate-500">{t('cart.emptyHint')}</p>
           <Link
-            to={`/${slug}`}
+            to={storePath()}
             className="mt-6 rounded-xl bg-emerald-600 px-5 py-2.5 font-semibold text-white transition hover:bg-emerald-700"
           >
             {t('cart.browse')}

@@ -25,7 +25,7 @@ public class PublicStoresController : PublicStoreControllerBase
 
         var stores = await query
             .OrderBy(s => s.Name)
-            .Select(s => new PublicStoreListItemDto(s.Slug, s.Name, s.LogoUrl, s.Description, s.Phone))
+            .Select(s => new PublicStoreListItemDto(s.Slug, s.Name, s.LogoUrl, s.Description, s.Phone, s.CustomDomain))
             .ToListAsync();
         return Ok(stores);
     }
@@ -39,6 +39,7 @@ public class PublicStoresController : PublicStoreControllerBase
         return Ok(new PublicStoreDto(
             store!.Slug, store.Name, store.LogoUrl, store.Description, store.Phone, store.Currency,
             store.StorefrontAccess.ToString(),
+            store.CustomDomain,
             visitor is null ? null : new StorefrontVisitorDto(visitor.DisplayName, visitor.PhoneMasked)));
     }
 

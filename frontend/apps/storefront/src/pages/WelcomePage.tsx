@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { resolveImageUrl } from '@gentlestore/shared';
 import Navbar from '../components/Navbar';
 import StoreGate from '../components/StoreGate';
 import { readInviteToken, redeemFailureReason, scrubInviteToken } from '../lib/access';
+import { useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api, API_URL } from '../api';
 
 /**
@@ -15,7 +16,8 @@ import { api, API_URL } from '../api';
  */
 export default function WelcomePage() {
   const { t } = useTranslation();
-  const { slug = '' } = useParams();
+  const slug = useStoreSlug();
+  const storePath = useStorePath();
   const queryClient = useQueryClient();
 
   // Read once, before the effect below wipes it from the address bar.
@@ -67,14 +69,14 @@ export default function WelcomePage() {
     );
   }
 
-  if (unlocked) return <Navigate to={`/${slug}`} replace />;
+  if (unlocked) return <Navigate to={storePath()} replace />;
 
   // No token in the link: either they are already in (bookmarked the welcome page, or the store
   // is public) or there is nothing here to unlock.
   if (token === null) {
     if (accessQuery.isLoading) return <Unlocking storeName={undefined} logoUrl={undefined} />;
     return accessQuery.data?.unlocked ? (
-      <Navigate to={`/${slug}`} replace />
+      <Navigate to={storePath()} replace />
     ) : (
       <StoreGate slug={slug} reason="locked" />
     );

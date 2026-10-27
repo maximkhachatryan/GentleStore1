@@ -10,7 +10,8 @@ export default function StoreCard({ store }: { store: PublicStoreListItem }) {
 
   return (
     <Link
-      to={`/${store.slug}`}
+      // A store on its own domain is linked there; Link loads other origins as a fresh page.
+      to={store.customDomain ? `https://${store.customDomain}` : `/${store.slug}`}
       className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-lg"
     >
       <div className="h-28 bg-gradient-to-br from-emerald-500 to-teal-600" />

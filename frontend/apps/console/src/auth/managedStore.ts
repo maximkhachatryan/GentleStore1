@@ -6,6 +6,8 @@ export interface ManagedStore {
   id: string;
   name: string;
   slug: string;
+  /** Absent in selections saved before stores had domains. */
+  customDomain?: string | null;
 }
 
 function read(): ManagedStore | null {

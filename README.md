@@ -34,7 +34,8 @@ GentleStore/
 
 **Multi-tenancy:** a single database with a `StoreId` discriminator on tenant-owned rows.
 The backoffice is auto-scoped to the signed-in user's `StoreId`; the public API resolves the tenant
-from the `{slug}` in the URL; the super-admin can act across all stores.
+from the `{slug}` in the URL; the super-admin can act across all stores. A store can also have its
+own domain, where the storefront finds the tenant from the host name instead (see below).
 
 **Auth:** lightweight JWT. A `Users` table stores BCrypt password hashes, a role
 (`SuperAdmin` / `StoreOwner` / `StoreStaff`) and an optional `StoreId`. The storefront is anonymous.
@@ -149,6 +150,46 @@ public store directory.
 Cookies cannot literally live forever (browsers cap persistent cookies at ~400 days), so the
 cookie is issued for the maximum window and its expiry is refreshed on every visit. A customer
 who keeps shopping is never signed out.
+
+---
+
+## Search engines and store domains
+
+### What crawlers see
+
+The storefront is a client-rendered app, but crawlers do not have to run it to learn what a page is
+about. On every page load the storefront's nginx asks the API for that page's head
+(`GET /api/public/seo/head/{path}`) and splices it into `index.html` with an SSI include
+([nginx.storefront.conf](frontend/nginx.storefront.conf)):
+
+- `<title>` (`{Product} · {Store}`, `{Category} · {Store}`, `{Store}`), meta description and a canonical link.
+- Open Graph / Twitter tags, which is also what WhatsApp and Telegram link previews read.
+- schema.org JSON-LD: `Product` with its price or price range and stock, `OnlineStore` for the store page.
+- `noindex` on invite-only stores and on cart, orders and invite pages.
+
+Everyone gets the same HTML (people, search engines, chat apps), so this is not cloaking. If the API is slow or down, the
+page keeps `index.html`'s default head and loads as usual. Outside nginx (the Vite dev server, the
+Capacitor app) the include is an inert comment.
+
+`/robots.txt` and `/sitemap.xml` are generated per host. The sitemap lists every public store's
+store page, the categories that have something to buy, and the available products. Invite-only stores are never listed.
+
+### A store's own domain
+
+A super admin can give a store its own domain (**Admin → Stores → Edit → Own domain**). Its
+storefront then lives at the root of that domain (`flowers.am/product/<id>`) instead of at
+`example.com/flowers/product/<id>`:
+
+- **Certificates** are obtained by Caddy on the first visit, after the API confirms a store owns
+  the name. Adding a domain needs no deploy. See [deployment.md §13a](deployment.md) for the DNS steps.
+- **The storefront** sees that it was opened on a host other than the platform's, asks the API which store
+  that is (`GET /api/public/hosts/{host}`) and mounts that store's routes at `/`.
+- **The session cookie** stays first-party: on a store's domain the app calls the API through that
+  same domain (Caddy forwards `/api/public/*` and `/uploads/*`), never through the platform's API host.
+- **Links the API builds** (invite links, payment return URLs, canonical URLs, the sitemap) use the
+  domain. Everything goes through `StorefrontLinks.StoreBase`.
+- **The platform's copy** of a public store's catalogue pages redirects to the domain. Invite-only
+  stores and order pages are not redirected, because sessions belong to the domain they were made on.
 
 ---
 
@@ -361,6 +402,5 @@ gateway integration involves.
   no prior relationship to the store.
 - Order POSTs should also check the `Origin` header once money is involved; `SameSite=Lax` is the
   current CSRF floor.
-- Per-store subdomains or custom domains.
 - Cloud image storage (S3/Blob) instead of local files.
 - Multi-currency conversion and i18n.

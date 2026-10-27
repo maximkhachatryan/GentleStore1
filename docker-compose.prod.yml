@@ -1,7 +1,8 @@
 # Production stack for a single Hetzner Cloud VM.
 # Run with:  docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 # All secrets/domains come from the .env file (see .env.example).
-# TLS is terminated by nginx-proxy; certs are issued/renewed automatically by acme-companion.
+# TLS is terminated by Caddy (see Caddyfile), which also obtains and renews every certificate —
+# the platform's own hosts at startup, stores' own domains on their first visit.
 name: gentlestore
 
 services:
@@ -58,10 +59,6 @@ services:
       PaymentService__CallbackBaseUrl: "http://api:8080"
       PaymentService__InternalKey: ${PAYMENTS_INTERNAL_KEY:-}
       PaymentService__CallbackSecret: ${PAYMENTS_CALLBACK_SECRET:-}
-      # Routing + automatic TLS via nginx-proxy / acme-companion
-      VIRTUAL_HOST: ${API_DOMAIN}
-      VIRTUAL_PORT: "8080"
-      LETSENCRYPT_HOST: ${API_DOMAIN}
     expose:
       - "8080"
     volumes:
@@ -71,16 +68,16 @@ services:
         condition: service_healthy
 
   # Paynet pushes webhooks from the public internet, so unlike the other services this one needs a
-  # hostname the outside world can reach — set PAYMENTS_DOMAIN and the VIRTUAL_HOST/LETSENCRYPT_HOST
-  # below take effect.
+  # hostname the outside world can reach — set PAYMENTS_DOMAIN and uncomment its block in the
+  # Caddyfile.
   #
   # Publishing the host also publishes /api/payments, so PAYMENTS_INTERNAL_KEY must be set at the
   # same time: the webhook path is exempt from it (a gateway has no key to present — it signs
-  # instead), while everything that can create or refund a payment stops being open. Setting the
-  # domain without the key would leave an unauthenticated refund endpoint on the internet.
+  # instead), while everything that can create or refund a payment stops being open. Publishing
+  # without the key would leave an unauthenticated refund endpoint on the internet.
   #
-  # Leave PAYMENTS_DOMAIN empty and the service stays reachable only from the compose network. That
-  # is fine, but Paynet cannot then call back and payments resolve by polling instead.
+  # Leave it unpublished and the service stays reachable only from the compose network. That is
+  # fine, but Paynet cannot then call back and payments resolve by polling instead.
   payments:
     build:
       context: ./payment-service
@@ -102,10 +99,6 @@ services:
       Gateways__paynet__Credentials__default__ApiKey: ${PAYNET_API_KEY:-}
       Gateways__paynet__Credentials__default__WebhookSecret: ${PAYNET_WEBHOOK_SECRET:-}
       Gateways__paynet__Credentials__default__Domain: ${PAYNET_DOMAIN:-}
-      # Routing + automatic TLS, only when PAYMENTS_DOMAIN is set.
-      VIRTUAL_HOST: ${PAYMENTS_DOMAIN:-}
-      VIRTUAL_PORT: "8080"
-      LETSENCRYPT_HOST: ${PAYMENTS_DOMAIN:-}
     expose:
       - "8080"
     depends_on:
@@ -122,10 +115,6 @@ services:
         VITE_STOREFRONT_URL: "https://${STOREFRONT_DOMAIN}"
     container_name: gentlestore-console
     restart: unless-stopped
-    environment:
-      VIRTUAL_HOST: ${CONSOLE_DOMAIN}
-      VIRTUAL_PORT: "80"
-      LETSENCRYPT_HOST: ${CONSOLE_DOMAIN}
     expose:
       - "80"
     depends_on:
@@ -138,60 +127,43 @@ services:
       args:
         APP: storefront
         VITE_API_URL: "https://${API_DOMAIN}"
+        # Lets the app tell the platform's domain from a store's own (see apps/storefront/src/api.ts).
+        VITE_STOREFRONT_URL: "https://${STOREFRONT_DOMAIN}"
     container_name: gentlestore-storefront
     restart: unless-stopped
-    environment:
-      VIRTUAL_HOST: ${STOREFRONT_DOMAIN}
-      VIRTUAL_PORT: "80"
-      LETSENCRYPT_HOST: ${STOREFRONT_DOMAIN}
     expose:
       - "80"
     depends_on:
       - api
 
-  # nginx reverse proxy: auto-generates vhosts from the VIRTUAL_HOST env of the services above.
-  nginx-proxy:
-    image: nginxproxy/nginx-proxy:1.6
-    container_name: gentlestore-nginx-proxy
+  # The only service exposed to the internet: routes by host name and terminates TLS (Caddyfile).
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: gentlestore-caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+      STOREFRONT_DOMAIN: ${STOREFRONT_DOMAIN}
+      CONSOLE_DOMAIN: ${CONSOLE_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
+      PAYMENTS_DOMAIN: ${PAYMENTS_DOMAIN:-}
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - nginx_certs:/etc/nginx/certs:ro
-      - nginx_vhost:/etc/nginx/vhost.d
-      - nginx_html:/usr/share/nginx/html
-      - nginx_conf:/etc/nginx/conf.d
-      # Raises the 1 MB default upload cap; see the file for details.
-      - ./nginx-proxy.conf:/etc/nginx/conf.d/zz-gentlestore.conf:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and ACME account state: keep this volume, or every certificate is requested
+      # again on the next start and Let's Encrypt's rate limits come into play.
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - api
       - console
       - storefront
 
-  # Obtains and renews Let's Encrypt certificates for every LETSENCRYPT_HOST.
-  acme-companion:
-    image: nginxproxy/acme-companion:2.4
-    container_name: gentlestore-acme
-    restart: unless-stopped
-    environment:
-      DEFAULT_EMAIL: ${ACME_EMAIL}
-      NGINX_PROXY_CONTAINER: gentlestore-nginx-proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nginx_certs:/etc/nginx/certs
-      - nginx_vhost:/etc/nginx/vhost.d
-      - nginx_html:/usr/share/nginx/html
-      - acme_state:/etc/acme.sh
-    depends_on:
-      - nginx-proxy
-
 volumes:
   gentlestore_pgdata:
   gentlestore_uploads:
-  nginx_certs:
-  nginx_vhost:
-  nginx_html:
-  nginx_conf:
-  acme_state:
+  caddy_data:
+  caddy_config:

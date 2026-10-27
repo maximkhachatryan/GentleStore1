@@ -11,11 +11,14 @@ import OrderStatusBadge from '../components/OrderStatusBadge';
 import PaymentPanel from '../components/PaymentPanel';
 import { formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
+import { useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api } from '../api';
 
 export default function OrderPage() {
   const { t, i18n } = useTranslation();
-  const { slug = '', id = '' } = useParams();
+  const { id = '' } = useParams();
+  const slug = useStoreSlug();
+  const storePath = useStorePath();
   const [params, setParams] = useSearchParams();
   const queryClient = useQueryClient();
   // Set by the checkout redirect so the "thank you" framing only shows the first time.
@@ -60,7 +63,7 @@ export default function OrderPage() {
         <main className="mx-auto max-w-md px-4 py-24 text-center">
           <h1 className="text-xl font-bold text-slate-900">{t('order.notFound')}</h1>
           <p className="mt-2 text-sm text-slate-500">{t('order.notFoundHint')}</p>
-          <Link to={`/${slug}`} className="mt-6 inline-block font-medium text-emerald-600">
+          <Link to={storePath()} className="mt-6 inline-block font-medium text-emerald-600">
             ← {t('product.backToStore')}
           </Link>
         </main>
@@ -153,13 +156,13 @@ export default function OrderPage() {
 
             <div className="flex flex-wrap gap-3 pb-4">
               <Link
-                to={`/${slug}`}
+                to={storePath()}
                 className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 {t('order.keepShopping')}
               </Link>
               <Link
-                to={`/${slug}/orders`}
+                to={storePath('/orders')}
                 className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 {t('orders.title')}

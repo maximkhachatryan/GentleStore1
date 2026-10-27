@@ -14,6 +14,13 @@ public class Store
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>
+    /// The store's own domain ("flowers.am"), when it has one: lowercase, without "www." — which
+    /// redirects here. The storefront then lives at the root of this domain instead of at
+    /// "/{Slug}" on the platform's, and its certificate is issued on the first visit.
+    /// </summary>
+    public string? CustomDomain { get; set; }
+
     /// <summary>Whether the storefront is open to everyone or only to invited customers.</summary>
     public StorefrontAccessMode StorefrontAccess { get; set; } = StorefrontAccessMode.Public;
 

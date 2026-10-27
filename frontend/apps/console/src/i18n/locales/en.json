@@ -91,7 +91,12 @@
     "deleteError": "Could not delete store",
     "payments": "Payments",
     "paymentsOn": "Payments on",
-    "paymentsOff": "Payments off"
+    "paymentsOff": "Payments off",
+    "customDomain": "Own domain",
+    "customDomainHelp": "Optional. Point the domain at this server first: an A record for the domain itself, and a CNAME for www pointing to it. Once saved, the store's pages move there and the certificate is issued on the first visit.",
+    "domainInvalid": "Enter a domain name such as flowers.am",
+    "domainPlatform": "This domain belongs to the platform itself",
+    "domainTaken": "Another store already uses this domain"
   },
   "users": {
     "title": "Users",
