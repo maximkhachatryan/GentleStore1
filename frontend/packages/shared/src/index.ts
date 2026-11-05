@@ -3,6 +3,8 @@ export * from './token';
 export * from './http';
 export * from './api';
 export * from './contact';
+export * from './fonts';
+export * from './theme';
 
 export function resolveAssetUrl(baseUrl: string, url: string | null | undefined): string | undefined {
   if (!url) return undefined;

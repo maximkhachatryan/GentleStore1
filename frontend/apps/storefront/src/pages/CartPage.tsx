@@ -108,14 +108,14 @@ export default function CartPage() {
 
   if (cart.lines.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-page">
         <Navbar store={store} />
         <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-4 py-20 text-center">
           <h1 className="text-xl font-bold text-slate-900">{t('cart.empty')}</h1>
           <p className="mt-2 text-sm text-slate-500">{t('cart.emptyHint')}</p>
           <Link
             to={storePath()}
-            className="mt-6 rounded-xl bg-emerald-600 px-5 py-2.5 font-semibold text-white transition hover:bg-emerald-700"
+            className="mt-6 rounded-xl bg-brand-600 px-5 py-2.5 font-semibold text-on-brand transition hover:bg-brand-700"
           >
             {t('cart.browse')}
           </Link>
@@ -125,7 +125,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-page">
       <Navbar store={store} />
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-4 px-4 py-6">
@@ -142,7 +142,7 @@ export default function CartPage() {
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-slate-900">{line.name}</div>
                   {line.variantLabel && <div className="text-xs text-slate-500">{line.variantLabel}</div>}
-                  <div className="mt-1 text-sm text-emerald-700">
+                  <div className="mt-1 text-sm text-brand-700">
                     {line.unitPrice === null
                       ? t('cart.priceOnRequest')
                       : formatPrice(line.unitPrice, currency)}
@@ -196,8 +196,8 @@ export default function CartPage() {
                   onClick={() => setFulfilment(option)}
                   className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
                     fulfilment === option
-                      ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
-                      : 'border-slate-200 text-slate-600 hover:border-emerald-300'
+                      ? 'border-brand-600 bg-brand-50 text-brand-700'
+                      : 'border-slate-200 text-slate-600 hover:border-brand-300'
                   }`}
                 >
                   {t(`checkout.${option.toLowerCase()}`)}
@@ -214,7 +214,7 @@ export default function CartPage() {
                 onChange={(e) => setAddress(e.target.value)}
                 rows={2}
                 placeholder={t('checkout.addressPlaceholder')}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-emerald-400"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand-400"
               />
             </label>
           )}
@@ -227,7 +227,7 @@ export default function CartPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-emerald-400"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand-400"
                 />
               </label>
               <label className="block">
@@ -238,13 +238,13 @@ export default function CartPage() {
                   inputMode="tel"
                   autoComplete="tel"
                   placeholder="+374 99 12 34 56"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-emerald-400"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand-400"
                 />
                 <span className="mt-1 block text-xs text-slate-400">{t('checkout.phoneHint')}</span>
               </label>
             </>
           ) : (
-            <div className="rounded-xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
+            <div className="rounded-xl bg-brand-50 px-3 py-2.5 text-sm text-brand-800">
               {knownName
                 ? t('checkout.knownAs', { name: knownName })
                 : t('checkout.knownAsPhone', { phone: known!.phoneMasked })}
@@ -258,7 +258,7 @@ export default function CartPage() {
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder={t('checkout.notePlaceholder')}
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-emerald-400"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-brand-400"
             />
           </label>
         </section>
@@ -266,7 +266,7 @@ export default function CartPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-baseline justify-between">
             <span className="font-semibold text-slate-900">{t('cart.total')}</span>
-            <span className="text-xl font-bold text-emerald-700">
+            <span className="text-xl font-bold text-brand-700">
               {cart.subtotal === null ? t('cart.quoteNeeded') : formatPrice(cart.subtotal, currency)}
             </span>
           </div>
@@ -285,7 +285,7 @@ export default function CartPage() {
               setErrorKey(null);
               place.mutate();
             }}
-            className="mt-4 w-full rounded-xl bg-emerald-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+            className="mt-4 w-full rounded-xl bg-brand-600 px-5 py-3 text-base font-semibold text-on-brand transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
           >
             {place.isPending ? t('checkout.placing') : t('checkout.placeOrder')}
           </button>

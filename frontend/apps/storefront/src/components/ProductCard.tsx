@@ -39,13 +39,13 @@ export default function ProductCard({ product }: Props) {
       </div>
       <div className="p-3">
         <h3 className="line-clamp-1 font-medium text-slate-900">{product.name}</h3>
-        <div className="mt-1 font-semibold text-emerald-700">
+        <div className="mt-1 font-semibold text-brand-700">
           {product.price === null ? t('productCard.priceOnRequest') : formatPrice(product.price, product.currency)}
         </div>
         {product.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {product.tags.slice(0, 3).map((t) => (
-              <span key={t} className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              <span key={t} className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
                 {t}
               </span>
             ))}

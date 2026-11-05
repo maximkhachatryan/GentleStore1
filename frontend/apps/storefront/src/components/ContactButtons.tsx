@@ -38,7 +38,7 @@ export default function ContactButtons({ phone, message, size = 'md' }: Props) {
         href={whatsappLink(phone, message)}
         target="_blank"
         rel="noreferrer"
-        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 font-semibold text-white transition hover:bg-emerald-700 ${pad}`}
+        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 font-semibold text-on-brand transition hover:bg-brand-700 ${pad}`}
       >
         <WhatsAppIcon /> {t('contact.whatsapp')}
       </a>

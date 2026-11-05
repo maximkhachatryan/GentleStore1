@@ -14,8 +14,8 @@ export default function Chip({ active, to, children }: Props) {
       aria-current={active ? 'page' : undefined}
       className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition ${
         active
-          ? 'bg-emerald-600 text-white shadow'
-          : 'border border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'
+          ? 'bg-brand-600 text-on-brand shadow'
+          : 'border border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
       }`}
     >
       {children}

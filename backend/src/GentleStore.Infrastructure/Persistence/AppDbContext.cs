@@ -43,6 +43,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.Description).HasMaxLength(4000);
             e.Property(x => x.Currency).IsRequired().HasMaxLength(3);
             e.Property(x => x.StorefrontAccess).HasConversion<int>();
+            // A handful of loose settings read together and never queried by: one jsonb column.
+            e.OwnsOne(x => x.Theme, t => t.ToJson());
         });
 
         mb.Entity<Category>(e =>

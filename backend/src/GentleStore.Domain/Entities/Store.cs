@@ -21,6 +21,9 @@ public class Store
     /// </summary>
     public string? CustomDomain { get; set; }
 
+    /// <summary>The storefront's look, set by a super admin. Null: the platform's own.</summary>
+    public StoreTheme? Theme { get; set; }
+
     /// <summary>Whether the storefront is open to everyone or only to invited customers.</summary>
     public StorefrontAccessMode StorefrontAccess { get; set; } = StorefrontAccessMode.Public;
 

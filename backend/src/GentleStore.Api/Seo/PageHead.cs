@@ -4,6 +4,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Unicode;
+using GentleStore.Api.Theming;
 
 namespace GentleStore.Api.Seo;
 
@@ -16,6 +17,9 @@ public static class PageHead
         // which is what makes the JSON safe to drop inside a <script> element.
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
     };
+
+    /// <summary>The browser-bar colour of an unthemed store; index.html's default head uses the same.</summary>
+    private const string DefaultThemeColor = "#059669";
 
     public static string Render(StorefrontPage page)
     {
@@ -48,6 +52,13 @@ public static class PageHead
 
         if (page.Indexable && StructuredData(page) is { } data)
             tags.Add($"<script type=\"application/ld+json\">{data.ToJsonString(JsonLdOptions)}</script>");
+
+        // The store's look, before the app has loaded anything. Every value in it is a validated
+        // colour or a string from ThemeCatalog, so it is safe to inline as-is. The storefront takes
+        // this element out once it applies the theme itself (lib/theme.ts finds it by id).
+        tags.Add(Meta("name", "theme-color", page.Store.Theme?.BrandColor ?? DefaultThemeColor));
+        if (page.Store.Theme is { } theme)
+            tags.Add($"<style id=\"gs-theme\">{ThemeCatalog.RenderStyle(theme)}</style>");
 
         return string.Join("\n", tags);
     }

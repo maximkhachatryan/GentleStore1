@@ -18,6 +18,7 @@ import ResponsiveTable from '../../components/ResponsiveTable';
 import { storefrontBaseFor } from '../../hooks/useStorefrontBase';
 import { apiErrorCode } from '../../lib/errors';
 import StorePaymentsDialog from './StorePaymentsDialog';
+import StoreThemeDialog from './StoreThemeDialog';
 
 // Why the API turned a domain down; each has its own message.
 const DOMAIN_ERRORS: Record<string, string> = {
@@ -44,6 +45,7 @@ export default function StoresPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StoreListItem | null>(null);
   const [payingStore, setPayingStore] = useState<StoreListItem | null>(null);
+  const [themingStore, setThemingStore] = useState<StoreListItem | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [form] = Form.useForm<StoreFormValues>();
 
@@ -142,6 +144,7 @@ export default function StoresPage() {
       },
       { key: 'edit', label: t('common.edit') },
       { key: 'payments', label: t('stores.payments') },
+      { key: 'theme', label: t('stores.theme') },
       { key: 'toggle', label: s.isActive ? t('stores.deactivate') : t('stores.activate') },
       { type: 'divider' },
       { key: 'delete', label: t('common.delete'), danger: true },
@@ -149,6 +152,7 @@ export default function StoresPage() {
     onClick: ({ key }) => {
       if (key === 'edit') openEdit(s);
       else if (key === 'payments') setPayingStore(s);
+      else if (key === 'theme') setThemingStore(s);
       else if (key === 'toggle') toggleActive.mutate(s);
       else if (key === 'delete') confirmDelete(s);
     },
@@ -266,6 +270,7 @@ export default function StoresPage() {
       />
 
       <StorePaymentsDialog store={payingStore} onClose={() => setPayingStore(null)} />
+      <StoreThemeDialog store={themingStore} onClose={() => setThemingStore(null)} />
 
       <FormDialog
         title={editing ? t('stores.edit') : t('stores.new')}

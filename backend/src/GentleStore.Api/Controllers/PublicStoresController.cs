@@ -1,5 +1,6 @@
 using GentleStore.Api.Contracts;
 using GentleStore.Api.Storefront;
+using GentleStore.Api.Theming;
 using GentleStore.Domain.Enums;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +41,8 @@ public class PublicStoresController : PublicStoreControllerBase
             store!.Slug, store.Name, store.LogoUrl, store.Description, store.Phone, store.Currency,
             store.StorefrontAccess.ToString(),
             store.CustomDomain,
-            visitor is null ? null : new StorefrontVisitorDto(visitor.DisplayName, visitor.PhoneMasked)));
+            visitor is null ? null : new StorefrontVisitorDto(visitor.DisplayName, visitor.PhoneMasked),
+            ThemeCatalog.Resolve(store.Theme)));
     }
 
     /// <summary>

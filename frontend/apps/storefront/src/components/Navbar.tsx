@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { resolveImageUrl } from '@gentlestore/shared';
+import { resolveImageUrl, type StoreTheme } from '@gentlestore/shared';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useOptionalCart } from '../lib/cart';
 import { useStorePath } from '../lib/storeBase';
+import { websiteLabel } from '../lib/website';
 import { API_URL } from '../api';
 
 interface NavbarStore {
   name: string;
   logoUrl: string | null;
+  theme?: StoreTheme | null;
 }
 
 function BagIcon() {
@@ -30,21 +32,39 @@ export default function Navbar({ store, children }: { store?: NavbarStore; child
   // Null outside a store's pages (the directory landing page has no cart).
   const cart = useOptionalCart();
   const storePath = useStorePath();
+  // A logo that already spells out the name is shown on its own, wider, without the name beside it.
+  const logoOnly = !!logo && store?.theme?.showStoreName === false;
+  const website = store?.theme?.websiteUrl;
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
+      {website && (
+        <div className="border-b border-slate-100 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-1 text-xs">
+            <a href={website} className="text-slate-500 transition hover:text-brand-600">
+              ← {websiteLabel(website)}
+            </a>
+          </div>
+        </div>
+      )}
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         {store ? (
-          <Link to={storePath()} className="flex items-center gap-2 text-lg font-bold text-slate-900">
-            <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-emerald-600 text-white">
-              {logo ? (
-                <img src={logo} alt={store.name} className="h-full w-full object-cover" />
-              ) : (
-                store.name.charAt(0)
-              )}
-            </span>
-            <span className="line-clamp-1">{store.name}</span>
-          </Link>
+          logoOnly ? (
+            <Link to={storePath()} className="flex h-10 items-center">
+              <img src={logo} alt={store.name} className="h-full max-w-[12rem] object-contain" />
+            </Link>
+          ) : (
+            <Link to={storePath()} className="flex items-center gap-2 font-heading text-lg font-bold text-slate-900">
+              <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-brand-600 text-on-brand">
+                {logo ? (
+                  <img src={logo} alt={store.name} className="h-full w-full object-cover" />
+                ) : (
+                  store.name.charAt(0)
+                )}
+              </span>
+              <span className="line-clamp-1">{store.name}</span>
+            </Link>
+          )
         ) : (
           <span aria-hidden />
         )}
@@ -54,11 +74,11 @@ export default function Navbar({ store, children }: { store?: NavbarStore; child
             <Link
               to={storePath('/cart')}
               aria-label={t('cart.title')}
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-emerald-600"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-brand-600"
             >
               <BagIcon />
               {cart.itemCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-xs font-semibold text-white">
+                <span className="absolute -right-0.5 -top-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1 text-xs font-semibold text-on-brand">
                   {cart.itemCount}
                 </span>
               )}

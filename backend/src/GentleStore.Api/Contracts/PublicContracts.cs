@@ -7,9 +7,10 @@ public record PublicStoreListItemDto(
 /// <param name="CustomDomain">
 /// The store's own domain. The storefront moves people there from the platform's "/{Slug}" pages.
 /// </param>
+/// <param name="Theme">The storefront's look; null for the platform's own.</param>
 public record PublicStoreDto(
     string Slug, string Name, string? LogoUrl, string? Description, string Phone, string Currency,
-    string AccessMode, string? CustomDomain, StorefrontVisitorDto? Visitor);
+    string AccessMode, string? CustomDomain, StorefrontVisitorDto? Visitor, StoreThemeDto? Theme);
 
 /// <summary>The store a custom domain belongs to.</summary>
 public record StoreHostDto(string Slug);

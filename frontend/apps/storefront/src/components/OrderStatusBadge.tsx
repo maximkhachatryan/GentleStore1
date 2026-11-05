@@ -6,8 +6,8 @@ const STYLES: Record<OrderStatus, string> = {
   AwaitingQuote: 'bg-amber-100 text-amber-800',
   AwaitingPayment: 'bg-orange-100 text-orange-800',
   Quoted: 'bg-sky-100 text-sky-800',
-  Confirmed: 'bg-emerald-100 text-emerald-800',
-  Ready: 'bg-emerald-600 text-white',
+  Confirmed: 'bg-brand-100 text-brand-800',
+  Ready: 'bg-brand-600 text-on-brand',
   Completed: 'bg-slate-800 text-white',
   Cancelled: 'bg-rose-100 text-rose-700',
 };

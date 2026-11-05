@@ -96,7 +96,7 @@ export default function ProductPage() {
         type="button"
         disabled={!canAddToCart}
         onClick={() => addToCart(false)}
-        className="w-full rounded-xl bg-emerald-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+        className="w-full rounded-xl bg-brand-600 px-5 py-3 text-base font-semibold text-on-brand transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
       >
         {needsVariantChoice ? t('product.chooseOptions') : t('product.addToCart')}
       </button>
@@ -121,7 +121,7 @@ export default function ProductPage() {
         <Navbar store={store} />
         <div className="mx-auto max-w-md px-4 py-24 text-center">
           <h1 className="text-2xl font-bold text-slate-900">{t('product.notFound')}</h1>
-          <Link to={storePath()} className="mt-4 inline-block font-medium text-emerald-600">
+          <Link to={storePath()} className="mt-4 inline-block font-medium text-brand-600">
             ← {t('product.backToStore')}
           </Link>
         </div>
@@ -134,13 +134,13 @@ export default function ProductPage() {
       <Navbar store={store} />
       <div className="mx-auto max-w-5xl px-4 py-6">
         <nav className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
-          <Link to={storePath()} className="transition hover:text-emerald-600">
+          <Link to={storePath()} className="transition hover:text-brand-600">
             ← {store?.name ?? t('product.backToStore')}
           </Link>
           {product && (
             <>
               <span aria-hidden="true">/</span>
-              <Link to={storePath(`/category/${product.categoryId}`)} className="transition hover:text-emerald-600">
+              <Link to={storePath(`/category/${product.categoryId}`)} className="transition hover:text-brand-600">
                 {product.categoryName}
               </Link>
             </>
@@ -154,14 +154,14 @@ export default function ProductPage() {
               {product.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {product.tags.map((t) => (
-                    <span key={t.id} className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                    <span key={t.id} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
                       {t.name}
                     </span>
                   ))}
                 </div>
               )}
               <h1 className="mt-2 text-3xl font-bold text-slate-900">{product.name}</h1>
-              <div className="mt-2 text-2xl font-semibold text-emerald-700">
+              <div className="mt-2 text-2xl font-semibold text-brand-700">
                 {displayPrice === null
                   ? t('product.priceOnRequest')
                   : hasVariants && !matchedVariant
@@ -170,7 +170,7 @@ export default function ProductPage() {
               </div>
               <div className="mt-1">
                 {displayInStock ? (
-                  <span className="text-sm font-medium text-emerald-600">{t('product.inStock')}</span>
+                  <span className="text-sm font-medium text-brand-600">{t('product.inStock')}</span>
                 ) : (
                   <span className="text-sm font-medium text-slate-400">{t('product.unavailable')}</span>
                 )}
@@ -197,8 +197,8 @@ export default function ProductPage() {
                               }
                               className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
                                 active
-                                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
-                                  : 'border-slate-200 text-slate-700 hover:border-emerald-300'
+                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                  : 'border-slate-200 text-slate-700 hover:border-brand-300'
                               }`}
                             >
                               {value}

@@ -69,7 +69,7 @@ export default function StoreGate({ slug, reason }: Props) {
   const explainBrowserBinding = reason === 'locked' || reason === 'already_used';
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-page">
       <Navbar />
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
@@ -78,12 +78,12 @@ export default function StoreGate({ slug, reason }: Props) {
             {logo ? (
               <img src={logo} alt={access.name} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-2xl font-bold text-emerald-600">{access.name.charAt(0)}</span>
+              <span className="text-2xl font-bold text-brand-600">{access.name.charAt(0)}</span>
             )}
           </div>
 
           <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
-            <span className="text-emerald-600">
+            <span className="text-brand-600">
               <LockIcon />
             </span>
             {t('gate.privateBadge')}

@@ -36,7 +36,7 @@ export default function ProductGallery({ images, alt }: Props) {
               type="button"
               onClick={() => setIndex(i)}
               className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 ${
-                i === index ? 'border-emerald-500' : 'border-transparent'
+                i === index ? 'border-brand-500' : 'border-transparent'
               }`}
             >
               <img src={resolveImageUrl(API_URL, img.imageUrl, 'sm')} alt="" className="h-full w-full object-cover" />

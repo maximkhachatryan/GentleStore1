@@ -27,7 +27,7 @@ export default function OrdersPage() {
   const orders = ordersQuery.data ?? [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-page">
       <Navbar store={store} />
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-3 px-4 py-6">
@@ -42,7 +42,7 @@ export default function OrdersPage() {
             <p className="mt-1 text-sm text-slate-500">{t('orders.emptyHint')}</p>
             <Link
               to={storePath()}
-              className="mt-6 inline-block rounded-xl bg-emerald-600 px-5 py-2.5 font-semibold text-white transition hover:bg-emerald-700"
+              className="mt-6 inline-block rounded-xl bg-brand-600 px-5 py-2.5 font-semibold text-on-brand transition hover:bg-brand-700"
             >
               {t('cart.browse')}
             </Link>
@@ -52,7 +52,7 @@ export default function OrdersPage() {
             <Link
               key={order.id}
               to={storePath(`/orders/${order.id}`)}
-              className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-300"
+              className="block rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-brand-300"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="font-bold text-slate-900">{order.orderNumber}</span>
@@ -64,7 +64,7 @@ export default function OrdersPage() {
                   {' · '}
                   {t('order.itemCount', { count: order.lines.reduce((sum, l) => sum + l.quantity, 0) })}
                 </span>
-                <span className="font-semibold text-emerald-700">
+                <span className="font-semibold text-brand-700">
                   {order.total === null ? t('cart.quoteNeeded') : formatPrice(order.total, order.currency)}
                 </span>
               </div>

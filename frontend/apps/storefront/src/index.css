@@ -1,7 +1,57 @@
 @import "tailwindcss";
 
+/*
+ * Per-store theme. A store's theme arrives as a handful of --gs-* variables: in the page head
+ * (SeoController → PageHead, for the first paint) and again from lib/theme.ts once the store is
+ * loaded. Components never see them directly; they use the tokens below (bg-brand-600,
+ * text-on-brand, font-heading, rounded-xl…).
+ *
+ * Without a theme every --gs-* variable is unset and each token falls back to the platform's
+ * own look (Tailwind's emerald scale, the system font stack, Tailwind's radii).
+ */
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /*
+   * The store sets one brand colour; its lighter and darker shades are mixed from it. These are
+   * invalid while --gs-brand is unset, which makes the tokens below fall back to emerald.
+   */
+  --gs-brand-50: color-mix(in oklab, var(--gs-brand) 8%, white);
+  --gs-brand-100: color-mix(in oklab, var(--gs-brand) 16%, white);
+  --gs-brand-200: color-mix(in oklab, var(--gs-brand) 30%, white);
+  --gs-brand-300: color-mix(in oklab, var(--gs-brand) 48%, white);
+  --gs-brand-400: color-mix(in oklab, var(--gs-brand) 68%, white);
+  --gs-brand-500: color-mix(in oklab, var(--gs-brand) 85%, white);
+  --gs-brand-700: color-mix(in oklab, var(--gs-brand) 85%, black);
+  --gs-brand-800: color-mix(in oklab, var(--gs-brand) 70%, black);
+  --gs-brand-900: color-mix(in oklab, var(--gs-brand) 58%, black);
+}
+
+@theme {
+  --color-brand-50: var(--gs-brand-50, oklch(97.9% 0.021 166.113));
+  --color-brand-100: var(--gs-brand-100, oklch(95% 0.052 163.051));
+  --color-brand-200: var(--gs-brand-200, oklch(90.5% 0.093 164.15));
+  --color-brand-300: var(--gs-brand-300, oklch(84.5% 0.143 164.978));
+  --color-brand-400: var(--gs-brand-400, oklch(76.5% 0.177 163.223));
+  --color-brand-500: var(--gs-brand-500, oklch(69.6% 0.17 162.48));
+  --color-brand-600: var(--gs-brand, oklch(59.6% 0.145 163.225));
+  --color-brand-700: var(--gs-brand-700, oklch(50.8% 0.118 165.612));
+  --color-brand-800: var(--gs-brand-800, oklch(43.2% 0.095 166.913));
+  --color-brand-900: var(--gs-brand-900, oklch(37.8% 0.077 168.94));
+  /* Text on a brand-coloured background: white, or near-black for a pale brand colour. */
+  --color-on-brand: var(--gs-on-brand, #fff);
+  --color-page: var(--gs-bg, #f8fafc);
+
+  --font-sans: var(--gs-font-body, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
+  --font-heading: var(--gs-font-heading, var(--font-sans));
+
+  /* Scaling Tailwind's own radii restyles every rounded-* class without touching it. */
+  --radius-lg: calc(0.5rem * var(--gs-radius, 1));
+  --radius-xl: calc(0.75rem * var(--gs-radius, 1));
+  --radius-2xl: calc(1rem * var(--gs-radius, 1));
+  --radius-3xl: calc(1.5rem * var(--gs-radius, 1));
+}
+
+:root {
+  font-family: var(--font-sans);
 }
 
 html,
@@ -12,9 +62,15 @@ body,
 }
 
 body {
-  background-color: #f8fafc;
+  background-color: var(--color-page);
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
 }
 
 * {

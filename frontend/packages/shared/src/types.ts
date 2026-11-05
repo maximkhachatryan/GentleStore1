@@ -517,6 +517,8 @@ export interface PublicStore {
   customDomain: string | null;
   /** The customer this browser is signed in as; null on public storefronts. */
   visitor: StorefrontVisitor | null;
+  /** The storefront's look; null for the platform's own. */
+  theme: StoreTheme | null;
 }
 
 export interface PublicCategory {
@@ -651,6 +653,69 @@ export interface UpdateStorePaymentsRequest {
   credentialRef?: string | null;
   mode?: PaymentMode | null;
   methods?: string[] | null;
+}
+
+// ---- Storefront theme (backend Theming/ThemeCatalog.cs) ----
+
+/** A store's theme as stored: a preset plus what was overridden on top. Null values use the preset's. */
+export interface StoreThemeRequest {
+  preset: string;
+  brandColor: string | null;
+  backgroundColor: string | null;
+  headingFont: string | null;
+  bodyFont: string | null;
+  radius: string | null;
+  showStoreName: boolean | null;
+  websiteUrl: string | null;
+}
+
+/** A theme with every value filled in — what the storefront renders. */
+export interface StoreTheme {
+  preset: string;
+  brandColor: string;
+  /** Text colour on brand-coloured backgrounds, chosen for contrast. */
+  onBrandColor: string;
+  backgroundColor: string;
+  headingFont: string;
+  bodyFont: string;
+  radius: string;
+  showStoreName: boolean;
+  websiteUrl: string | null;
+  /** The --gs-* variables the storefront's stylesheet reads. */
+  cssVariables: Record<string, string>;
+  /** Font keys to load; "system" is never listed. */
+  fonts: string[];
+}
+
+export interface ThemePreset {
+  key: string;
+  brandColor: string;
+  backgroundColor: string;
+  headingFont: string;
+  bodyFont: string;
+  radius: string;
+  showStoreName: boolean;
+}
+
+export interface ThemeFont {
+  key: string;
+  label: string;
+  /** CSS font-family list, Armenian fallback included. */
+  stack: string;
+  serif: boolean;
+}
+
+export interface ThemeRadius {
+  key: string;
+  /** Multiplies the storefront's corner radii; 1 is the platform's own. */
+  scale: number;
+}
+
+export interface StoreThemeSettings {
+  /** Null when the store uses the platform's own look. */
+  theme: StoreThemeRequest | null;
+  resolved: StoreTheme | null;
+  catalog: { presets: ThemePreset[]; fonts: ThemeFont[]; radii: ThemeRadius[] };
 }
 
 // ---- Paying for an order (storefront) ----

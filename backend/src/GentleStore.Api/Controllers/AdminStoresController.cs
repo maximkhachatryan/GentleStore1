@@ -152,14 +152,32 @@ public class AdminStoresController : ControllerBase
         if (domain is null)
             return (null, BadRequest(new { error = "Enter a domain name such as flowers.am.", code = "domain_invalid" }));
 
-        var platformHosts = new[] { _storefront.Url, _console.Url }.Select(url => HostNames.Normalize(HostNames.OfUrl(url)));
-        if (platformHosts.Contains(domain))
+        // The admin is calling the API on its own host, which is how that one is known here.
+        var platformHosts = new[] { HostNames.OfUrl(_storefront.Url), HostNames.OfUrl(_console.Url), Request.Host.Host }
+            .Select(HostNames.Normalize);
+        if (platformHosts.Contains(domain) || IsReservedPlatformName(domain))
             return (null, BadRequest(new { error = "This domain belongs to the platform itself.", code = "domain_platform" }));
 
         if (await _db.Stores.AnyAsync(s => s.CustomDomain == domain && s.Id != storeId))
             return (null, Conflict(new { error = "Another store already uses this domain.", code = "domain_taken" }));
 
         return (domain, null);
+    }
+
+    /// <summary>
+    /// Names directly under the platform's domain that the platform keeps for itself, whether or not
+    /// they are in use yet. Stores without a domain of their own get "shop.flowers.example.com" or
+    /// "flowers.example.com"; never one of these.
+    /// </summary>
+    private static readonly string[] ReservedLabels = ["api", "console", "admin", "www", "mail", "app", "static", "cdn"];
+
+    private bool IsReservedPlatformName(string domain)
+    {
+        var platform = HostNames.Normalize(HostNames.OfUrl(_storefront.Url));
+        if (platform is null || !domain.EndsWith("." + platform, StringComparison.Ordinal)) return false;
+
+        var label = domain[..^(platform.Length + 1)];
+        return ReservedLabels.Contains(label);
     }
 
     private async Task<string> UniqueSlugAsync(string desired, Guid? excludeId = null)

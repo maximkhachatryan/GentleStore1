@@ -58,12 +58,12 @@ export default function OrderPage() {
 
   if (orderQuery.isError) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-page">
         <Navbar store={store} />
         <main className="mx-auto max-w-md px-4 py-24 text-center">
           <h1 className="text-xl font-bold text-slate-900">{t('order.notFound')}</h1>
           <p className="mt-2 text-sm text-slate-500">{t('order.notFoundHint')}</p>
-          <Link to={storePath()} className="mt-6 inline-block font-medium text-emerald-600">
+          <Link to={storePath()} className="mt-6 inline-block font-medium text-brand-600">
             ← {t('product.backToStore')}
           </Link>
         </main>
@@ -72,7 +72,7 @@ export default function OrderPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-page">
       <Navbar store={store} />
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-4 px-4 py-6">
@@ -80,7 +80,7 @@ export default function OrderPage() {
           <>
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               {justPlaced && (
-                <p className="mb-2 text-sm font-semibold text-emerald-600">{t('order.placed')}</p>
+                <p className="mb-2 text-sm font-semibold text-brand-600">{t('order.placed')}</p>
               )}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-bold text-slate-900">{order.orderNumber}</h1>
@@ -96,9 +96,9 @@ export default function OrderPage() {
               {/* The handoff that makes a web order real for a WhatsApp-first shop: the customer
                   sends the number to the store, and the store confirms from its own inbox. */}
               {store && (
-                <div className="mt-4 rounded-xl bg-emerald-50 p-3">
-                  <p className="text-sm font-semibold text-emerald-900">{t('order.confirmTitle')}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+                <div className="mt-4 rounded-xl bg-brand-50 p-3">
+                  <p className="text-sm font-semibold text-brand-900">{t('order.confirmTitle')}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-brand-800">
                     {t('order.confirmBody', { store: store.name })}
                   </p>
                   <div className="mt-3">
@@ -132,7 +132,7 @@ export default function OrderPage() {
               </div>
               <div className="flex items-baseline justify-between border-t border-slate-200 p-4">
                 <span className="font-semibold text-slate-900">{t('cart.total')}</span>
-                <span className="text-lg font-bold text-emerald-700">
+                <span className="text-lg font-bold text-brand-700">
                   {order.total === null ? t('cart.quoteNeeded') : formatPrice(order.total, order.currency)}
                 </span>
               </div>

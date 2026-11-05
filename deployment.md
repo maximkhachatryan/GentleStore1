@@ -442,6 +442,120 @@ For search engines, the store owner can verify the domain in
 
 ---
 
+## 13b. Landing pages and shop subdomains
+
+Some stores want a website of their own (a landing page, an "about us") with the shop one click
+away. The platform does not host those sites. A store's site lives on a static host (Netlify or
+Cloudflare Pages), and only the shop points at this server, as a `shop.` name set as the store's
+**Own domain** (§13a). Nothing on the server changes for any of the cases below.
+
+Landing pages the platform team builds go in their own repository, one folder per store, with one
+Netlify/Cloudflare Pages project per folder:
+
+```
+landing-pages/
+  flowers/   index.html, styles.css, images/
+  bakery/    ...
+```
+
+Whichever case applies, set **Admin → Stores → ⋯ → Theme → Store's own website** to the site's
+address. The shop then links back to it, both above its header and in its footer.
+
+### The store has a domain and wants a landing page
+
+| Type  | Name   | Value                  | Serves       |
+|-------|--------|------------------------|--------------|
+| A / CNAME, as the host says | `@`, `www` | the landing host | landing page |
+| A     | `shop` | `<server-ipv4>`        | the shop     |
+
+1. Connect `flowers.am` and `www.flowers.am` to the landing site at its host.
+2. Add the `shop` record and wait until `nslookup shop.flowers.am` answers with the server.
+3. **Own domain** = `shop.flowers.am`.
+4. On the landing page, link to the shop with a plain `<a href="https://shop.flowers.am">`, not a
+   script, so search engines follow it. Use the console's share links for categories and products.
+
+Do **not** point `flowers.am` itself at this server: no store owns that name, so Caddy refuses it a
+certificate.
+
+### The store has a domain but no landing page
+
+Either of these works:
+
+- **Shop on the bare domain** (§13a as written): **Own domain** = `flowers.am`.
+- **Shop on `shop.`, bare domain forwarded to it:** do the `shop` record and **Own domain** as above,
+  then forward `flowers.am` to `https://shop.flowers.am`. Most registrars offer free URL forwarding,
+  or a one-file Netlify site will do it with a `_redirects` file containing
+  `/* https://shop.flowers.am/:splat 301`.
+
+Prefer the second if a landing page may come later. Moving a live shop from `flowers.am` to
+`shop.flowers.am` afterwards changes every product URL. It also loses carts and sessions, which
+belong to the domain that set them, and invite-only customers need new invite links. If it has to
+happen anyway, give the landing host redirects for the shop's old paths:
+
+```
+/product/*   https://shop.flowers.am/product/:splat   301
+/category/*  https://shop.flowers.am/category/:splat  301
+/cart        https://shop.flowers.am/cart             301
+/orders/*    https://shop.flowers.am/orders/:splat    301
+/welcome     https://shop.flowers.am/welcome          301
+```
+
+### The store has no domain
+
+Give it names under the platform's own domain. The platform team manages these records:
+
+| Type  | Name           | Value                  | Serves       |
+|-------|----------------|------------------------|--------------|
+| CNAME | `flowers`      | `<site>.netlify.app.`  | landing page |
+| A     | `shop.flowers` | `<server-ipv4>`        | the shop     |
+
+**Own domain** = `shop.flowers.example.com`. Notes:
+
+- Use explicit records, not a `*.example.com` wildcard. A wildcard covers only one level, so it
+  would not match `shop.flowers`, and it would clash with the landing pages' CNAMEs.
+- `api`, `console`, `admin`, `www`, `mail`, `app`, `static` and `cdn` directly under the platform's
+  domain are kept for the platform, and the console refuses them as a store's domain.
+- Keep `Storefront__SessionCookie__Domain` unset. All these stores are "same-site" with one
+  another, and host-only cookies are what keep each store's customer sessions to itself.
+- If the store buys a domain later, add it to the landing site and change **Own domain** to
+  `shop.<their domain>`. Keep the old name redirecting by pointing `shop.flowers` at a Netlify site
+  whose `_redirects` file reads `/* https://shop.<their domain>/:splat 301`. Otherwise every
+  indexed link breaks, because the old name stops being a store the moment the domain changes.
+
+### Search engines
+
+The shop's head, `robots.txt` and `sitemap.xml` follow whichever host it is opened on, so a
+`shop.` name needs nothing extra. The landing page's own title, description, `robots.txt` and
+`sitemap.xml` are the landing repository's job. In Search Console:
+
+- A store on its own domain verifies a **Domain property** (DNS TXT), which covers the landing page
+  and the shop. It submits both sitemaps.
+- A store under the platform's domain gets a **URL-prefix property** for its own address only. The
+  platform's Domain property would show it every store.
+
+---
+
+## 13c. Storefront themes
+
+A super admin sets each store's look under **Admin → Stores → ⋯ → Theme**. The dialog offers a
+style (preset), with the brand colour, background, heading and text fonts, corner roundness,
+logo-only header, and a link back to the store's own website. Fields left empty follow the style.
+The dialog previews the result live. **Reset to default** returns the store to the platform's
+look. Store staff cannot change the theme.
+
+- The theme is stored on the store (`Stores.Theme`, jsonb) and served with the store
+  (`/api/public/stores/{slug}`).
+- It also goes into each page's head as a small `<style id="gs-theme">`, so the first paint is
+  already in the store's colours.
+- Fonts are self-hosted (`@fontsource-variable/*` in the shared frontend package). A browser
+  downloads only the fonts the store uses. Each font falls back to Noto Sans or Noto Serif
+  Armenian for Armenian text.
+- To add a preset or a font, change `ThemeCatalog.cs` in the API. For a font, also change
+  `packages/shared/src/fonts.ts` in the frontend, and add the preset's name to the console's
+  translations (`theme.preset_<key>`).
+
+---
+
 ## 14. Troubleshooting
 
 **HTTPS / certificate not issued**

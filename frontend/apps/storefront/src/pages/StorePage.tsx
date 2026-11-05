@@ -79,12 +79,12 @@ export default function StorePage() {
                 {logo ? (
                   <img src={logo} alt={store.name} className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-3xl font-bold text-emerald-600">{store.name.charAt(0)}</span>
+                  <span className="text-3xl font-bold text-brand-600">{store.name.charAt(0)}</span>
                 )}
               </div>
               <div className="flex-1">
                 {store.visitor && (
-                  <p className="text-sm font-medium text-emerald-600">
+                  <p className="text-sm font-medium text-brand-600">
                     {visitorName
                       ? t('store.greetingNamed', { name: visitorName })
                       : t('store.greeting', { phone: store.visitor.phoneMasked })}
@@ -98,7 +98,7 @@ export default function StorePage() {
                 {store.visitor && (
                   <Link
                     to={storePath('/orders')}
-                    className="mt-2 block text-center text-sm font-medium text-slate-500 underline transition hover:text-emerald-600"
+                    className="mt-2 block text-center text-sm font-medium text-slate-500 underline transition hover:text-brand-600"
                   >
                     {t('orders.title')}
                   </Link>
@@ -111,13 +111,13 @@ export default function StorePage() {
         </div>
       </section>
 
-      <div className="sticky top-14 z-20 border-b border-slate-200 bg-slate-50/90 backdrop-blur">
+      <div className="sticky top-14 z-20 border-b border-slate-200 bg-page/90 backdrop-blur">
         <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('store.searchPlaceholder')}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2 outline-none focus:border-emerald-400"
+            className="w-full rounded-xl border border-slate-200 px-4 py-2 outline-none focus:border-brand-400"
           />
           <div className="flex gap-2 overflow-x-auto pb-1">
             <Chip active={!categoryId} to={storePath()}>
@@ -153,7 +153,7 @@ export default function StorePage() {
         {categoryMissing ? (
           <div className="py-16 text-center text-slate-500">
             <p>{t('store.categoryNotFound')}</p>
-            <Link to={storePath()} className="mt-3 inline-block font-medium text-emerald-600">
+            <Link to={storePath()} className="mt-3 inline-block font-medium text-brand-600">
               {t('store.showAll')}
             </Link>
           </div>

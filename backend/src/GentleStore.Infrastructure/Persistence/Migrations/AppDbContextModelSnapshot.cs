@@ -956,6 +956,44 @@ namespace GentleStore.Infrastructure.Persistence.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("GentleStore.Domain.Entities.Store", b =>
+                {
+                    b.OwnsOne("GentleStore.Domain.Entities.StoreTheme", "Theme", b1 =>
+                        {
+                            b1.Property<Guid>("StoreId");
+
+                            b1.Property<string>("BackgroundColor");
+
+                            b1.Property<string>("BodyFont");
+
+                            b1.Property<string>("BrandColor");
+
+                            b1.Property<string>("HeadingFont");
+
+                            b1.Property<string>("Preset")
+                                .IsRequired();
+
+                            b1.Property<string>("Radius");
+
+                            b1.Property<bool?>("ShowStoreName");
+
+                            b1.Property<string>("WebsiteUrl");
+
+                            b1.HasKey("StoreId");
+
+                            b1.ToTable("Stores");
+
+                            b1
+                                .ToJson("Theme")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("StoreId");
+                        });
+
+                    b.Navigation("Theme");
+                });
+
             modelBuilder.Entity("GentleStore.Domain.Entities.Tag", b =>
                 {
                     b.HasOne("GentleStore.Domain.Entities.Store", "Store")

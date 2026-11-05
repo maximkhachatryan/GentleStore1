@@ -28,6 +28,8 @@ import type {
   StartPaymentRequest,
   StorePaymentSettings,
   UpdateStorePaymentsRequest,
+  StoreThemeRequest,
+  StoreThemeSettings,
   PublicOrder,
   QuoteOrderRequest,
   UpdateOrderStatusRequest,
@@ -91,6 +93,14 @@ export function createApi(http: AxiosInstance) {
        */
       updateStorePayments: (id: string, body: UpdateStorePaymentsRequest) =>
         http.put<StorePaymentSettings>(`/api/admin/stores/${id}/payments`, body).then((r) => r.data),
+      /** The store's storefront theme, the same filled in from its preset, and the catalog to pick from. */
+      getStoreTheme: (id: string) =>
+        http.get<StoreThemeSettings>(`/api/admin/stores/${id}/theme`).then((r) => r.data),
+      updateStoreTheme: (id: string, body: StoreThemeRequest) =>
+        http.put<StoreThemeSettings>(`/api/admin/stores/${id}/theme`, body).then((r) => r.data),
+      /** Back to the platform's own look. */
+      resetStoreTheme: (id: string) =>
+        http.delete<StoreThemeSettings>(`/api/admin/stores/${id}/theme`).then((r) => r.data),
       listUsers: () => http.get<AdminUser[]>('/api/admin/users').then((r) => r.data),
       createUser: (body: CreateUserRequest) => http.post<AdminUser>('/api/admin/users', body).then((r) => r.data),
       updateUser: (id: string, body: UpdateUserRequest) =>

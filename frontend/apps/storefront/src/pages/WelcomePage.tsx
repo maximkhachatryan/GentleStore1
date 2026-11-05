@@ -92,14 +92,14 @@ function Unlocking({ storeName, logoUrl }: { storeName?: string; logoUrl?: strin
   const logo = resolveImageUrl(API_URL, logoUrl, 'sm');
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-page">
       <Navbar />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-4 py-12 text-center">
         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
           {logo ? (
             <img src={logo} alt={storeName ?? ''} className="h-full w-full object-cover" />
           ) : (
-            <span className="text-2xl font-bold text-emerald-600">{storeName?.charAt(0) ?? ''}</span>
+            <span className="text-2xl font-bold text-brand-600">{storeName?.charAt(0) ?? ''}</span>
           )}
         </div>
         <h1 className="mt-5 text-xl font-bold text-slate-900">
@@ -107,7 +107,7 @@ function Unlocking({ storeName, logoUrl }: { storeName?: string; logoUrl?: strin
         </h1>
         <p className="mt-2 text-sm text-slate-500">{t('welcome.subtitle')}</p>
         <div
-          className="mt-6 h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-600"
+          className="mt-6 h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-brand-600"
           role="status"
           aria-label={t('welcome.subtitle')}
         />

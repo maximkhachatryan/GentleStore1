@@ -51,9 +51,9 @@ export default function PaymentPanel({ slug, order, store }: Props) {
 
   if (order.paidAt) {
     return (
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-        <p className="text-sm font-semibold text-emerald-900">{t('order.paid')}</p>
-        <p className="mt-1 text-xs text-emerald-800">
+      <section className="rounded-2xl border border-brand-200 bg-brand-50 p-4">
+        <p className="text-sm font-semibold text-brand-900">{t('order.paid')}</p>
+        <p className="mt-1 text-xs text-brand-800">
           {t('order.paidOn', {
             date: new Date(order.paidAt).toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }),
           })}
@@ -99,7 +99,7 @@ export default function PaymentPanel({ slug, order, store }: Props) {
               type="button"
               disabled={pay.isPending}
               onClick={() => pay.mutate(method.key)}
-              className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-on-brand transition hover:bg-brand-700 disabled:opacity-60"
             >
               {pay.isPending
                 ? t('order.checkingPayment')

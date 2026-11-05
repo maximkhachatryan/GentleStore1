@@ -1,6 +1,8 @@
 using System.Globalization;
+using GentleStore.Api.Contracts;
 using GentleStore.Api.LinkPreviews;
 using GentleStore.Api.Storefront;
+using GentleStore.Api.Theming;
 using GentleStore.Api.Uploads;
 using GentleStore.Domain.Enums;
 using GentleStore.Infrastructure.Persistence;
@@ -19,7 +21,9 @@ public enum StorefrontPageKind
     Other
 }
 
-public sealed record PageStore(string Name, string? Description, string Phone, string Currency, string Url);
+/// <param name="Theme">The storefront's look, applied from the head so the first paint already has it.</param>
+public sealed record PageStore(
+    string Name, string? Description, string Phone, string Currency, string Url, StoreThemeDto? Theme);
 
 public sealed record PageImage(string Url, int? Width, int? Height);
 
@@ -68,7 +72,8 @@ public class StorefrontPageMeta
             .Where(s => s.Slug == slug && s.IsActive)
             .Select(s => new
             {
-                s.Id, s.Name, s.Slug, s.CustomDomain, s.Description, s.LogoUrl, s.Phone, s.Currency, s.StorefrontAccess
+                s.Id, s.Name, s.Slug, s.CustomDomain, s.Description, s.LogoUrl, s.Phone, s.Currency, s.StorefrontAccess,
+                s.Theme
             })
             .FirstOrDefaultAsync(ct);
         if (store is null) return null;
@@ -148,7 +153,8 @@ public class StorefrontPageMeta
         }
 
         var image = await ResolveImageAsync(imageUrl, StorefrontLinks.Origin(_storefront.Url, store.CustomDomain), ct);
-        var pageStore = new PageStore(store.Name, store.Description, store.Phone, store.Currency, storeUrl);
+        var pageStore = new PageStore(
+            store.Name, store.Description, store.Phone, store.Currency, storeUrl, ThemeCatalog.Resolve(store.Theme));
 
         return new StorefrontPage(kind, pageStore, title, description, url, image, offer,
             Indexable: isPublic && kind != StorefrontPageKind.Other);
