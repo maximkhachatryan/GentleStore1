@@ -12,6 +12,7 @@ import { GridSkeleton } from '../components/Skeletons';
 import { resolveImageUrl } from '@gentlestore/shared';
 import { isInviteRequired } from '../lib/access';
 import { usePageTitle } from '../lib/pageTitle';
+import { showsLogoOnly } from '../lib/theme';
 import { useStoreDomainRedirect, useStorePath, useStoreSlug } from '../lib/storeBase';
 import { api, API_URL } from '../api';
 
@@ -62,7 +63,9 @@ export default function StorePage() {
   }
 
   const store = storeQuery.data;
-  const logo = resolveImageUrl(API_URL, store?.logoUrl, 'sm');
+  // A logo shown on its own is shown whole and wider, so it gets the sharper copy.
+  const logoOnly = showsLogoOnly(store);
+  const logo = resolveImageUrl(API_URL, store?.logoUrl, logoOnly ? 'md' : 'sm');
   // An old link to a category the store has since deleted.
   const categoryMissing = !!categoryId && !!categoriesQuery.data && !category;
   const visitorName = store?.visitor?.displayName ?? null;
@@ -75,13 +78,19 @@ export default function StorePage() {
         <div className="mx-auto max-w-6xl px-4 py-8">
           {store ? (
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 shadow">
-                {logo ? (
-                  <img src={logo} alt={store.name} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-3xl font-bold text-brand-600">{store.name.charAt(0)}</span>
-                )}
-              </div>
+              {logoOnly ? (
+                <div className="flex h-20 max-w-xs items-center">
+                  <img src={logo} alt={store.name} className="h-full w-auto max-w-full object-contain" />
+                </div>
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 shadow">
+                  {logo ? (
+                    <img src={logo} alt={store.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-3xl font-bold text-brand-600">{store.name.charAt(0)}</span>
+                  )}
+                </div>
+              )}
               <div className="flex-1">
                 {store.visitor && (
                   <p className="text-sm font-medium text-brand-600">
@@ -90,7 +99,8 @@ export default function StorePage() {
                       : t('store.greeting', { phone: store.visitor.phoneMasked })}
                   </p>
                 )}
-                <h1 className="text-2xl font-bold text-slate-900">{store.name}</h1>
+                {/* With the logo standing in for the name, the heading stays for screen readers and search engines. */}
+                <h1 className={logoOnly ? 'sr-only' : 'text-2xl font-bold text-slate-900'}>{store.name}</h1>
                 {store.description && <p className="mt-1 max-w-2xl text-slate-500">{store.description}</p>}
               </div>
               <div className="sm:w-64">

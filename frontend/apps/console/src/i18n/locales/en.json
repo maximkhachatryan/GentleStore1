@@ -472,7 +472,7 @@
     "radius_extra-round": "Very rounded",
     "fromPreset": "Style's: {{value}}",
     "showStoreName": "Show the store name next to the logo",
-    "showStoreNameHint": "Turn off when the logo already contains the name.",
+    "showStoreNameHint": "Turn off when the logo already contains the name. Needs a logo: a store without one always shows its name.",
     "websiteUrl": "Store's own website",
     "websiteUrlHint": "Optional. For a shop that sits beside the store's own site (e.g. shop.flowers.am): the storefront links back to it.",
     "preview": "Preview",

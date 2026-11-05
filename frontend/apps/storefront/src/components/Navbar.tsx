@@ -5,6 +5,7 @@ import { resolveImageUrl, type StoreTheme } from '@gentlestore/shared';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useOptionalCart } from '../lib/cart';
 import { useStorePath } from '../lib/storeBase';
+import { showsLogoOnly } from '../lib/theme';
 import { websiteLabel } from '../lib/website';
 import { API_URL } from '../api';
 
@@ -33,7 +34,7 @@ export default function Navbar({ store, children }: { store?: NavbarStore; child
   const cart = useOptionalCart();
   const storePath = useStorePath();
   // A logo that already spells out the name is shown on its own, wider, without the name beside it.
-  const logoOnly = !!logo && store?.theme?.showStoreName === false;
+  const logoOnly = !!logo && showsLogoOnly(store);
   const website = store?.theme?.websiteUrl;
 
   return (

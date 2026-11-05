@@ -51,6 +51,14 @@ export function useStoreTheme(theme: StoreTheme | null | undefined, logoUrl: str
   }, [logoUrl]);
 }
 
+/**
+ * Whether the store is shown by its logo alone, with no name beside it: for a logo that already
+ * spells the name out. A store without a logo always shows its name, or it would show nothing.
+ */
+export function showsLogoOnly(store: { logoUrl: string | null; theme?: StoreTheme | null } | undefined): boolean {
+  return !!store?.logoUrl && store.theme?.showStoreName === false;
+}
+
 function setThemeColor(color: string) {
   // The head can carry two: index.html's default and the API's per-store one. Keep them in step.
   document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => (m.content = color));
