@@ -101,7 +101,7 @@ export default function StorePage() {
                 )}
                 {/* With the logo standing in for the name, the heading stays for screen readers and search engines. */}
                 <h1 className={logoOnly ? 'sr-only' : 'text-2xl font-bold text-slate-900'}>{store.name}</h1>
-                {store.description && <p className="mt-1 max-w-2xl text-slate-500">{store.description}</p>}
+                {store.description && <p className="mt-1 max-w-2xl whitespace-pre-line text-slate-500">{store.description}</p>}
               </div>
               <div className="sm:w-64">
                 <ContactButtons phone={store.phone} />

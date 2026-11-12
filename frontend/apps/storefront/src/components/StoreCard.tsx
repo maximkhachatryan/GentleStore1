@@ -24,7 +24,7 @@ export default function StoreCard({ store }: { store: PublicStoreListItem }) {
           )}
         </div>
         <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-brand-700">{store.name}</h3>
-        {store.description && <p className="mt-1 line-clamp-2 text-sm text-slate-500">{store.description}</p>}
+        {store.description && <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-slate-500">{store.description}</p>}
         <span className="mt-3 inline-block text-sm font-medium text-brand-600">{t('storeCard.browse')} →</span>
       </div>
     </Link>
