@@ -75,6 +75,7 @@
     "inStock": "В наличии",
     "unavailable": "Сейчас недоступно",
     "priceFrom": "От {{price}}",
+    "saleEnds": "Скидка действует до {{date}}",
     "priceOnRequest": "Цена по запросу",
     "ordersNote": "Заказы оформляются напрямую с магазином через WhatsApp или по телефону.",
     "orderMessage": "Здравствуйте! Хочу заказать: {{product}}.",

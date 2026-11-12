@@ -17,9 +17,10 @@ public record PlaceOrderRequest(
     string? ContactName,
     string? ContactPhone);
 
+/// <param name="RegularUnitPrice">The pre-sale price when the line was bought on sale; otherwise null.</param>
 public record PublicOrderLineDto(
     Guid? ProductId, string ProductName, string? VariantLabel,
-    int Quantity, decimal? UnitPrice, decimal? LineTotal);
+    int Quantity, decimal? UnitPrice, decimal? LineTotal, decimal? RegularUnitPrice);
 
 /// <param name="ContactPhoneMasked">Masked even for its owner — storefronts get opened on shared phones.</param>
 /// <param name="AwaitingPayment">The customer still owes for this order and can pay it now.</param>
@@ -51,7 +52,7 @@ public record OrderPaymentDto(PublicOrderDto Order, PaymentActionDto? Action);
 
 public record OrderLineDto(
     Guid Id, Guid? ProductId, Guid? ProductVariantId, string ProductName, string? VariantLabel,
-    int Quantity, decimal? UnitPrice, decimal? LineTotal);
+    int Quantity, decimal? UnitPrice, decimal? LineTotal, decimal? RegularUnitPrice);
 
 /// <param name="IdentityTier">
 /// <c>Invited</c> (phone verified by the invite the store sent), <c>Returning</c> or <c>Guest</c>

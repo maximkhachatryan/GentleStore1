@@ -20,29 +20,51 @@ public record ProductTagDto(Guid Id, string Name);
 
 public record VariantAttributeDto(Guid? DefinitionId, Guid? OptionId, string Name, string Value);
 
+/// <param name="SalePrice">Stored as set, even after the sale ends; the product's SaleEndsAt says when it stops.</param>
 public record ProductVariantDto(
     Guid Id, string? Sku, decimal Price, bool IsAvailable, int DisplayOrder,
-    IReadOnlyList<VariantAttributeDto> Attributes);
+    IReadOnlyList<VariantAttributeDto> Attributes, decimal? SalePrice);
 
 public record CreateProductVariantRequest(
-    string? Sku, decimal Price, bool IsAvailable, int DisplayOrder, List<Guid> OptionIds);
+    string? Sku, decimal Price, bool IsAvailable, int DisplayOrder, List<Guid> OptionIds,
+    decimal? SalePrice = null);
 
 public record UpdateProductVariantRequest(
-    string? Sku, decimal Price, bool IsAvailable, int DisplayOrder, List<Guid> OptionIds);
+    string? Sku, decimal Price, bool IsAvailable, int DisplayOrder, List<Guid> OptionIds,
+    decimal? SalePrice = null);
 
+/// <param name="SalePrice">Stored as set; whether it currently applies also depends on <paramref name="SaleEndsAt"/>.</param>
+/// <param name="SaleEndsAt">When the sale stops for the product and its variants; null runs until ended.</param>
 public record ProductDto(
     Guid Id, Guid CategoryId, string CategoryName, string Name, string? Description,
     decimal? Price, bool IsAvailable, int DisplayOrder,
     IReadOnlyList<ProductImageDto> Images, IReadOnlyList<ProductTagDto> Tags,
-    IReadOnlyList<ProductVariantDto> Variants, DateTime CreatedAt);
+    IReadOnlyList<ProductVariantDto> Variants, DateTime CreatedAt,
+    decimal? SalePrice, DateTime? SaleEndsAt);
 
 public record CreateProductRequest(
     Guid CategoryId, string Name, string? Description, decimal? Price,
-    bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
+    bool IsAvailable, int DisplayOrder, List<Guid>? TagIds,
+    decimal? SalePrice = null, DateTime? SaleEndsAt = null);
 
 public record UpdateProductRequest(
     Guid CategoryId, string Name, string? Description, decimal? Price,
-    bool IsAvailable, int DisplayOrder, List<Guid>? TagIds);
+    bool IsAvailable, int DisplayOrder, List<Guid>? TagIds,
+    decimal? SalePrice = null, DateTime? SaleEndsAt = null);
+
+/// <summary>
+/// Puts every product in scope on sale at <paramref name="Percent"/> off its regular price,
+/// replacing any sale already set on them. With neither filter it covers the whole store; with both,
+/// products that match both.
+/// </summary>
+/// <param name="EndsAt">When the sale stops; null runs until it is ended.</param>
+public record ApplySaleRequest(Guid? CategoryId, Guid? TagId, int Percent, DateTime? EndsAt);
+
+/// <summary>Takes every product in scope off sale. Scope works as in <see cref="ApplySaleRequest"/>.</summary>
+public record EndSaleRequest(Guid? CategoryId, Guid? TagId);
+
+/// <param name="ProductCount">How many products changed.</param>
+public record SaleResultDto(int ProductCount);
 
 public record AddProductImageRequest(string ImageUrl, int? DisplayOrder);
 

@@ -395,6 +395,13 @@ export default function OrdersPage() {
                           placeholder={t('orders.setPrice')}
                           style={{ width: '100%' }}
                         />
+                      ) : l.regularUnitPrice !== null && l.unitPrice !== null ? (
+                        <span>
+                          {money(l.unitPrice, order.currency, '—')}{' '}
+                          <Typography.Text delete type="secondary" style={{ fontSize: 12 }}>
+                            {money(l.regularUnitPrice, order.currency, '—')}
+                          </Typography.Text>
+                        </span>
                       ) : (
                         money(l.unitPrice, order.currency, '—')
                       ),

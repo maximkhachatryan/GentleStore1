@@ -85,7 +85,8 @@ public class PublicOrdersController : PublicStoreControllerBase
         order.Lines
             .OrderBy(l => l.DisplayOrder)
             .Select(l => new PublicOrderLineDto(
-                l.ProductId, l.ProductName, l.VariantLabel, l.Quantity, l.UnitPrice, l.LineTotal))
+                l.ProductId, l.ProductName, l.VariantLabel, l.Quantity, l.UnitPrice, l.LineTotal,
+                l.RegularUnitPrice))
             .ToList());
 
     /// <summary>Stable codes the storefront maps to its own copy, rather than English prose.</summary>

@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar';
 import ProductGallery from '../components/ProductGallery';
 import ContactButtons from '../components/ContactButtons';
 import StoreGate from '../components/StoreGate';
-import { formatPrice } from '../lib/format';
+import { discountPercent, formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
 import { useCart } from '../lib/cart';
 import { usePageTitle } from '../lib/pageTitle';
@@ -14,7 +14,7 @@ import { useStoreDomainRedirect, useStorePath, useStoreSlug } from '../lib/store
 import { api } from '../api';
 
 export default function ProductPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id = '' } = useParams();
   const slug = useStoreSlug();
   const storePath = useStorePath();
@@ -58,8 +58,21 @@ export default function ProductPage() {
   }, [product, attributeGroups, selected]);
 
   const hasVariants = (product?.variants.length ?? 0) > 0;
-  const minVariantPrice = hasVariants ? Math.min(...product!.variants.map((v) => v.price)) : null;
-  const displayPrice = matchedVariant ? matchedVariant.price : hasVariants ? minVariantPrice : product?.price ?? null;
+  // The cheapest variant is the one behind "From …", so its sale is the one worth showing.
+  const cheapestVariant = hasVariants
+    ? product!.variants.reduce((min, v) => (v.price < min.price ? v : min))
+    : null;
+  const displayPrice = matchedVariant ? matchedVariant.price : cheapestVariant ? cheapestVariant.price : product?.price ?? null;
+  const displayRegularPrice = matchedVariant
+    ? matchedVariant.regularPrice
+    : cheapestVariant
+      ? cheapestVariant.regularPrice
+      : product?.regularPrice ?? null;
+  const percentOff = discountPercent(displayPrice, displayRegularPrice);
+  const saleEndsText =
+    percentOff !== null && product?.saleEndsAt
+      ? new Date(product.saleEndsAt).toLocaleDateString(i18n.language, { dateStyle: 'medium' })
+      : null;
   const displayInStock = matchedVariant ? matchedVariant.inStock : hasVariants ? product!.variants.some((v) => v.inStock) : product?.inStock ?? false;
 
   const orderProductLabel = useMemo(() => {
@@ -84,6 +97,7 @@ export default function ProductPage() {
         ? attributeGroups.map((g) => `${g.name}: ${selected[g.name]}`).join(', ')
         : null,
       unitPrice: displayPrice,
+      regularPrice: percentOff !== null ? displayRegularPrice : null,
       imageUrl: product.images[0]?.imageUrl ?? null,
     });
 
@@ -161,13 +175,28 @@ export default function ProductPage() {
                 </div>
               )}
               <h1 className="mt-2 text-3xl font-bold text-slate-900">{product.name}</h1>
-              <div className="mt-2 text-2xl font-semibold text-brand-700">
-                {displayPrice === null
-                  ? t('product.priceOnRequest')
-                  : hasVariants && !matchedVariant
-                    ? t('product.priceFrom', { price: formatPrice(displayPrice, product.currency) })
-                    : formatPrice(displayPrice, product.currency)}
+              <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-2xl font-semibold text-brand-700">
+                  {displayPrice === null
+                    ? t('product.priceOnRequest')
+                    : hasVariants && !matchedVariant
+                      ? t('product.priceFrom', { price: formatPrice(displayPrice, product.currency) })
+                      : formatPrice(displayPrice, product.currency)}
+                </span>
+                {percentOff !== null && (
+                  <>
+                    <span className="text-lg text-slate-400 line-through">
+                      {formatPrice(displayRegularPrice!, product.currency)}
+                    </span>
+                    <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-sm font-semibold text-white">
+                      −{percentOff}%
+                    </span>
+                  </>
+                )}
               </div>
+              {saleEndsText && (
+                <div className="mt-1 text-sm font-medium text-rose-700">{t('product.saleEnds', { date: saleEndsText })}</div>
+              )}
               <div className="mt-1">
                 {displayInStock ? (
                   <span className="text-sm font-medium text-brand-600">{t('product.inStock')}</span>

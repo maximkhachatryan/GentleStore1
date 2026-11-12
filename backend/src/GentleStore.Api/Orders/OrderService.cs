@@ -4,6 +4,7 @@ using GentleStore.Api.Notifications;
 using GentleStore.Api.Storefront;
 using GentleStore.Domain.Entities;
 using GentleStore.Domain.Enums;
+using GentleStore.Domain.Pricing;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -208,6 +209,8 @@ public class OrderService : IOrderService
 
         var lines = new List<OrderLine>();
         var order = 0;
+        // One instant for the whole cart, so a sale ending mid-checkout cannot split it.
+        var now = DateTime.UtcNow;
 
         foreach (var item in items)
         {
@@ -216,7 +219,7 @@ public class OrderService : IOrderService
             if (!product.IsAvailable)
                 return (null, PlaceOrderProblem.ProductUnavailable);
 
-            decimal? unitPrice;
+            EffectivePrice price;
             string? variantLabel = null;
             Guid? variantId = null;
 
@@ -231,7 +234,7 @@ public class OrderService : IOrderService
                 if (!variant.IsAvailable) return (null, PlaceOrderProblem.VariantUnavailable);
 
                 variantId = variant.Id;
-                unitPrice = variant.Price;
+                price = SalePricing.Resolve(variant.Price, variant.SalePrice, product.SaleEndsAt, now);
                 variantLabel = string.Join(", ", variant.Attributes
                     .OrderBy(a => a.Name)
                     .Select(a => $"{a.Name}: {a.Value}"));
@@ -240,7 +243,7 @@ public class OrderService : IOrderService
             else
             {
                 if (item.VariantId is not null) return (null, PlaceOrderProblem.UnknownVariant);
-                unitPrice = product.Price;
+                price = SalePricing.Resolve(product.Price, product.SalePrice, product.SaleEndsAt, now);
             }
 
             lines.Add(new OrderLine
@@ -251,7 +254,8 @@ public class OrderService : IOrderService
                 ProductName = product.Name,
                 VariantLabel = variantLabel,
                 Quantity = item.Quantity,
-                UnitPrice = unitPrice,
+                UnitPrice = price.Price,
+                RegularUnitPrice = price.RegularPrice,
                 DisplayOrder = order++
             });
         }

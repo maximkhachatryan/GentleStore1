@@ -155,6 +155,8 @@ public class BackofficeOrdersController : BackofficeControllerBase
 
             var line = order.Lines.FirstOrDefault(l => l.Id == update.LineId);
             if (line is null) return BadRequest(new { error = "Unknown order line.", code = "line_unknown" });
+            // A re-priced line is the store's own quote now, no longer the sale it was bought at.
+            if (line.UnitPrice != update.UnitPrice) line.RegularUnitPrice = null;
             line.UnitPrice = update.UnitPrice;
         }
 
@@ -195,7 +197,7 @@ public class BackofficeOrdersController : BackofficeControllerBase
                 .OrderBy(l => l.DisplayOrder)
                 .Select(l => new OrderLineDto(
                     l.Id, l.ProductId, l.ProductVariantId, l.ProductName, l.VariantLabel,
-                    l.Quantity, l.UnitPrice, l.LineTotal))
+                    l.Quantity, l.UnitPrice, l.LineTotal, l.RegularUnitPrice))
                 .ToList());
     }
 }

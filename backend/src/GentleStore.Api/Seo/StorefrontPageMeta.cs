@@ -5,6 +5,7 @@ using GentleStore.Api.Storefront;
 using GentleStore.Api.Theming;
 using GentleStore.Api.Uploads;
 using GentleStore.Domain.Enums;
+using GentleStore.Domain.Pricing;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -27,8 +28,9 @@ public sealed record PageStore(
 
 public sealed record PageImage(string Url, int? Width, int? Height);
 
-/// <summary>What a product costs: one price, or the spread across its variants.</summary>
-public sealed record PageOffer(decimal LowPrice, decimal HighPrice, bool InStock);
+/// <summary>What a product costs now: one price, or the spread across its variants.</summary>
+/// <param name="ValidUntil">When a running sale ends and these prices with it; null when nothing is on sale or the sale has no end date.</param>
+public sealed record PageOffer(decimal LowPrice, decimal HighPrice, bool InStock, DateTime? ValidUntil = null);
 
 /// <summary>A storefront page as search engines and chat apps should see it.</summary>
 /// <param name="Title">The page's own name: the store's, the category's or the product's.</param>
@@ -101,20 +103,32 @@ public class StorefrontPageMeta
                         p.Name,
                         p.Description,
                         p.Price,
-                        Variants = p.Variants.Select(v => new { v.Price, v.IsAvailable }).ToList(),
+                        p.SalePrice,
+                        p.SaleEndsAt,
+                        Variants = p.Variants.Select(v => new { v.Price, v.SalePrice, v.IsAvailable }).ToList(),
                         Image = p.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).FirstOrDefault()
                     })
                     .FirstOrDefaultAsync(ct);
 
                 if (product is not null)
                 {
+                    // What a customer would pay right now, sale included — the same rule checkout uses.
+                    var now = DateTime.UtcNow;
+                    var variantPrices = product.Variants
+                        .Select(v => SalePricing.Resolve(v.Price, v.SalePrice, product.SaleEndsAt, now))
+                        .ToList();
+                    var productPrice = SalePricing.Resolve(product.Price, product.SalePrice, product.SaleEndsAt, now);
+
                     // Once a product has variants they carry the price and the stock, as on the product page.
+                    var onSale = product.Variants.Count > 0 ? variantPrices.Any(p => p.OnSale) : productPrice.OnSale;
+                    var validUntil = onSale ? product.SaleEndsAt : null;
                     offer = product.Variants.Count > 0
                         ? new PageOffer(
-                            product.Variants.Min(v => v.Price),
-                            product.Variants.Max(v => v.Price),
-                            product.Variants.Any(v => v.IsAvailable))
-                        : product.Price is { } price ? new PageOffer(price, price, InStock: true) : null;
+                            variantPrices.Min(v => v.Price!.Value),
+                            variantPrices.Max(v => v.Price!.Value),
+                            product.Variants.Any(v => v.IsAvailable),
+                            validUntil)
+                        : productPrice.Price is { } price ? new PageOffer(price, price, InStock: true, validUntil) : null;
 
                     var priceText = offer is null ? null : FormatPrice(offer, store.Currency);
 

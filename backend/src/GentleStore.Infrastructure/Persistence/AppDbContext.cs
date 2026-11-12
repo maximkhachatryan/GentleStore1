@@ -60,6 +60,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.Name).IsRequired().HasMaxLength(200);
             e.Property(x => x.Description).HasMaxLength(4000);
             e.Property(x => x.Price).HasPrecision(18, 2);
+            e.Property(x => x.SalePrice).HasPrecision(18, 2);
             e.HasOne(x => x.Store).WithMany(x => x.Products)
                 .HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Category).WithMany(x => x.Products)
@@ -111,6 +112,7 @@ public class AppDbContext : DbContext
         {
             e.Property(x => x.Sku).HasMaxLength(80);
             e.Property(x => x.Price).HasPrecision(18, 2);
+            e.Property(x => x.SalePrice).HasPrecision(18, 2);
             e.HasOne(x => x.Product).WithMany(x => x.Variants)
                 .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(x => new { x.ProductId, x.DisplayOrder });
@@ -214,6 +216,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.ProductName).IsRequired().HasMaxLength(200);
             e.Property(x => x.VariantLabel).HasMaxLength(400);
             e.Property(x => x.UnitPrice).HasPrecision(18, 2);
+            e.Property(x => x.RegularUnitPrice).HasPrecision(18, 2);
             e.Ignore(x => x.LineTotal);
 
             e.HasOne(x => x.Order).WithMany(x => x.Lines)

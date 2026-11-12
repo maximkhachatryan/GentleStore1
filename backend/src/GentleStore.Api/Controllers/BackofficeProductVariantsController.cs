@@ -38,7 +38,7 @@ public class BackofficeProductVariantsController : BackofficeControllerBase
     {
         if (_current.StoreId is not Guid storeId) return Forbidden();
         if (!await ProductExists(storeId, productId)) return NotFound();
-        if (req.Price < 0) return BadRequest(new { error = "Price cannot be negative." });
+        if (ValidatePrices(req.Price, req.SalePrice) is { } invalid) return invalid;
 
         var variant = new ProductVariant
         {
@@ -46,6 +46,7 @@ public class BackofficeProductVariantsController : BackofficeControllerBase
             ProductId = productId,
             Sku = string.IsNullOrWhiteSpace(req.Sku) ? null : req.Sku!.Trim(),
             Price = req.Price,
+            SalePrice = req.SalePrice,
             IsAvailable = req.IsAvailable,
             DisplayOrder = req.DisplayOrder
         };
@@ -60,7 +61,7 @@ public class BackofficeProductVariantsController : BackofficeControllerBase
     public async Task<IActionResult> Update(Guid productId, Guid variantId, UpdateProductVariantRequest req)
     {
         if (_current.StoreId is not Guid storeId) return Forbidden();
-        if (req.Price < 0) return BadRequest(new { error = "Price cannot be negative." });
+        if (ValidatePrices(req.Price, req.SalePrice) is { } invalid) return invalid;
 
         var variant = await _db.ProductVariants
             .Include(v => v.Attributes)
@@ -69,6 +70,7 @@ public class BackofficeProductVariantsController : BackofficeControllerBase
 
         variant.Sku = string.IsNullOrWhiteSpace(req.Sku) ? null : req.Sku!.Trim();
         variant.Price = req.Price;
+        variant.SalePrice = req.SalePrice;
         variant.IsAvailable = req.IsAvailable;
         variant.DisplayOrder = req.DisplayOrder;
 
@@ -90,6 +92,14 @@ public class BackofficeProductVariantsController : BackofficeControllerBase
         _db.ProductVariants.Remove(variant);
         await _db.SaveChangesAsync();
         return NoContent();
+    }
+
+    private IActionResult? ValidatePrices(decimal price, decimal? salePrice)
+    {
+        if (price < 0) return BadRequest(new { error = "Price cannot be negative." });
+        if (salePrice is not null && (salePrice < 0 || salePrice >= price))
+            return BadRequest(new { error = "Sale price must be below the regular price.", code = "sale_price_invalid" });
+        return null;
     }
 
     private Task<bool> ProductExists(Guid storeId, Guid productId) =>
@@ -127,5 +137,6 @@ public class BackofficeProductVariantsController : BackofficeControllerBase
     private static ProductVariantDto ToDto(ProductVariant v) => new(
         v.Id, v.Sku, v.Price, v.IsAvailable, v.DisplayOrder,
         v.Attributes.Select(a => new VariantAttributeDto(
-            a.VariantAttributeDefinitionId, a.VariantAttributeOptionId, a.Name, a.Value)).ToList());
+            a.VariantAttributeDefinitionId, a.VariantAttributeOptionId, a.Name, a.Value)).ToList(),
+        v.SalePrice);
 }

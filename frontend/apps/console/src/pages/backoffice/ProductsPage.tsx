@@ -19,7 +19,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PercentageOutlined, PlusOutlined } from '@ant-design/icons';
 import type { Product, ProductVariant } from '@gentlestore/shared';
 import { resolveImageUrl } from '@gentlestore/shared';
 import { api, API_URL } from '../../api';
@@ -30,15 +30,28 @@ import PageHeader from '../../components/PageHeader';
 import ResponsiveTable from '../../components/ResponsiveTable';
 import ShareButtons from '../../components/ShareButtons';
 import { useStorefrontBase } from '../../hooks/useStorefrontBase';
+import { formatDate } from '../../lib/format';
+import { endOfDayIso, isSaleRunning, toDateInput } from '../../lib/sale';
+import SaleDialog from './SaleDialog';
 
 interface ProductValues {
   name: string;
   categoryId: string;
   price?: number | null;
+  salePrice?: number | null;
+  /** "YYYY-MM-DD" from the date input; empty for no end date. */
+  saleEndsDate?: string;
   isAvailable: boolean;
   displayOrder: number;
   description?: string;
   tagIds?: string[];
+}
+
+/** Null when nothing on the product carries a sale price. */
+function saleState(p: Product): 'running' | 'ended' | null {
+  const hasSalePrices = p.salePrice !== null || p.variants.some((v) => v.salePrice !== null);
+  if (!hasSalePrices) return null;
+  return isSaleRunning(p.saleEndsAt) ? 'running' : 'ended';
 }
 
 function Thumb({ url, size }: { url?: string; size: number }) {
@@ -54,7 +67,7 @@ function Thumb({ url, size }: { url?: string; size: number }) {
 }
 
 export default function ProductsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const { message } = AntApp.useApp();
   const storefront = useStorefrontBase();
@@ -66,7 +79,9 @@ export default function ProductsPage() {
   const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
   const [vSku, setVSku] = useState('');
   const [vPrice, setVPrice] = useState(0);
+  const [vSalePrice, setVSalePrice] = useState<number | null>(null);
   const [vAvailable, setVAvailable] = useState(true);
+  const [saleOpen, setSaleOpen] = useState(false);
   const [vOrder, setVOrder] = useState(1);
   const [vSelections, setVSelections] = useState<Record<string, string | undefined>>({});
 
@@ -98,6 +113,8 @@ export default function ProductsPage() {
         categoryId: v.categoryId,
         description: v.description,
         price: v.price ?? null,
+        salePrice: v.salePrice ?? null,
+        saleEndsAt: v.saleEndsDate ? endOfDayIso(v.saleEndsDate) : null,
         isAvailable: v.isAvailable,
         displayOrder: v.displayOrder,
         tagIds: v.tagIds ?? [],
@@ -147,6 +164,8 @@ export default function ProductsPage() {
     form.setFieldsValue({
       isAvailable: true,
       price: null,
+      salePrice: null,
+      saleEndsDate: '',
       displayOrder: (products?.length ?? 0) + 1,
       tagIds: [],
     });
@@ -160,6 +179,8 @@ export default function ProductsPage() {
       categoryId: p.categoryId,
       description: p.description ?? '',
       price: p.price,
+      salePrice: p.salePrice,
+      saleEndsDate: toDateInput(p.saleEndsAt),
       isAvailable: p.isAvailable,
       displayOrder: p.displayOrder,
       tagIds: p.tags.map((tag) => tag.id),
@@ -172,6 +193,7 @@ export default function ProductsPage() {
       const payload = {
         sku: vSku.trim() ? vSku.trim() : null,
         price: vPrice,
+        salePrice: vSalePrice,
         isAvailable: vAvailable,
         displayOrder: vOrder,
         optionIds: Object.values(vSelections).filter((id): id is string => !!id),
@@ -203,6 +225,7 @@ export default function ProductsPage() {
     setEditingVariant(variant ?? null);
     setVSku(variant?.sku ?? '');
     setVPrice(variant?.price ?? (form.getFieldValue('price') ?? 0));
+    setVSalePrice(variant?.salePrice ?? null);
     setVAvailable(variant?.isAvailable ?? true);
     setVOrder(variant?.displayOrder ?? (editingDetail?.variants.length ?? 0) + 1);
     setVSelections(
@@ -219,8 +242,43 @@ export default function ProductsPage() {
     setEditing(null);
   };
 
-  const priceLabel = (p: Product) =>
-    p.price === null ? <Typography.Text type="secondary">{t('products.noPrice')}</Typography.Text> : p.price.toFixed(2);
+  const priceLabel = (p: Product) => {
+    if (p.price === null) return <Typography.Text type="secondary">{t('products.noPrice')}</Typography.Text>;
+    const onSale = p.salePrice !== null && p.salePrice < p.price && isSaleRunning(p.saleEndsAt);
+    return onSale ? (
+      <span>
+        <Typography.Text delete type="secondary">
+          {p.price.toFixed(2)}
+        </Typography.Text>{' '}
+        <Typography.Text strong>{p.salePrice!.toFixed(2)}</Typography.Text>
+      </span>
+    ) : (
+      p.price.toFixed(2)
+    );
+  };
+
+  const saleTag = (p: Product) => {
+    const state = saleState(p);
+    if (state === 'running')
+      return (
+        <Tag color="red" style={{ marginInlineEnd: 0 }}>
+          {p.saleEndsAt
+            ? t('products.onSaleUntil', { date: formatDate(p.saleEndsAt, i18n.language) })
+            : t('products.onSale')}
+        </Tag>
+      );
+    if (state === 'ended') return <Tag style={{ marginInlineEnd: 0 }}>{t('products.saleEnded')}</Tag>;
+    return null;
+  };
+
+  const priceCell = (p: Product) => (
+    <Space size={6} wrap>
+      {priceLabel(p)}
+      {saleTag(p)}
+    </Space>
+  );
+
+  const variantSaleInvalid = vSalePrice !== null && vSalePrice >= vPrice;
 
   const availabilityTag = (p: Product) =>
     p.isAvailable ? <Tag color="green">{t('common.yes')}</Tag> : <Tag>{t('common.no')}</Tag>;
@@ -248,7 +306,7 @@ export default function ProductsPage() {
     },
     { title: t('common.name'), dataIndex: 'name', key: 'name' },
     { title: t('products.category'), dataIndex: 'categoryName', key: 'categoryName' },
-    { title: t('products.price'), key: 'price', render: (_, r) => priceLabel(r) },
+    { title: t('products.price'), key: 'price', render: (_, r) => priceCell(r) },
     { title: t('products.available'), key: 'available', render: (_, r) => availabilityTag(r) },
     { title: t('products.tags'), key: 'tags', render: (_, r) => r.tags.map((tag) => <Tag key={tag.id}>{tag.name}</Tag>) },
     {
@@ -276,6 +334,9 @@ export default function ProductsPage() {
               value={categoryFilter}
               onChange={setCategoryFilter}
             />
+            <Button icon={<PercentageOutlined />} onClick={() => setSaleOpen(true)} disabled={!products?.length}>
+              {t('products.sale.button')}
+            </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} disabled={!categories?.length}>
               {t('products.new')}
             </Button>
@@ -299,7 +360,7 @@ export default function ProductsPage() {
             title={r.name}
             subtitle={r.categoryName}
             extra={availabilityTag(r)}
-            fields={[{ label: t('products.price'), value: priceLabel(r) }]}
+            fields={[{ label: t('products.price'), value: priceCell(r) }]}
             actions={rowActions(r)}
           >
             {r.tags.length > 0 && (
@@ -339,6 +400,32 @@ export default function ProductsPage() {
             <Col xs={10} sm={12}>
               <Form.Item name="displayOrder" label={t('products.order')} rules={[{ required: true }]}>
                 <InputNumber min={0} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={12}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="salePrice"
+                label={t('products.salePrice')}
+                extra={t('products.salePriceHint')}
+                dependencies={['price']}
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator(_, value: number | null | undefined) {
+                      const price = getFieldValue('price') as number | null | undefined;
+                      if (value == null || (price != null && value < price)) return Promise.resolve();
+                      return Promise.reject(new Error(t('products.salePriceTooHigh')));
+                    },
+                  }),
+                ]}
+              >
+                <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="saleEndsDate" label={t('products.saleEnds')} extra={t('products.saleEndsHint')}>
+                <Input type="date" />
               </Form.Item>
             </Col>
           </Row>
@@ -418,7 +505,16 @@ export default function ProductsPage() {
                           {a.name}: {a.value}
                         </Tag>
                       ))}
-                      <Typography.Text strong>{v.price.toFixed(2)}</Typography.Text>
+                      {v.salePrice !== null && v.salePrice < v.price ? (
+                        <span>
+                          <Typography.Text delete type="secondary">
+                            {v.price.toFixed(2)}
+                          </Typography.Text>{' '}
+                          <Typography.Text strong>{v.salePrice.toFixed(2)}</Typography.Text>
+                        </span>
+                      ) : (
+                        <Typography.Text strong>{v.price.toFixed(2)}</Typography.Text>
+                      )}
                       {v.sku && <Typography.Text type="secondary">{v.sku}</Typography.Text>}
                       {!v.isAvailable && <Tag style={{ marginInlineEnd: 0 }}>{t('common.no')}</Tag>}
                     </Space>
@@ -441,6 +537,7 @@ export default function ProductsPage() {
         open={variantEditorOpen}
         onCancel={() => setVariantEditorOpen(false)}
         onOk={() => saveVariant.mutate()}
+        okDisabled={variantSaleInvalid}
         confirmLoading={saveVariant.isPending}
       >
         <Space direction="vertical" style={{ display: 'flex' }} size={14}>
@@ -469,6 +566,22 @@ export default function ProductsPage() {
               />
             </Col>
             <Col xs={12}>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{t('products.salePrice')}</div>
+              <InputNumber
+                min={0}
+                step={0.01}
+                value={vSalePrice}
+                onChange={(val) => setVSalePrice(val ?? null)}
+                status={variantSaleInvalid ? 'error' : undefined}
+                style={{ width: '100%' }}
+              />
+              {variantSaleInvalid && (
+                <Typography.Text type="danger" style={{ fontSize: 12 }}>
+                  {t('products.salePriceTooHigh')}
+                </Typography.Text>
+              )}
+            </Col>
+            <Col xs={12}>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>{t('products.order')}</div>
               <InputNumber min={0} value={vOrder} onChange={(val) => setVOrder(val ?? 0)} style={{ width: '100%' }} />
             </Col>
@@ -483,6 +596,14 @@ export default function ProductsPage() {
           </Row>
         </Space>
       </FormDialog>
+
+      <SaleDialog
+        open={saleOpen}
+        onClose={() => setSaleOpen(false)}
+        categoryOptions={categoryOptions}
+        tagOptions={tagOptions}
+        onChanged={invalidateList}
+      />
     </div>
   );
 }

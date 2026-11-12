@@ -23,6 +23,12 @@ public class OrderLine
     /// <summary>Null for a "price on request" item until the store quotes it.</summary>
     public decimal? UnitPrice { get; set; }
 
+    /// <summary>
+    /// The regular price when <see cref="UnitPrice"/> was a sale price at the time of ordering;
+    /// null otherwise. Kept so the order can show what the customer saved after the sale ends.
+    /// </summary>
+    public decimal? RegularUnitPrice { get; set; }
+
     public int DisplayOrder { get; set; }
 
     public Order? Order { get; set; }

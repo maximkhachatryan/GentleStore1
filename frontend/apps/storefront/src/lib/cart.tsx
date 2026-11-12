@@ -8,6 +8,8 @@ export interface CartLine {
   name: string;
   variantLabel: string | null;
   unitPrice: number | null;
+  /** The crossed-out price when added on sale. Absent from carts saved before sales existed. */
+  regularPrice?: number | null;
   imageUrl: string | null;
   quantity: number;
 }
@@ -65,8 +67,10 @@ export function CartProvider({ slug, children }: { slug: string; children: React
       if (index === -1) return [...current, { ...line, quantity: Math.min(quantity, MAX_QUANTITY) }];
 
       const next = [...current];
+      // Adding again refreshes the snapshot too, so a sale that started or ended since shows up.
       next[index] = {
         ...next[index],
+        ...line,
         quantity: Math.min(next[index].quantity + quantity, MAX_QUANTITY),
       };
       return next;

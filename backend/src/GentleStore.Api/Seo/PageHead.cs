@@ -125,6 +125,9 @@ public static class PageHead
                             ["priceCurrency"] = page.Store.Currency,
                             ["availability"] = availability
                         };
+                    // Tells search engines the sale price is temporary, so they stop showing it on time.
+                    if (offer.ValidUntil is { } until)
+                        product["offers"]!["priceValidUntil"] = until.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 }
 
                 return product;

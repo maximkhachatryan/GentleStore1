@@ -2,6 +2,9 @@ import type { AxiosInstance } from 'axios';
 import type {
   AddProductImageRequest,
   AdminStats,
+  ApplySaleRequest,
+  SaleResult,
+  SaleScope,
   AdminUser,
   Category,
   CreateCategoryRequest,
@@ -125,6 +128,11 @@ export function createApi(http: AxiosInstance) {
       updateProduct: (id: string, body: UpdateProductRequest) =>
         http.put<Product>(`/api/backoffice/products/${id}`, body).then((r) => r.data),
       deleteProduct: (id: string) => http.delete(`/api/backoffice/products/${id}`).then((r) => r.data),
+      /** Puts every product in scope on sale at a percentage off, replacing sales already set on them. */
+      applySale: (body: ApplySaleRequest) =>
+        http.post<SaleResult>('/api/backoffice/products/sale', body).then((r) => r.data),
+      endSale: (body: SaleScope) =>
+        http.post<SaleResult>('/api/backoffice/products/sale/end', body).then((r) => r.data),
       addProductImage: (id: string, body: AddProductImageRequest) =>
         http.post<ProductImage>(`/api/backoffice/products/${id}/images`, body).then((r) => r.data),
       deleteProductImage: (id: string, imageId: string) =>

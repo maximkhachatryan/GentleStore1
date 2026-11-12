@@ -25,17 +25,22 @@ public record PublicVariantAttributeDto(string Name, string Value);
 
 public record PublicVariantDto(
     Guid Id, string? Sku, decimal Price, bool InStock,
-    IReadOnlyList<PublicVariantAttributeDto> Attributes);
+    IReadOnlyList<PublicVariantAttributeDto> Attributes, decimal? RegularPrice);
+
+// Price is always what the customer pays now. RegularPrice is set only while a sale is running,
+// for the crossed-out "was" price, and SaleEndsAt only when that sale has an end date.
 
 public record PublicProductListItemDto(
     Guid Id, string Name, decimal? Price, string Currency, bool InStock,
-    string? PrimaryImageUrl, Guid CategoryId, IReadOnlyList<string> Tags);
+    string? PrimaryImageUrl, Guid CategoryId, IReadOnlyList<string> Tags,
+    decimal? RegularPrice, DateTime? SaleEndsAt);
 
 public record PublicProductDto(
     Guid Id, string Name, string? Description, decimal? Price, string Currency,
     bool InStock, Guid CategoryId, string CategoryName,
     IReadOnlyList<PublicImageDto> Images, IReadOnlyList<PublicTagDto> Tags,
-    IReadOnlyList<PublicVariantDto> Variants);
+    IReadOnlyList<PublicVariantDto> Variants,
+    decimal? RegularPrice, DateTime? SaleEndsAt);
 
 /// <summary>The signed-in customer, trimmed to what is safe to show on a possibly shared device.</summary>
 public record StorefrontVisitorDto(string? DisplayName, string PhoneMasked);

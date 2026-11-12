@@ -1,6 +1,7 @@
 using GentleStore.Api.Auth;
 using GentleStore.Api.Contracts;
 using GentleStore.Domain.Entities;
+using GentleStore.Domain.Pricing;
 using GentleStore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +51,7 @@ public class BackofficeProductsController : BackofficeControllerBase
     public async Task<IActionResult> Create(CreateProductRequest req)
     {
         if (_current.StoreId is not Guid storeId) return Forbidden();
-        var validation = await ValidateProduct(storeId, req.CategoryId, req.Name, req.Price);
+        var validation = await ValidateProduct(storeId, req.CategoryId, req.Name, req.Price, req.SalePrice);
         if (validation is not null) return validation;
 
         var product = new Product
@@ -61,6 +62,8 @@ public class BackofficeProductsController : BackofficeControllerBase
             Name = req.Name.Trim(),
             Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description!.Trim(),
             Price = req.Price,
+            SalePrice = req.SalePrice,
+            SaleEndsAt = req.SalePrice is null ? null : ToUtc(req.SaleEndsAt),
             IsAvailable = req.IsAvailable,
             DisplayOrder = req.DisplayOrder,
             CreatedAt = DateTime.UtcNow
@@ -82,13 +85,16 @@ public class BackofficeProductsController : BackofficeControllerBase
             .Include(p => p.ProductTags)
             .FirstOrDefaultAsync(p => p.Id == id && p.StoreId == storeId);
         if (product is null) return NotFound();
-        var validation = await ValidateProduct(storeId, req.CategoryId, req.Name, req.Price);
+        var validation = await ValidateProduct(storeId, req.CategoryId, req.Name, req.Price, req.SalePrice);
         if (validation is not null) return validation;
 
         product.CategoryId = req.CategoryId;
         product.Name = req.Name.Trim();
         product.Description = string.IsNullOrWhiteSpace(req.Description) ? null : req.Description!.Trim();
         product.Price = req.Price;
+        product.SalePrice = req.SalePrice;
+        // The end date is shared with the variants' sale prices, so it stays when only they are on sale.
+        product.SaleEndsAt = ToUtc(req.SaleEndsAt);
         product.IsAvailable = req.IsAvailable;
         product.DisplayOrder = req.DisplayOrder;
 
@@ -137,6 +143,76 @@ public class BackofficeProductsController : BackofficeControllerBase
         return NoContent();
     }
 
+    [HttpPost("sale")]
+    public async Task<IActionResult> ApplySale(ApplySaleRequest req)
+    {
+        if (_current.StoreId is not Guid storeId) return Forbidden();
+        if (req.Percent is < SalePricing.MinPercent or > SalePricing.MaxPercent)
+            return BadRequest(new
+            {
+                error = $"Discount must be between {SalePricing.MinPercent}% and {SalePricing.MaxPercent}%.",
+                code = "percent_invalid"
+            });
+
+        var endsAt = ToUtc(req.EndsAt);
+        if (endsAt <= DateTime.UtcNow)
+            return BadRequest(new { error = "The sale must end in the future.", code = "ends_in_past" });
+
+        var products = await SaleScope(storeId, req.CategoryId, req.TagId);
+        var changed = 0;
+        foreach (var product in products)
+        {
+            product.SalePrice = product.Price is { } price ? SalePricing.Discount(price, req.Percent) : null;
+            foreach (var variant in product.Variants)
+                variant.SalePrice = SalePricing.Discount(variant.Price, req.Percent);
+
+            var onSale = product.SalePrice is not null || product.Variants.Any(v => v.SalePrice is not null);
+            product.SaleEndsAt = onSale ? endsAt : null;
+            if (onSale) changed++;
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(new SaleResultDto(changed));
+    }
+
+    [HttpPost("sale/end")]
+    public async Task<IActionResult> EndSale(EndSaleRequest req)
+    {
+        if (_current.StoreId is not Guid storeId) return Forbidden();
+
+        var products = await SaleScope(storeId, req.CategoryId, req.TagId);
+        var changed = 0;
+        foreach (var product in products)
+        {
+            if (product.SalePrice is null && product.SaleEndsAt is null && product.Variants.All(v => v.SalePrice is null))
+                continue;
+            product.SalePrice = null;
+            product.SaleEndsAt = null;
+            foreach (var variant in product.Variants) variant.SalePrice = null;
+            changed++;
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(new SaleResultDto(changed));
+    }
+
+    private Task<List<Product>> SaleScope(Guid storeId, Guid? categoryId, Guid? tagId)
+    {
+        var query = _db.Products.Where(p => p.StoreId == storeId);
+        if (categoryId is not null) query = query.Where(p => p.CategoryId == categoryId);
+        if (tagId is not null) query = query.Where(p => p.ProductTags.Any(pt => pt.TagId == tagId));
+        return query.Include(p => p.Variants).ToListAsync();
+    }
+
+    /// <summary>A date without a zone is taken as UTC; Npgsql refuses to store any other kind.</summary>
+    private static DateTime? ToUtc(DateTime? value) => value switch
+    {
+        null => null,
+        { Kind: DateTimeKind.Utc } v => v,
+        { Kind: DateTimeKind.Local } v => v.ToUniversalTime(),
+        var v => DateTime.SpecifyKind(v.Value, DateTimeKind.Utc)
+    };
+
     private async Task<Product?> LoadProduct(Guid storeId, Guid id) =>
         await _db.Products
             .Include(p => p.Category)
@@ -145,10 +221,13 @@ public class BackofficeProductsController : BackofficeControllerBase
             .Include(p => p.Variants).ThenInclude(v => v.Attributes)
             .FirstOrDefaultAsync(p => p.Id == id && p.StoreId == storeId);
 
-    private async Task<IActionResult?> ValidateProduct(Guid storeId, Guid categoryId, string name, decimal? price)
+    private async Task<IActionResult?> ValidateProduct(
+        Guid storeId, Guid categoryId, string name, decimal? price, decimal? salePrice)
     {
         if (string.IsNullOrWhiteSpace(name)) return BadRequest(new { error = "Name is required." });
         if (price < 0) return BadRequest(new { error = "Price cannot be negative." });
+        if (salePrice is not null && (salePrice < 0 || price is null || salePrice >= price))
+            return BadRequest(new { error = "Sale price must be below the regular price.", code = "sale_price_invalid" });
         if (!await _db.Categories.AnyAsync(c => c.Id == categoryId && c.StoreId == storeId))
             return BadRequest(new { error = "Category does not belong to your store." });
         return null;
@@ -170,6 +249,7 @@ public class BackofficeProductsController : BackofficeControllerBase
         p.Variants.OrderBy(v => v.DisplayOrder).Select(v => new ProductVariantDto(
             v.Id, v.Sku, v.Price, v.IsAvailable, v.DisplayOrder,
             v.Attributes.Select(a => new VariantAttributeDto(
-                a.VariantAttributeDefinitionId, a.VariantAttributeOptionId, a.Name, a.Value)).ToList())).ToList(),
-        p.CreatedAt);
+                a.VariantAttributeDefinitionId, a.VariantAttributeOptionId, a.Name, a.Value)).ToList(),
+            v.SalePrice)).ToList(),
+        p.CreatedAt, p.SalePrice, p.SaleEndsAt);
 }

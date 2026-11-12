@@ -75,6 +75,7 @@
     "inStock": "Առկա է",
     "unavailable": "Ներկայումս անհասանելի",
     "priceFrom": "{{price}}-ից",
+    "saleEnds": "Զեղչը գործում է մինչև {{date}}",
     "priceOnRequest": "Գինը՝ հարցումով",
     "ordersNote": "Պատվերները կատարվում են ուղղակիորեն խանութի հետ WhatsApp-ով կամ հեռախոսով։",
     "orderMessage": "Բարև ձեզ, ցանկանում եմ պատվիրել՝ {{product}}։",

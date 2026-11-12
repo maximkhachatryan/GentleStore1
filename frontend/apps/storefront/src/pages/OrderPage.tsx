@@ -122,6 +122,9 @@ export default function OrderPage() {
                       <div className="mt-0.5 text-xs text-slate-500">
                         {t('order.quantity', { count: line.quantity })}
                         {line.unitPrice !== null && ` · ${formatPrice(line.unitPrice, order.currency)}`}
+                        {line.unitPrice !== null && line.regularUnitPrice !== null && (
+                          <span className="ml-1.5 line-through">{formatPrice(line.regularUnitPrice, order.currency)}</span>
+                        )}
                       </div>
                     </div>
                     <div className="whitespace-nowrap text-sm font-semibold text-slate-900">

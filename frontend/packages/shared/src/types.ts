@@ -175,6 +175,8 @@ export interface ProductVariant {
   isAvailable: boolean;
   displayOrder: number;
   attributes: VariantAttribute[];
+  /** As set — it ends with the product's `saleEndsAt`. */
+  salePrice: number | null;
 }
 
 export interface CreateProductVariantRequest {
@@ -183,6 +185,7 @@ export interface CreateProductVariantRequest {
   isAvailable: boolean;
   displayOrder: number;
   optionIds: string[];
+  salePrice?: number | null;
 }
 export type UpdateProductVariantRequest = CreateProductVariantRequest;
 
@@ -199,6 +202,10 @@ export interface Product {
   tags: ProductTagRef[];
   variants: ProductVariant[];
   createdAt: string;
+  /** As set — still returned after the sale has ended. */
+  salePrice: number | null;
+  /** When the sale stops for the product and its variants; null runs until ended. */
+  saleEndsAt: string | null;
 }
 
 export interface CreateProductRequest {
@@ -209,8 +216,26 @@ export interface CreateProductRequest {
   isAvailable: boolean;
   displayOrder: number;
   tagIds?: string[] | null;
+  salePrice?: number | null;
+  saleEndsAt?: string | null;
 }
 export type UpdateProductRequest = CreateProductRequest;
+
+/** With neither filter the sale covers the whole store; with both, products matching both. */
+export interface SaleScope {
+  categoryId?: string | null;
+  tagId?: string | null;
+}
+
+export interface ApplySaleRequest extends SaleScope {
+  /** 1–95. */
+  percent: number;
+  endsAt?: string | null;
+}
+
+export interface SaleResult {
+  productCount: number;
+}
 
 export interface AddProductImageRequest {
   imageUrl: string;
@@ -373,6 +398,8 @@ export interface PublicOrderLine {
   /** Null for a "price on request" item the store has not quoted yet. */
   unitPrice: number | null;
   lineTotal: number | null;
+  /** The pre-sale price when this line was bought on sale. */
+  regularUnitPrice: number | null;
 }
 
 export interface PublicOrder {
@@ -407,6 +434,8 @@ export interface OrderLine {
   quantity: number;
   unitPrice: number | null;
   lineTotal: number | null;
+  /** The pre-sale price when this line was bought on sale. */
+  regularUnitPrice: number | null;
 }
 
 export interface OrderListItem {
@@ -546,26 +575,35 @@ export interface PublicVariantAttribute {
 export interface PublicVariant {
   id: string;
   sku: string | null;
+  /** What the customer pays now, sale included. */
   price: number;
   inStock: boolean;
   attributes: PublicVariantAttribute[];
+  /** The crossed-out price while a sale runs; otherwise null. */
+  regularPrice: number | null;
 }
 
 export interface PublicProductListItem {
   id: string;
   name: string;
+  /** What the customer pays now, sale included. */
   price: number | null;
   currency: string;
   inStock: boolean;
   primaryImageUrl: string | null;
   categoryId: string;
   tags: string[];
+  /** The crossed-out price while a sale runs; otherwise null. */
+  regularPrice: number | null;
+  /** Set only while on sale, and only when the sale has an end date. */
+  saleEndsAt: string | null;
 }
 
 export interface PublicProduct {
   id: string;
   name: string;
   description: string | null;
+  /** What the customer pays now, sale included. */
   price: number | null;
   currency: string;
   inStock: boolean;
@@ -574,6 +612,10 @@ export interface PublicProduct {
   images: PublicImage[];
   tags: PublicTag[];
   variants: PublicVariant[];
+  /** The crossed-out price while a sale runs; otherwise null. */
+  regularPrice: number | null;
+  /** Set while the product or any variant is on sale, and only when the sale has an end date. */
+  saleEndsAt: string | null;
 }
 
 export interface StorefrontVisitor {

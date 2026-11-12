@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PublicProductListItem } from '@gentlestore/shared';
 import { resolveImageUrl } from '@gentlestore/shared';
 import { API_URL } from '../api';
-import { formatPrice } from '../lib/format';
+import { discountPercent, formatPrice } from '../lib/format';
 import { useStorePath } from '../lib/storeBase';
 
 interface Props {
@@ -14,6 +14,7 @@ export default function ProductCard({ product }: Props) {
   const { t } = useTranslation();
   const storePath = useStorePath();
   const img = resolveImageUrl(API_URL, product.primaryImageUrl, 'md');
+  const percentOff = discountPercent(product.price, product.regularPrice);
 
   return (
     <Link
@@ -36,11 +37,23 @@ export default function ProductCard({ product }: Props) {
             {t('productCard.outOfStock')}
           </span>
         )}
+        {percentOff !== null && (
+          <span className="absolute right-2 top-2 rounded-full bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white">
+            −{percentOff}%
+          </span>
+        )}
       </div>
       <div className="p-3">
         <h3 className="line-clamp-1 font-medium text-slate-900">{product.name}</h3>
-        <div className="mt-1 font-semibold text-brand-700">
-          {product.price === null ? t('productCard.priceOnRequest') : formatPrice(product.price, product.currency)}
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+          <span className="font-semibold text-brand-700">
+            {product.price === null ? t('productCard.priceOnRequest') : formatPrice(product.price, product.currency)}
+          </span>
+          {percentOff !== null && (
+            <span className="text-sm text-slate-400 line-through">
+              {formatPrice(product.regularPrice!, product.currency)}
+            </span>
+          )}
         </div>
         {product.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">

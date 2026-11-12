@@ -7,7 +7,7 @@ import { resolveImageUrl } from '@gentlestore/shared';
 import type { FulfilmentMethod } from '@gentlestore/shared';
 import Navbar from '../components/Navbar';
 import StoreGate from '../components/StoreGate';
-import { formatPrice } from '../lib/format';
+import { discountPercent, formatPrice } from '../lib/format';
 import { isInviteRequired } from '../lib/access';
 import { useCart } from '../lib/cart';
 import { useStorePath, useStoreSlug } from '../lib/storeBase';
@@ -146,6 +146,9 @@ export default function CartPage() {
                     {line.unitPrice === null
                       ? t('cart.priceOnRequest')
                       : formatPrice(line.unitPrice, currency)}
+                    {discountPercent(line.unitPrice, line.regularPrice) !== null && (
+                      <span className="ml-2 text-slate-400 line-through">{formatPrice(line.regularPrice!, currency)}</span>
+                    )}
                   </div>
 
                   <div className="mt-2 flex items-center gap-2">
